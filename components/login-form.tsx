@@ -16,6 +16,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+type TenantMembership = {
+  id: string;
+  user_id: string;
+  tenant: {
+    id: string;
+    name: string;
+    slug: string;
+    plan: string;
+    status: string;
+  };
+};
+
 export function LoginForm({
   className,
   ...props
@@ -26,26 +38,91 @@ export function LoginForm({
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  // const handleLogin = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   const supabase = createClient();
+  //   setIsLoading(true);
+  //   setError(null);
+
+  //   try {
+  //     const { error } = await supabase.auth.signInWithPassword({
+  //       email,
+  //       password,
+  //     });
+  //     if (error) throw error;
+  //     // Update this route to redirect to an authenticated route. The user already has an active session.
+  //     router.push("/protected");
+  //   } catch (error: unknown) {
+  //     setError(error instanceof Error ? error.message : "An error occurred");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
-
+  
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+      // 1. Sign in
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+  
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("No user found after login");
+  
+      // 2. Fetch tenant member details
+      const { data: memberData, error: memberError } = await supabase
+        .from("tenant_members")
+        .select(
+          `
+          id,
+          user_id,
+          tenant:tenant_id (
+            id,
+            name,
+            slug,
+            plan,
+            status
+          )
+        `
+        )
+        .eq("user_id", authData.user.id)
+        .maybeSingle<TenantMembership>();
+  
+      if (memberError) throw memberError;
+      if (!memberData) throw new Error("No tenant membership found");
+
+      const { data: orgData, error: orgError } = await supabase
+        .from("organization")
+        .select("*")
+        .eq("tenant_id", memberData.tenant.id)
+        .maybeSingle();
+
+      if (orgError) throw orgError;
+
+      // 3. Combine into single object
+      const result = {
+        ...memberData,
+        tenant: {
+          ...memberData.tenant,
+          organization: orgData || null,
+        },
+      };
+  
+      router.push("/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
