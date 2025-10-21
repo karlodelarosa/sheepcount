@@ -3,13 +3,7 @@
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
@@ -29,10 +23,7 @@ type TenantMembership = {
   };
 };
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -66,18 +57,17 @@ export function LoginForm({
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
-  
+
     try {
       // 1. Sign in
-      const { data: authData, error: authError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-  
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user found after login");
-  
+
       // 2. Fetch tenant member details
       const { data: memberData, error: memberError } = await supabase
         .from("tenant_members")
@@ -96,18 +86,18 @@ export function LoginForm({
         )
         .eq("user_id", authData.user.id)
         .maybeSingle<TenantMembership>();
-  
+
       if (memberError) throw memberError;
       if (!memberData) throw new Error("No tenant membership found");
-  
+
       const { data: orgData, error: orgError } = await supabase
         .from("organization")
         .select("*")
         .eq("tenant_id", memberData.tenant.id)
         .maybeSingle();
-  
+
       if (orgError) throw orgError;
-  
+
       // 3. Combine into single object
       const result = {
         ...memberData,
@@ -116,10 +106,10 @@ export function LoginForm({
           organization: orgData || null,
         },
       };
-  
+
       setTenant(result);
       localStorage.setItem("tenantData", JSON.stringify(result));
-  
+
       router.push("/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -127,17 +117,13 @@ export function LoginForm({
       setIsLoading(false);
     }
   };
-  
-  
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
+          <CardDescription>Enter your email below to login to your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
@@ -150,7 +136,7 @@ export function LoginForm({
                   placeholder="m@example.com"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={e => setEmail(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -168,7 +154,7 @@ export function LoginForm({
                   type="password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
@@ -178,10 +164,7 @@ export function LoginForm({
             </div>
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
-              <Link
-                href="/auth/sign-up"
-                className="underline underline-offset-4"
-              >
+              <Link href="/auth/sign-up" className="underline underline-offset-4">
                 Sign up
               </Link>
             </div>

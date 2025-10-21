@@ -17,5 +17,5 @@ export default function Sidebar() {
         <Link href="/settings">Ministry</Link>
       </nav>
     </aside>
-  )
+  );
 }
