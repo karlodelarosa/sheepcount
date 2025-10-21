@@ -1,3 +1,13 @@
+"use client";
+import { useTenant } from "@/app/providers/tenant-provider";
+
 export default function DashboardPage() {
-  return <h1>Welcome to your dashboard 👋</h1>;
+  const { user, tenant } = useTenant();
+
+  return (
+    <div>
+      <h1>Welcome 👋 {user?.email}</h1>
+      <p>Tenant: <pre>{JSON.stringify(tenant, null, 2)}</pre></p>
+    </div>
+  );
 }

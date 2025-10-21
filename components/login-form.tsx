@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTenant } from "@/app/providers/tenant-provider";
 
 type TenantMembership = {
   id: string;
@@ -37,6 +38,7 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { setTenant } = useTenant();
 
   // const handleLogin = async (e: React.FormEvent) => {
   //   e.preventDefault();
@@ -97,15 +99,15 @@ export function LoginForm({
   
       if (memberError) throw memberError;
       if (!memberData) throw new Error("No tenant membership found");
-
+  
       const { data: orgData, error: orgError } = await supabase
         .from("organization")
         .select("*")
         .eq("tenant_id", memberData.tenant.id)
         .maybeSingle();
-
+  
       if (orgError) throw orgError;
-
+  
       // 3. Combine into single object
       const result = {
         ...memberData,
@@ -115,6 +117,9 @@ export function LoginForm({
         },
       };
   
+      setTenant(result);
+      localStorage.setItem("tenantData", JSON.stringify(result));
+  
       router.push("/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -122,6 +127,7 @@ export function LoginForm({
       setIsLoading(false);
     }
   };
+  
   
 
   return (
