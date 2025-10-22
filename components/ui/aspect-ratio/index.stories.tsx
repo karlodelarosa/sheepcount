@@ -18,7 +18,7 @@ export default meta;
 type Story = StoryObj<typeof AspectRatio>;
 
 export const Default: Story = {
-  render: (args) => (
+  render: args => (
     <AspectRatio {...args} className="w-64 bg-gray-200">
       <div className="bg-blue-500 flex items-center justify-center text-white">
         Content
@@ -31,7 +31,7 @@ export const Default: Story = {
 };
 
 export const Square: Story = {
-  render: (args) => (
+  render: args => (
     <AspectRatio {...args} className="w-48 bg-gray-200">
       <div className="bg-green-500 flex items-center justify-center text-white">
         Square
@@ -44,7 +44,7 @@ export const Square: Story = {
 };
 
 export const Tall: Story = {
-  render: (args) => (
+  render: args => (
     <AspectRatio {...args} className="w-32 bg-gray-200">
       <div className="bg-red-500 flex items-center justify-center text-white">
         Tall

@@ -76,7 +76,9 @@ export const RadioMenu: Story = {
       <DropdownMenuContent className="w-56">
         <DropdownMenuLabel>Choose one</DropdownMenuLabel>
         <DropdownMenuRadioGroup defaultValue="light">
-          <DropdownMenuRadioItem value="light">Light Mode</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="light">
+            Light Mode
+          </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="dark">Dark Mode</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>

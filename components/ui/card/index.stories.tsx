@@ -1,7 +1,14 @@
-// components/ui/card/index.stories.tsx
 import React from "react";
-import { Meta, StoryObj } from "@storybook/react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, CardAction } from "./index";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  CardAction,
+} from "./index";
 import { Button } from "../button";
 
 const meta: Meta<typeof Card> = {
@@ -12,12 +19,16 @@ const meta: Meta<typeof Card> = {
     layout: "centered",
     docs: {
       description: {
-        component: "A flexible Card component with slots for header, content, footer, and actions. Works well with Buttons and other UI elements.",
+        component:
+          "A flexible Card component with slots for header, content, footer, and actions. Works well with Buttons and other UI elements.",
       },
     },
   },
   argTypes: {
-    className: { control: "text", description: "Additional classes for the card container" },
+    className: {
+      control: "text",
+      description: "Additional classes for the card container",
+    },
   },
 };
 
@@ -30,22 +41,30 @@ export const Default: Story = {
   args: {
     className: "w-[300px]",
   },
-  render: (args) => (
+  render: args => (
     <Card {...args}>
       <CardHeader>
         <CardTitle>Card Title</CardTitle>
-        <CardDescription>This is a description for the card. It supports multiple lines and additional info.</CardDescription>
+        <CardDescription>
+          This is a description for the card. It supports multiple lines and
+          additional info.
+        </CardDescription>
         <CardAction>
-          <Button size="sm" variant="secondary">Action</Button>
+          <Button size="sm" variant="secondary">
+            Action
+          </Button>
         </CardAction>
       </CardHeader>
       <CardContent>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
+          eiusmod tempor incididunt ut labore et dolore magna aliqua.
         </p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2">
-        <Button variant="outline" size="sm">Cancel</Button>
+        <Button variant="outline" size="sm">
+          Cancel
+        </Button>
         <Button size="sm">Save</Button>
       </CardFooter>
     </Card>
@@ -57,19 +76,24 @@ export const WithoutAction: Story = {
   args: {
     className: "w-[300px]",
   },
-  render: (args) => (
+  render: args => (
     <Card {...args}>
       <CardHeader>
         <CardTitle>Card Title</CardTitle>
-        <CardDescription>This card does not have an action button in the header.</CardDescription>
+        <CardDescription>
+          This card does not have an action button in the header.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <p>
-          You can put any content here. For example, text, images, or other components.
+          You can put any content here. For example, text, images, or other
+          components.
         </p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2">
-        <Button variant="outline" size="sm">Close</Button>
+        <Button variant="outline" size="sm">
+          Close
+        </Button>
       </CardFooter>
     </Card>
   ),
@@ -80,15 +104,21 @@ export const LongContent: Story = {
   args: {
     className: "w-[400px]",
   },
-  render: (args) => (
+  render: args => (
     <Card {...args}>
       <CardHeader>
         <CardTitle>Card With Long Content</CardTitle>
-        <CardDescription>This card demonstrates wrapping and spacing for longer content blocks.</CardDescription>
+        <CardDescription>
+          This card demonstrates wrapping and spacing for longer content blocks.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin sagittis, nisl nec ullamcorper sodales, enim nisl tincidunt ex, sed porttitor sapien arcu eget libero. Suspendisse potenti. Integer ultricies purus a felis ultrices, in dapibus mi vehicula. Donec nec purus vitae urna faucibus malesuada.
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin
+          sagittis, nisl nec ullamcorper sodales, enim nisl tincidunt ex, sed
+          porttitor sapien arcu eget libero. Suspendisse potenti. Integer
+          ultricies purus a felis ultrices, in dapibus mi vehicula. Donec nec
+          purus vitae urna faucibus malesuada.
         </p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2">

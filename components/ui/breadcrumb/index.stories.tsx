@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "@storybook/react";
-import { Breadcrumbs } from ".";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { Breadcrumbs } from "./index";
 
 const meta: Meta<typeof Breadcrumbs> = {
   title: "ui/Breadcrumbs",
@@ -24,11 +24,11 @@ const sampleData = [
 ];
 
 export const Default: Story = {
-  render: (args) => <Breadcrumbs {...args} data={sampleData} />,
+  render: args => <Breadcrumbs {...args} data={sampleData} />,
 };
 
 export const CustomSeparator: Story = {
-  render: (args) => (
+  render: args => (
     <Breadcrumbs
       {...args}
       data={sampleData}

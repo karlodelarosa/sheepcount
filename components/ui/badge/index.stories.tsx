@@ -58,6 +58,8 @@ export const Outline: Story = {
 export const AsChildExample: Story = {
   args: {
     asChild: true,
-    children: <button className="px-2 py-1 rounded bg-gray-200">Button Badge</button>,
+    children: (
+      <button className="px-2 py-1 rounded bg-gray-200">Button Badge</button>
+    ),
   },
 };

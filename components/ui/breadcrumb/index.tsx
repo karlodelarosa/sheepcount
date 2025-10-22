@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { ChevronRight, MoreHorizontal } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BreadcrumbData {
@@ -15,7 +14,12 @@ interface BreadcrumbsProps extends React.ComponentProps<"nav"> {
   separator?: React.ReactNode;
 }
 
-function Breadcrumbs({ data, separator, className, ...props }: BreadcrumbsProps) {
+function Breadcrumbs({
+  data,
+  separator,
+  className,
+  ...props
+}: BreadcrumbsProps) {
   const Separator = separator ?? <ChevronRight className="size-3.5" />;
   return (
     <nav
@@ -26,9 +30,7 @@ function Breadcrumbs({ data, separator, className, ...props }: BreadcrumbsProps)
     >
       <ol
         data-slot="breadcrumb-list"
-        className={cn(
-          "flex flex-wrap items-center gap-1 text-sm break-words"
-        )}
+        className={cn("flex flex-wrap items-center gap-1 text-sm break-words")}
       >
         {data.map((item, index) => {
           const isLast = index === data.length - 1;

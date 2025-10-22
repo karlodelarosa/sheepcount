@@ -1,6 +1,5 @@
-// components/ui/carousel/index.stories.tsx
 import React from "react";
-import { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import {
   Carousel,
   CarouselContent,
@@ -8,7 +7,6 @@ import {
   CarouselPrevious,
   CarouselNext,
 } from "./index";
-import { Button } from "../button";
 
 const meta: Meta<typeof Carousel> = {
   title: "ui/Carousel",
@@ -48,13 +46,13 @@ export const Default: Story = {
     orientation: "horizontal",
     className: "h-48",
   },
-  render: (args) => (
+  render: args => (
     <div className="relative w-full max-w-xl mx-auto">
       <Carousel {...args}>
         <CarouselPrevious />
         <CarouselNext />
         <CarouselContent className="flex gap-4">
-          {sampleSlides.map((slide) => (
+          {sampleSlides.map(slide => (
             <CarouselItem
               key={slide.id}
               className={`flex items-center justify-center rounded-lg text-white font-bold ${slide.color}`}
@@ -73,13 +71,13 @@ export const Vertical: Story = {
     orientation: "vertical",
     className: "h-96 w-64",
   },
-  render: (args) => (
+  render: args => (
     <div className="relative mx-auto">
       <Carousel {...args}>
         <CarouselPrevious />
         <CarouselNext />
         <CarouselContent className="flex flex-col gap-4">
-          {sampleSlides.map((slide) => (
+          {sampleSlides.map(slide => (
             <CarouselItem
               key={slide.id}
               className={`flex items-center justify-center rounded-lg text-white font-bold h-32 ${slide.color}`}

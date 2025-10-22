@@ -47,10 +47,13 @@ export const RealtimeChat = ({
     const mergedMessages = [...initialMessages, ...realtimeMessages];
     // Remove duplicates based on message id
     const uniqueMessages = mergedMessages.filter(
-      (message, index, self) => index === self.findIndex(m => m.id === message.id)
+      (message, index, self) =>
+        index === self.findIndex(m => m.id === message.id),
     );
     // Sort by creation date
-    const sortedMessages = uniqueMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const sortedMessages = uniqueMessages.sort((a, b) =>
+      a.createdAt.localeCompare(b.createdAt),
+    );
 
     return sortedMessages;
   }, [initialMessages, realtimeMessages]);
@@ -74,7 +77,7 @@ export const RealtimeChat = ({
       sendMessage(newMessage);
       setNewMessage("");
     },
-    [newMessage, isConnected, sendMessage]
+    [newMessage, isConnected, sendMessage],
   );
 
   return (
@@ -89,7 +92,8 @@ export const RealtimeChat = ({
         <div className="space-y-1">
           {allMessages.map((message, index) => {
             const prevMessage = index > 0 ? allMessages[index - 1] : null;
-            const showHeader = !prevMessage || prevMessage.user.name !== message.user.name;
+            const showHeader =
+              !prevMessage || prevMessage.user.name !== message.user.name;
 
             return (
               <div
@@ -107,11 +111,14 @@ export const RealtimeChat = ({
         </div>
       </div>
 
-      <form onSubmit={handleSendMessage} className="flex w-full gap-2 border-t border-border p-4">
+      <form
+        onSubmit={handleSendMessage}
+        className="flex w-full gap-2 border-t border-border p-4"
+      >
         <Input
           className={cn(
             "rounded-full bg-background text-sm transition-all duration-300",
-            isConnected && newMessage.trim() ? "w-[calc(100%-36px)]" : "w-full"
+            isConnected && newMessage.trim() ? "w-[calc(100%-36px)]" : "w-full",
           )}
           type="text"
           value={newMessage}

@@ -1,6 +1,5 @@
-// Calendar.stories.tsx
-import type { Meta, StoryObj } from "@storybook/react";
-import { Calendar } from ".";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { Calendar } from "./index";
 
 const meta: Meta<typeof Calendar> = {
   title: "ui/Calendar",
@@ -21,13 +20,13 @@ export default meta;
 type Story = StoryObj<typeof Calendar>;
 
 export const Default: Story = {
-  render: (args) => <Calendar {...args} />,
+  render: args => <Calendar {...args} />,
 };
 
 export const RangeSelection: Story = {
-  render: (args) => <Calendar {...args} mode="range" />,
+  render: args => <Calendar {...args} mode="range" />,
 };
 
 export const MultipleSelection: Story = {
-  render: (args) => <Calendar {...args} mode="multiple" />,
+  render: args => <Calendar {...args} mode="multiple" />,
 };

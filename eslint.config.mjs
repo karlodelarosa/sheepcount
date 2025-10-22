@@ -14,34 +14,21 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  // Next.js + TS base configs
   ...compat.extends("next/core-web-vitals", "next/typescript"),
-
-  // Storybook support
   ...storybook.configs["flat/recommended"],
-
-  // Custom rules and plugins
   {
     plugins: {
       prettier: prettierPlugin,
-      "unused-imports": unusedImportsPlugin, // ✅ match the rule name here
+      "unused-imports": unusedImportsPlugin,
     },
     rules: {
       ...prettierConfig.rules,
-
-      // ✅ Automatically remove unused imports
       "unused-imports/no-unused-imports": "error",
-
-      // Warn (not error) for unused vars (but allow _ignored)
       "unused-imports/no-unused-vars": [
         "warn",
         { vars: "all", varsIgnorePattern: "^_", argsIgnorePattern: "^_" },
       ],
-
-      // Soften the `any` rule if you want
       "@typescript-eslint/no-explicit-any": "warn",
-
-      // ✅ Enforce Prettier formatting
       "prettier/prettier": "error",
     },
   },

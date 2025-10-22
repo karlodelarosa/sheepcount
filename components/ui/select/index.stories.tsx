@@ -27,7 +27,7 @@ type Story = StoryObj<typeof Select>;
 
 // Default
 export const Default: Story = {
-  render: (args) => (
+  render: args => (
     <Select {...args}>
       <SelectTrigger>
         <SelectValue placeholder="Choose an option" />
@@ -43,7 +43,7 @@ export const Default: Story = {
 
 // Disabled
 export const Disabled: Story = {
-  render: (args) => (
+  render: args => (
     <Select {...args} disabled>
       <SelectTrigger>
         <SelectValue placeholder="Disabled" />
@@ -58,7 +58,7 @@ export const Disabled: Story = {
 
 // With group and label (works)
 export const WithGroupAndLabel: Story = {
-  render: (args) => (
+  render: args => (
     <Select {...args}>
       <SelectTrigger>
         <SelectValue placeholder="Choose an option" />
@@ -82,7 +82,7 @@ export const WithGroupAndLabel: Story = {
 
 // Default value pre-selected
 export const DefaultValue: Story = {
-  render: (args) => (
+  render: args => (
     <Select {...args} defaultValue="option2">
       <SelectTrigger>
         <SelectValue placeholder="Choose an option" />

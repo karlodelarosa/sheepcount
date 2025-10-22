@@ -22,8 +22,8 @@ export function SearchableSelect({
 }: SearchableSelectProps) {
   const [filter, setFilter] = React.useState("");
 
-  const filteredOptions = options.filter((opt) =>
-    opt.toLowerCase().includes(filter.toLowerCase())
+  const filteredOptions = options.filter(opt =>
+    opt.toLowerCase().includes(filter.toLowerCase()),
   );
 
   return (
@@ -31,7 +31,7 @@ export function SearchableSelect({
       <SelectPrimitive.Trigger
         className={cn(
           "border-input flex w-full items-center justify-between rounded-md border bg-input-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-ring/50 disabled:opacity-50",
-          className
+          className,
         )}
       >
         <SelectPrimitive.Value placeholder={placeholder} />
@@ -47,13 +47,13 @@ export function SearchableSelect({
               type="text"
               placeholder="Search..."
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={e => setFilter(e.target.value)}
               className="w-full rounded border p-1 text-sm outline-none"
             />
           </div>
 
           <SelectPrimitive.Viewport>
-            {filteredOptions.map((opt) => (
+            {filteredOptions.map(opt => (
               <SelectPrimitive.Item
                 key={opt}
                 value={opt} // ✅ Must have value

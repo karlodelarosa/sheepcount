@@ -2,7 +2,11 @@ import Sidebar from "./_components/sidebar/sidebar";
 import Header from "./_components/header/header";
 import { TenantProvider } from "../providers/tenant-provider";
 
-export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+export default function ProtectedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <main className="min-h-screen flex">
       <Sidebar />

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { Tag } from ".";
+import { Tag } from "./";
 
 const meta = {
   title: "ui/Tag",

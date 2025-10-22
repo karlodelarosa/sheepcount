@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { SearchableSelect } from ".";
+import { SearchableSelect } from "./index";
 
 const meta: Meta<typeof SearchableSelect> = {
   title: "ui/SearchableSelect",

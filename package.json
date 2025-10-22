@@ -7,7 +7,7 @@
     "lint": "next lint",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "lint:fix": "next lint --fix && prettier --write ."
+    "lint:fix": "next lint --fix && npx prettier --write 'app/**/*.{ts,tsx,js,jsx}' 'components/**/*.{ts,tsx,js,jsx}'"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
@@ -48,10 +48,11 @@
     "@vitest/browser": "^3.2.4",
     "@vitest/coverage-v8": "^3.2.4",
     "autoprefixer": "^10.4.20",
-    "eslint": "^9",
+    "eslint": "^9.38.0",
     "eslint-config-next": "15.3.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-storybook": "^9.1.13",
     "eslint-plugin-unused-imports": "^4.3.0",
     "playwright": "^1.56.1",

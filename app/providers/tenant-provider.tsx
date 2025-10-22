@@ -35,7 +35,9 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <TenantContext.Provider value={{ user, tenant, setTenant }}>{children}</TenantContext.Provider>
+    <TenantContext.Provider value={{ user, tenant, setTenant }}>
+      {children}
+    </TenantContext.Provider>
   );
 }
 
