@@ -1,32 +1,64 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { Calendar } from "./index";
+import type { CalendarProps } from "./index";
 
-const meta: Meta<typeof Calendar> = {
+const meta: Meta<CalendarProps> = {
   title: "ui/Calendar",
   component: Calendar,
-  parameters: {
-    layout: "centered",
-  },
+  parameters: { layout: "centered" },
   tags: ["autodocs"],
   argTypes: {
     mode: {
       control: { type: "select" },
       options: ["single", "multiple", "range"],
     },
+    showOutsideDays: { control: "boolean" },
+    className: { control: "text" },
   },
 };
 
 export default meta;
-type Story = StoryObj<typeof Calendar>;
+type Story = StoryObj<CalendarProps>;
 
+// Default single-date calendar
 export const Default: Story = {
-  render: args => <Calendar {...args} />,
+  args: {
+    mode: "single",
+    selected: undefined,
+  },
 };
 
+// Range selection
 export const RangeSelection: Story = {
-  render: args => <Calendar {...args} mode="range" />,
+  args: {
+    mode: "range",
+    selected: undefined, // start empty
+  },
 };
 
+// Multiple selection
 export const MultipleSelection: Story = {
-  render: args => <Calendar {...args} mode="multiple" />,
+  args: {
+    mode: "multiple",
+    selected: [],
+  },
+};
+
+// Calendar with min/max date
+export const WithMinMax: Story = {
+  args: {
+    mode: "single",
+    selected: undefined,
+    fromDate: new Date(2025, 0, 1),
+    toDate: new Date(2025, 11, 31),
+  },
+};
+
+// Calendar with custom styling
+export const CustomStyled: Story = {
+  args: {
+    mode: "single",
+    selected: undefined,
+    className: "border border-primary shadow-lg",
+  },
 };
