@@ -95,7 +95,7 @@ export const WithMultipleFields: Story = {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>We'll never share your email.</FormDescription>
+                <FormDescription>We&apos;ll never share your email.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
