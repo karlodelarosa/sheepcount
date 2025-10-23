@@ -21,7 +21,7 @@ export default meta;
 type Story = StoryObj<typeof RadioGroup>;
 
 export const Default: Story = {
-  render: (args) => (
+  render: args => (
     <RadioGroup defaultValue="option-1" {...args}>
       <div className="flex items-center space-x-2">
         <RadioGroupItem value="option-1" id="option-1" />
@@ -65,7 +65,8 @@ export const Controlled: Story = {
         </RadioGroup>
 
         <p className="text-sm text-muted-foreground">
-          Selected: <span className="font-medium text-foreground">{selected}</span>
+          Selected:{" "}
+          <span className="font-medium text-foreground">{selected}</span>
         </p>
       </div>
     );

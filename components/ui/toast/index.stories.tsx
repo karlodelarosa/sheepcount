@@ -18,9 +18,15 @@ export const WithButtons: Story = {
   render: () => (
     <div className="space-y-2">
       <Button onClick={() => toast("Normal toast")}>Normal Toast</Button>
-      <Button onClick={() => toast.success("Success toast")}>Success Toast</Button>
+      <Button onClick={() => toast.success("Success toast")}>
+        Success Toast
+      </Button>
       <Button onClick={() => toast.error("Error toast")}>Error Toast</Button>
-      <Button onClick={() => toast("Custom toast", { description: "With description" })}>
+      <Button
+        onClick={() =>
+          toast("Custom toast", { description: "With description" })
+        }
+      >
         With Description
       </Button>
 

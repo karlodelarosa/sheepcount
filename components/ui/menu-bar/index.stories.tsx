@@ -7,7 +7,6 @@ import {
   MenubarContent,
   MenubarItem,
   MenubarSeparator,
-  MenubarLabel,
   MenubarShortcut,
   MenubarSub,
   MenubarSubTrigger,
@@ -92,10 +91,7 @@ export const Default: Story = {
           <MenubarMenu>
             <MenubarTrigger>Profiles</MenubarTrigger>
             <MenubarContent>
-              <MenubarRadioGroup
-                value={person}
-                onValueChange={setPerson}
-              >
+              <MenubarRadioGroup value={person} onValueChange={setPerson}>
                 <MenubarRadioItem value="pedro">Pedro Duarte</MenubarRadioItem>
                 <MenubarRadioItem value="colm">Colm Tuite</MenubarRadioItem>
               </MenubarRadioGroup>

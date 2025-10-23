@@ -45,11 +45,7 @@ export const Checked: Story = {
     const [checked, setChecked] = React.useState(true);
     return (
       <div className="flex items-center space-x-2">
-        <Checkbox
-          id="checked"
-          checked={checked}
-          onCheckedChange={setChecked}
-        />
+        <Checkbox id="checked" checked={checked} onCheckedChange={setChecked} />
         <label htmlFor="checked" className="text-sm">
           Controlled Checkbox ({checked ? "checked" : "unchecked"})
         </label>

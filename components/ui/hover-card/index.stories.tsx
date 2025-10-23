@@ -32,7 +32,8 @@ export const Default: Story = {
             <div className="space-y-1">
               <h4 className="font-semibold leading-none">shadcn</h4>
               <p className="text-sm text-muted-foreground">
-                Creator of shadcn/ui — Beautifully designed components built with Radix UI and Tailwind CSS.
+                Creator of shadcn/ui — Beautifully designed components built
+                with Radix UI and Tailwind CSS.
               </p>
               <a
                 href="https://ui.shadcn.com"

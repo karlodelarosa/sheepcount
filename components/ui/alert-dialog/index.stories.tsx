@@ -27,7 +27,9 @@ export const Default: Story = {
   render: args => (
     <AlertDialog {...args}>
       <AlertDialogTrigger>
-        <button className="px-4 py-2 bg-blue-500 text-white rounded">Open Dialog</button>
+        <button className="px-4 py-2 bg-blue-500 text-white rounded">
+          Open Dialog
+        </button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -49,16 +51,19 @@ export const LongMessage: Story = {
   render: args => (
     <AlertDialog {...args}>
       <AlertDialogTrigger>
-        <button className="px-4 py-2 bg-red-500 text-white rounded">Open Alert</button>
+        <button className="px-4 py-2 bg-red-500 text-white rounded">
+          Open Alert
+        </button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Important Notice</AlertDialogTitle>
           <AlertDialogDescription>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum, lorem sit amet
-            dapibus tincidunt, mauris sapien consequat erat, nec gravida risus magna sit amet erat.
-            This is a longer message to test overflow and scrolling behavior inside the alert dialog
-            content.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
+            vestibulum, lorem sit amet dapibus tincidunt, mauris sapien
+            consequat erat, nec gravida risus magna sit amet erat. This is a
+            longer message to test overflow and scrolling behavior inside the
+            alert dialog content.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

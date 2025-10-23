@@ -45,9 +45,7 @@ export const Default: Story = {
           Duplicate
         </ContextMenuItem>
         <ContextMenuSeparator />
-        <ContextMenuCheckboxItem checked>
-          Always show
-        </ContextMenuCheckboxItem>
+        <ContextMenuCheckboxItem checked>Always show</ContextMenuCheckboxItem>
         <ContextMenuSeparator />
 
         <ContextMenuRadioGroup value="medium">

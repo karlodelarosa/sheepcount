@@ -24,7 +24,8 @@ export const Default: Story = {
         <div className="flex flex-col gap-2">
           <h4 className="font-medium leading-none">Popover Title</h4>
           <p className="text-sm text-muted-foreground">
-            This is a popover component. You can place any content here — text, forms, or actions.
+            This is a popover component. You can place any content here — text,
+            forms, or actions.
           </p>
           <Button size="sm">Confirm</Button>
         </div>

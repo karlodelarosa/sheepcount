@@ -18,7 +18,7 @@ export default meta;
 type Story = StoryObj<typeof Progress>;
 
 export const Default: Story = {
-  render: (args) => <Progress {...args} />,
+  render: args => <Progress {...args} />,
 };
 
 export const AnimatedProgress: Story = {
@@ -27,7 +27,7 @@ export const AnimatedProgress: Story = {
 
     React.useEffect(() => {
       const timer = setInterval(() => {
-        setValue((v) => (v >= 100 ? 0 : v + 10));
+        setValue(v => (v >= 100 ? 0 : v + 10));
       }, 800);
       return () => clearInterval(timer);
     }, []);
@@ -52,11 +52,14 @@ export const ControlledProgress: Story = {
       <div className="flex flex-col gap-3 w-64">
         <Progress value={value} />
         <div className="flex items-center gap-2">
-          <Button size="sm" onClick={() => setValue((v) => Math.max(0, v - 10))}>
+          <Button size="sm" onClick={() => setValue(v => Math.max(0, v - 10))}>
             -
           </Button>
           <span className="text-sm text-muted-foreground">{value}%</span>
-          <Button size="sm" onClick={() => setValue((v) => Math.min(100, v + 10))}>
+          <Button
+            size="sm"
+            onClick={() => setValue(v => Math.min(100, v + 10))}
+          >
             +
           </Button>
         </div>

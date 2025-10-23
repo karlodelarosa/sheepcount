@@ -2,7 +2,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React, { useState } from "react";
 import { Slider } from "./index";
-import { Button } from "@/components/ui/button/index";
 
 const meta: Meta<typeof Slider> = {
   title: "ui/Slider",

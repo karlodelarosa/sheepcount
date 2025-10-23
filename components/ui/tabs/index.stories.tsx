@@ -1,12 +1,7 @@
 // Tabs.stories.tsx
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React from "react";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "./index";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "./index";
 
 const meta: Meta<typeof Tabs> = {
   title: "UI/Tabs",
@@ -28,14 +23,18 @@ export const Default: Story = {
   render: () => (
     <Tabs defaultValue={tabData[0].value} className="w-[400px]">
       <TabsList>
-        {tabData.map((tab) => (
+        {tabData.map(tab => (
           <TabsTrigger key={tab.value} value={tab.value}>
             {tab.label}
           </TabsTrigger>
         ))}
       </TabsList>
-      {tabData.map((tab) => (
-        <TabsContent key={tab.value} value={tab.value} className="p-4 border rounded-md">
+      {tabData.map(tab => (
+        <TabsContent
+          key={tab.value}
+          value={tab.value}
+          className="p-4 border rounded-md"
+        >
           {tab.content}
         </TabsContent>
       ))}

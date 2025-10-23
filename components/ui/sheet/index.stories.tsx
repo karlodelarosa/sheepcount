@@ -23,8 +23,12 @@ export default meta;
 type Story = StoryObj<typeof Sheet>;
 
 // Wrap story in full-screen container to make fixed Sheet visible
-const FullScreenWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="h-screen w-screen flex items-center justify-center">{children}</div>
+const FullScreenWrapper: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => (
+  <div className="h-screen w-screen flex items-center justify-center">
+    {children}
+  </div>
 );
 
 export const Default: Story = {
@@ -43,8 +47,8 @@ export const Default: Story = {
           </SheetHeader>
           <div className="flex-1 p-4">
             <p>
-              Here’s some content inside the sheet. You can place forms, text, or
-              anything else here.
+              Here’s some content inside the sheet. You can place forms, text,
+              or anything else here.
             </p>
           </div>
           <SheetFooter>

@@ -23,10 +23,30 @@ type Story = StoryObj<typeof Table>;
 
 // Mock data
 const mockData = [
-  { name: "John Doe", email: "john@example.com", role: "Admin", status: "Active" },
-  { name: "Jane Smith", email: "jane@example.com", role: "Editor", status: "Inactive" },
-  { name: "Bob Johnson", email: "bob@example.com", role: "Viewer", status: "Active" },
-  { name: "Alice Brown", email: "alice@example.com", role: "Admin", status: "Active" },
+  {
+    name: "John Doe",
+    email: "john@example.com",
+    role: "Admin",
+    status: "Active",
+  },
+  {
+    name: "Jane Smith",
+    email: "jane@example.com",
+    role: "Editor",
+    status: "Inactive",
+  },
+  {
+    name: "Bob Johnson",
+    email: "bob@example.com",
+    role: "Viewer",
+    status: "Active",
+  },
+  {
+    name: "Alice Brown",
+    email: "alice@example.com",
+    role: "Admin",
+    status: "Active",
+  },
 ];
 
 export const WithMockData: Story = {

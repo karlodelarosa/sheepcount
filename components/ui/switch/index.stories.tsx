@@ -19,10 +19,7 @@ export const Default: Story = {
 
     return (
       <div className="flex items-center space-x-2">
-        <Switch
-          checked={checked}
-          onCheckedChange={(val) => setChecked(val)}
-        />
+        <Switch checked={checked} onCheckedChange={val => setChecked(val)} />
         <Label>{checked ? "On" : "Off"}</Label>
       </div>
     );

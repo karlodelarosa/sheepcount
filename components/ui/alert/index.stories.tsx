@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { Alert, AlertTitle, AlertDescription } from ".";
+import { Alert, AlertTitle, AlertDescription } from "./index";
 
 const meta: Meta<typeof Alert> = {
   title: "ui/Alert",
@@ -37,9 +37,7 @@ export const Destructive: Story = {
   render: args => (
     <Alert {...args}>
       <AlertTitle>Error!</AlertTitle>
-      <AlertDescription>
-        Something went wrong. Please try again later.
-      </AlertDescription>
+      <AlertDescription>Something went wrong. Please try again later.</AlertDescription>
     </Alert>
   ),
 };
@@ -52,10 +50,9 @@ export const LongMessage: Story = {
     <Alert {...args}>
       <AlertTitle>Heads up!</AlertTitle>
       <AlertDescription>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum,
-        lorem sit amet dapibus tincidunt, mauris sapien consequat erat, nec
-        gravida risus magna sit amet erat. This shows how alerts behave with
-        longer content.
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vestibulum, lorem sit amet
+        dapibus tincidunt, mauris sapien consequat erat, nec gravida risus magna sit amet erat. This
+        shows how alerts behave with longer content.
       </AlertDescription>
     </Alert>
   ),

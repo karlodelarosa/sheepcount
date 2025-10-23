@@ -28,11 +28,17 @@ export const Horizontal: Story = {
 export const Vertical: Story = {
   render: () => (
     <div className="flex flex-row gap-4 w-96 h-32 p-4 border">
-      <div className="flex-1 bg-slate-100 flex items-center justify-center">Left</div>
+      <div className="flex-1 bg-slate-100 flex items-center justify-center">
+        Left
+      </div>
       <Separator orientation="vertical" />
-      <div className="flex-1 bg-slate-200 flex items-center justify-center">Center</div>
+      <div className="flex-1 bg-slate-200 flex items-center justify-center">
+        Center
+      </div>
       <Separator orientation="vertical" />
-      <div className="flex-1 bg-slate-300 flex items-center justify-center">Right</div>
+      <div className="flex-1 bg-slate-300 flex items-center justify-center">
+        Right
+      </div>
     </div>
   ),
 };

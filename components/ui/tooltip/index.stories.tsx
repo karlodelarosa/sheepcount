@@ -1,7 +1,7 @@
 // Tooltip.stories.tsx
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./index";
+import { Tooltip, TooltipTrigger, TooltipContent } from "./index";
 import { Button } from "@/components/ui/button/index";
 
 const meta: Meta<typeof Tooltip> = {

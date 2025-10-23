@@ -26,7 +26,7 @@ export const Default: Story = {
         <InputOTP
           maxLength={6}
           value={value}
-          onChange={(val) => setValue(val)}
+          onChange={val => setValue(val)}
           containerClassName="gap-3"
         >
           <InputOTPGroup>
@@ -60,7 +60,7 @@ export const OneGroup: Story = {
         <InputOTP
           maxLength={6}
           value={value}
-          onChange={(val) => setValue(val)}
+          onChange={val => setValue(val)}
           containerClassName="gap-3"
         >
           <InputOTPGroup>

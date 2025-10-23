@@ -10,7 +10,13 @@ import {
   FormMessage,
 } from "./index";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const meta: Meta<typeof Form> = {
@@ -34,7 +40,8 @@ export const WithMultipleFields: Story = {
       },
     });
 
-    const onSubmit = (data: any) => alert(`Submitted:\n${JSON.stringify(data, null, 2)}`);
+    const onSubmit = (data: any) =>
+      alert(`Submitted:\n${JSON.stringify(data, null, 2)}`);
 
     return (
       <Form {...form}>
@@ -82,7 +89,11 @@ export const WithMultipleFields: Story = {
               <FormItem className="md:col-span-2">
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="you@example.com" {...field} />
+                  <Input
+                    type="email"
+                    placeholder="you@example.com"
+                    {...field}
+                  />
                 </FormControl>
                 <FormDescription>We'll never share your email.</FormDescription>
                 <FormMessage />
@@ -98,7 +109,10 @@ export const WithMultipleFields: Story = {
               <FormItem>
                 <FormLabel>Role</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>

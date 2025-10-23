@@ -1,8 +1,8 @@
 // Toggle.stories.tsx
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React from "react";
-import { Toggle, toggleVariants } from "./index";
-import { LucideIcon, Check } from "lucide-react";
+import { Toggle } from "./index";
+import { Check } from "lucide-react";
 
 const meta: Meta<typeof Toggle> = {
   title: "UI/Toggle",

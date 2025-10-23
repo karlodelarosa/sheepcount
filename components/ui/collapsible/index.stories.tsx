@@ -1,9 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from "./index";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./index";
 import { Button } from "@/components/ui/button";
 
 const meta: Meta<typeof Collapsible> = {
@@ -23,10 +19,7 @@ export const Default: Story = {
     <div className="max-w-sm w-full">
       <Collapsible defaultOpen>
         <CollapsibleTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-between"
-          >
+          <Button variant="outline" className="w-full justify-between">
             Click to toggle content
             <span className="ml-2">▼</span>
           </Button>
