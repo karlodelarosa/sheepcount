@@ -20,9 +20,7 @@ export default function ProtectedLayout({
 
             <TenantProvider>
               <main className="flex-1 p-8">
-                <div className="max-w-[1400px] mx-auto">
-                  {children}
-                </div>
+                <div className="max-w-[1400px] mx-auto">{children}</div>
               </main>
             </TenantProvider>
           </div>

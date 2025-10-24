@@ -9,21 +9,23 @@ export type CalendarProps = DayPickerProps & {
   selected?: Date | Date[] | { from?: Date; to?: Date }; // optional
 };
 
-function getRangeSelected(selected?: Date | Date[] | { from?: Date; to?: Date }): DateRange | undefined {
+function getRangeSelected(
+  selected?: Date | Date[] | { from?: Date; to?: Date },
+): DateRange | undefined {
   if (!selected) return undefined;
-  
+
   // Handle Date object
   if (selected instanceof Date) {
     return { from: selected, to: selected };
   }
-  
+
   // Handle Date array
   if (Array.isArray(selected)) {
     if (selected.length === 0) return undefined;
     if (selected.length === 1) return { from: selected[0], to: selected[0] };
     return { from: selected[0], to: selected[selected.length - 1] };
   }
-  
+
   // Handle range object
   if (!selected.from) return undefined;
   return { from: selected.from, to: selected.to };

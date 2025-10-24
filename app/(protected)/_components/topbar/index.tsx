@@ -1,6 +1,14 @@
 "use client";
 
-import { Bell, Settings, LogOut, User, ChevronDown, Moon, Sun } from "lucide-react";
+import {
+  Bell,
+  Settings,
+  LogOut,
+  User,
+  ChevronDown,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { Button } from "@/components/ui/button/index";
 import {
   DropdownMenu,
@@ -24,19 +32,21 @@ export function TopBar() {
           <SidebarTrigger className="lg:hidden" />
           <div>
             <h1 className="text-foreground">Welcome back, Admin</h1>
-            <p className="text-muted-foreground">Manage your organization efficiently</p>
+            <p className="text-muted-foreground">
+              Manage your organization efficiently
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Dark Mode Toggle */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="rounded-xl hover:bg-muted"
             onClick={toggleMode}
           >
-            {settings.mode === 'dark' ? (
+            {settings.mode === "dark" ? (
               <Sun className="w-5 h-5 text-foreground" />
             ) : (
               <Moon className="w-5 h-5 text-foreground" />
@@ -44,7 +54,11 @@ export function TopBar() {
           </Button>
 
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative rounded-xl hover:bg-muted">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative rounded-xl hover:bg-muted"
+          >
             <Bell className="w-5 h-5 text-foreground" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full" />
           </Button>
@@ -52,8 +66,8 @@ export function TopBar() {
           {/* User Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="flex items-center gap-3 px-3 py-2 h-auto rounded-xl hover:bg-muted"
               >
                 <Avatar className="w-9 h-9 border-2 border-border">
@@ -68,7 +82,10 @@ export function TopBar() {
                 <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 rounded-xl border-border/60">
+            <DropdownMenuContent
+              align="end"
+              className="w-56 rounded-xl border-border/60"
+            >
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
                   <p className="text-foreground">Admin User</p>

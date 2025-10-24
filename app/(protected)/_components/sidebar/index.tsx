@@ -13,11 +13,57 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar/index";
-import { LayoutDashboard, Users, Calendar, Building2, Home, Award, Shield, GraduationCap, UserCircle, DollarSign, Target, BookOpen, CalendarDays, UserCog, ChevronDown, Settings, Church, TrendingUp, Book, Network, Lightbulb } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible/index";
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  Building2,
+  Home,
+  Award,
+  Shield,
+  GraduationCap,
+  UserCircle,
+  DollarSign,
+  Target,
+  BookOpen,
+  CalendarDays,
+  UserCog,
+  ChevronDown,
+  Settings,
+  Church,
+  TrendingUp,
+  Book,
+  Network,
+  Lightbulb,
+} from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible/index";
 import { useTheme } from "@/context/theme-context";
 
-type ViewRoute = "dashboard" | "people" | "attendance" | "households" | "lifegroups" | "ministries" | "admin" | "training" | "properties" | "financial" | "goals" | "discipleship" | "programs" | "workers" | "settings" | "services" | "evangelism" | "biblestudies" | "orgchart" | "churchgoals";
+type ViewRoute =
+  | "dashboard"
+  | "people"
+  | "attendance"
+  | "households"
+  | "lifegroups"
+  | "ministries"
+  | "admin"
+  | "training"
+  | "properties"
+  | "financial"
+  | "goals"
+  | "discipleship"
+  | "programs"
+  | "workers"
+  | "settings"
+  | "services"
+  | "evangelism"
+  | "biblestudies"
+  | "orgchart"
+  | "churchgoals";
 
 export function Sidebar() {
   const { settings } = useTheme();
@@ -26,7 +72,8 @@ export function Sidebar() {
 
   // Helper to construct the full path based on the assumed App Router structure:
   // /protected for 'dashboard', and /protected/[view] for others.
-  const getPath = (view: ViewRoute) => (view === "dashboard" ? "/protected" : `/protected/${view}`);
+  const getPath = (view: ViewRoute) =>
+    view === "dashboard" ? "/protected" : `/protected/${view}`;
 
   // Helper to determine active state by comparing the current pathname to the link path
   const isActive = (view: ViewRoute) => {
@@ -43,7 +90,6 @@ export function Sidebar() {
     router.push(getPath(view));
   };
 
-
   const menuGroups = [
     {
       title: "People & Membership",
@@ -57,13 +103,21 @@ export function Sidebar() {
       title: "Leadership",
       items: [
         { title: "Admin Positions", icon: Shield, value: "admin" as const },
-        { title: "Organization Chart", icon: Network, value: "orgchart" as const },
+        {
+          title: "Organization Chart",
+          icon: Network,
+          value: "orgchart" as const,
+        },
       ],
     },
     {
       title: "Groups & Ministry",
       items: [
-        { title: "Life Groups", icon: UserCircle, value: "lifegroups" as const },
+        {
+          title: "Life Groups",
+          icon: UserCircle,
+          value: "lifegroups" as const,
+        },
         { title: "Work Ministry", icon: Award, value: "ministries" as const },
       ],
     },
@@ -71,7 +125,11 @@ export function Sidebar() {
       title: "Development",
       items: [
         { title: "Training", icon: GraduationCap, value: "training" as const },
-        { title: "Discipleship", icon: BookOpen, value: "discipleship" as const },
+        {
+          title: "Discipleship",
+          icon: BookOpen,
+          value: "discipleship" as const,
+        },
         { title: "Bible Studies", icon: Book, value: "biblestudies" as const },
         { title: "Programs", icon: CalendarDays, value: "programs" as const },
       ],
@@ -79,9 +137,21 @@ export function Sidebar() {
     {
       title: "Evangelism & Attendance",
       items: [
-        { title: "Evangelism Flow", icon: TrendingUp, value: "evangelism" as const },
-        { title: "Service Attendance", icon: Church, value: "services" as const },
-        { title: "General Attendance", icon: Calendar, value: "attendance" as const },
+        {
+          title: "Evangelism Flow",
+          icon: TrendingUp,
+          value: "evangelism" as const,
+        },
+        {
+          title: "Service Attendance",
+          icon: Church,
+          value: "services" as const,
+        },
+        {
+          title: "General Attendance",
+          icon: Calendar,
+          value: "attendance" as const,
+        },
       ],
     },
     {
@@ -95,22 +165,26 @@ export function Sidebar() {
       items: [
         { title: "Financial", icon: DollarSign, value: "financial" as const },
         { title: "Goal Projects", icon: Target, value: "goals" as const },
-        { title: "Church Goals", icon: Lightbulb, value: "churchgoals" as const },
+        {
+          title: "Church Goals",
+          icon: Lightbulb,
+          value: "churchgoals" as const,
+        },
       ],
     },
   ];
 
   return (
-    <SidebarComponent 
-      className="w-64 shrink-0 border-r border-border/60 bg-card/80 backdrop-blur-sm"
-    >
+    <SidebarComponent className="w-64 shrink-0 border-r border-border/60 bg-card/80 backdrop-blur-sm">
       <SidebarHeader className="border-b border-border/60 p-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 flex items-center justify-center shadow-lg">
             <Building2 className="w-5 h-5 text-white dark:text-slate-900" />
           </div>
           <div>
-            <h2 className="text-foreground">{settings?.organizationName || 'My Organization'}</h2>
+            <h2 className="text-foreground">
+              {settings?.organizationName || "My Organization"}
+            </h2>
             <p className="text-muted-foreground">Management Suite</p>
           </div>
         </div>
@@ -125,9 +199,10 @@ export function Sidebar() {
               isActive={isActive("dashboard")}
               className={`
                 w-full px-4 py-3 rounded-xl transition-all duration-200
-                ${isActive("dashboard")
-                  ? "bg-foreground text-background shadow-lg shadow-foreground/20"
-                  : "hover:bg-muted text-foreground"
+                ${
+                  isActive("dashboard")
+                    ? "bg-foreground text-background shadow-lg shadow-foreground/20"
+                    : "hover:bg-muted text-foreground"
                 }
               `}
             >
@@ -138,7 +213,11 @@ export function Sidebar() {
 
           {/* Grouped Menu Items */}
           {menuGroups.map((group, groupIndex) => (
-            <Collapsible key={groupIndex} defaultOpen className="group/collapsible">
+            <Collapsible
+              key={groupIndex}
+              defaultOpen
+              className="group/collapsible"
+            >
               <SidebarGroup>
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel className="px-4 py-2 text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-between group-data-[state=open]/collapsible:text-foreground">
@@ -149,16 +228,17 @@ export function Sidebar() {
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <SidebarMenu className="space-y-1">
-                      {group.items.map((item) => (
+                      {group.items.map(item => (
                         <SidebarMenuItem key={item.value}>
                           <SidebarMenuButton
                             onClick={() => navigateTo(item.value)}
                             isActive={isActive(item.value)}
                             className={`
                               w-full px-4 py-2.5 rounded-xl transition-all duration-200
-                              ${isActive(item.value)
-                                ? "bg-foreground text-background shadow-lg shadow-foreground/20"
-                                : "hover:bg-muted text-foreground"
+                              ${
+                                isActive(item.value)
+                                  ? "bg-foreground text-background shadow-lg shadow-foreground/20"
+                                  : "hover:bg-muted text-foreground"
                               }
                             `}
                           >
@@ -181,9 +261,10 @@ export function Sidebar() {
               isActive={isActive("settings")}
               className={`
                 w-full px-4 py-3 rounded-xl transition-all duration-200
-                ${isActive("settings")
-                  ? "bg-foreground text-background shadow-lg shadow-foreground/20"
-                  : "hover:bg-muted text-foreground"
+                ${
+                  isActive("settings")
+                    ? "bg-foreground text-background shadow-lg shadow-foreground/20"
+                    : "hover:bg-muted text-foreground"
                 }
               `}
             >
