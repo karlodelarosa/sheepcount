@@ -46,34 +46,37 @@ import { useTheme } from "@/context/theme-context";
 type ViewRoute =
   | "dashboard"
   | "people"
-  | "attendance"
+  | "general-attendance"
   | "households"
-  | "lifegroups"
-  | "ministries"
-  | "admin"
+  | "life-groups"
+  | "work-ministry"
+  | "admin-position"
   | "training"
   | "properties"
   | "financial"
-  | "goals"
+  | "goal-projects"
   | "discipleship"
-  | "programs"
+  | "program"
   | "workers"
   | "settings"
-  | "services"
+  | "service-attendance"
   | "evangelism"
-  | "biblestudies"
-  | "orgchart"
-  | "churchgoals";
+  | "bible-study"
+  | "org-chart"
+  | "church-goals";
 
 export function Sidebar() {
   const { settings } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
 
-  // Helper to construct the full path based on the assumed App Router structure:
-  // /protected for 'dashboard', and /protected/[view] for others.
-  const getPath = (view: ViewRoute) =>
-    view === "dashboard" ? "/protected" : `/protected/${view}`;
+  const getPath = (view: ViewRoute) => {
+    if (view === "dashboard") {
+      return "/dashboard";
+    }
+    
+    return `/${view}`;
+  };
 
   // Helper to determine active state by comparing the current pathname to the link path
   const isActive = (view: ViewRoute) => {
@@ -102,11 +105,11 @@ export function Sidebar() {
     {
       title: "Leadership",
       items: [
-        { title: "Admin Positions", icon: Shield, value: "admin" as const },
+        { title: "Admin Positions", icon: Shield, value: "admin-position" as const },
         {
           title: "Organization Chart",
           icon: Network,
-          value: "orgchart" as const,
+          value: "org-chart" as const,
         },
       ],
     },
@@ -116,9 +119,9 @@ export function Sidebar() {
         {
           title: "Life Groups",
           icon: UserCircle,
-          value: "lifegroups" as const,
+          value: "life-groups" as const,
         },
-        { title: "Work Ministry", icon: Award, value: "ministries" as const },
+        { title: "Work Ministry", icon: Award, value: "work-ministry" as const },
       ],
     },
     {
@@ -130,8 +133,8 @@ export function Sidebar() {
           icon: BookOpen,
           value: "discipleship" as const,
         },
-        { title: "Bible Studies", icon: Book, value: "biblestudies" as const },
-        { title: "Programs", icon: CalendarDays, value: "programs" as const },
+        { title: "Bible Studies", icon: Book, value: "bible-study" as const },
+        { title: "Programs", icon: CalendarDays, value: "program" as const },
       ],
     },
     {
@@ -145,12 +148,12 @@ export function Sidebar() {
         {
           title: "Service Attendance",
           icon: Church,
-          value: "services" as const,
+          value: "service-attendance" as const,
         },
         {
           title: "General Attendance",
           icon: Calendar,
-          value: "attendance" as const,
+          value: "general-attendance" as const,
         },
       ],
     },
@@ -164,11 +167,11 @@ export function Sidebar() {
       title: "Finance & Projects",
       items: [
         { title: "Financial", icon: DollarSign, value: "financial" as const },
-        { title: "Goal Projects", icon: Target, value: "goals" as const },
+        { title: "Goal Projects", icon: Target, value: "goal-projects" as const },
         {
           title: "Church Goals",
           icon: Lightbulb,
-          value: "churchgoals" as const,
+          value: "church-goals" as const,
         },
       ],
     },
