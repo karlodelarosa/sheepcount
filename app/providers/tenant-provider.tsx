@@ -3,10 +3,12 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { TenantMembership } from "@/components/login-form";
+
 
 type TenantContextType = {
   user: any | null;
-  tenant: any | null;
+  tenant: TenantMembership | null;
   setTenant: (tenant: any) => void;
 };
 
@@ -19,16 +21,14 @@ const TenantContext = createContext<TenantContextType>({
 export function TenantProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
   const [user, setUser] = useState<any | null>(null);
-  const [tenant, setTenant] = useState<any | null>(null);
+  const [tenant, setTenant] = useState<TenantMembership | null>(null);
 
   useEffect(() => {
-    // Load auth session
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
     });
 
-    // Load tenant from localStorage if exists
-    const storedTenant = localStorage.getItem("tenantData");
+    const storedTenant = localStorage.getItem("tenant-data");
     if (storedTenant) {
       setTenant(JSON.parse(storedTenant));
     }

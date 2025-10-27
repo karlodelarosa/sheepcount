@@ -17,16 +17,27 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTenant } from "@/app/providers/tenant-provider";
 
-type TenantMembership = {
+type ProfileRole = "admin" | "member";
+type AccountStatus = "active" | "inactive";
+
+export type TenantMembership = {
   id: string;
   user_id: string;
+  status: string;
   tenant: {
     id: string;
     name: string;
     slug: string;
     plan: string;
-    status: string;
+    status: AccountStatus;
   };
+  profile: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    role: ProfileRole;
+    avatar_url: string;
+  }
 };
 
 export function LoginForm({
@@ -40,27 +51,6 @@ export function LoginForm({
   const router = useRouter();
   const { setTenant } = useTenant();
 
-  // const handleLogin = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   const supabase = createClient();
-  //   setIsLoading(true);
-  //   setError(null);
-
-  //   try {
-  //     const { error } = await supabase.auth.signInWithPassword({
-  //       email,
-  //       password,
-  //     });
-  //     if (error) throw error;
-  //     // Update this route to redirect to an authenticated route. The user already has an active session.
-  //     router.push("/protected");
-  //   } catch (error: unknown) {
-  //     setError(error instanceof Error ? error.message : "An error occurred");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
@@ -68,7 +58,6 @@ export function LoginForm({
     setError(null);
 
     try {
-      // 1. Sign in
       const { data: authData, error: authError } =
         await supabase.auth.signInWithPassword({
           email,
@@ -78,22 +67,27 @@ export function LoginForm({
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user found after login");
 
-      // 2. Fetch tenant member details
       const { data: memberData, error: memberError } = await supabase
-        .from("tenant_members")
-        .select(
-          `
+        .from('tenant_members')
+        .select(`
           id,
           user_id,
+          status,
           tenant:tenant_id (
             id,
             name,
             slug,
             plan,
             status
+          ),
+          profile:profile_id (
+            id,
+            first_name,
+            last_name,
+            role,
+            avatar_url
           )
-        `,
-        )
+        `)
         .eq("user_id", authData.user.id)
         .maybeSingle<TenantMembership>();
 
@@ -108,17 +102,18 @@ export function LoginForm({
 
       if (orgError) throw orgError;
 
-      // 3. Combine into single object
+      const { tenant, ...rest } = memberData;
+
       const result = {
-        ...memberData,
+        ...rest,
         tenant: {
-          ...memberData.tenant,
+          ...tenant,
           organization: orgData || null,
         },
       };
 
       setTenant(result);
-      localStorage.setItem("tenantData", JSON.stringify(result));
+      localStorage.setItem("tenant-data", JSON.stringify(result));
 
       router.push("/");
     } catch (error: unknown) {

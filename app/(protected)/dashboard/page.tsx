@@ -7,9 +7,9 @@ export default function DashboardPage() {
   return (
     <div>
       <h1>Welcome 👋 {user?.email}</h1>
-      <p>
-        Tenant: <pre>{JSON.stringify(tenant, null, 2)}</pre>
-      </p>
+      <pre>
+        Tenant: <p>{JSON.stringify(tenant, null, 2)}</p>
+      </pre>
     </div>
   );
 }

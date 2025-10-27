@@ -42,6 +42,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible/index";
 import { useTheme } from "@/context/theme-context";
+import { useTenant } from "@/app/providers/tenant-provider";
 
 type ViewRoute =
   | "dashboard"
@@ -69,6 +70,7 @@ export function Sidebar() {
   const { settings } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
+  const { tenant } = useTenant();
 
   const getPath = (view: ViewRoute) => {
     if (view === "dashboard") {

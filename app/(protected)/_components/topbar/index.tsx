@@ -21,22 +21,22 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar/index";
 import { SidebarTrigger } from "@/components/ui/sidebar/index";
 import { useTheme } from "@/context/theme-context";
+import { useTenant } from "@/app/providers/tenant-provider";
+import { WelcomeMessage } from "./_components/welcome-message";
+import { UserDropdown } from "./_components/user-dropdown";
 
 export function TopBar() {
   const { settings, toggleMode } = useTheme();
+  const { tenant } = useTenant();
+
+  if (!tenant) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md">
       <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-4">
-          <SidebarTrigger className="lg:hidden" />
-          <div>
-            <h1 className="text-foreground">Welcome back, Admin</h1>
-            <p className="text-muted-foreground">
-              Manage your organization efficiently
-            </p>
-          </div>
-        </div>
+        {tenant && (
+          <WelcomeMessage profile={tenant.profile} />
+        )}
 
         <div className="flex items-center gap-3">
           {/* Dark Mode Toggle */}
@@ -64,7 +64,7 @@ export function TopBar() {
           </Button>
 
           {/* User Dropdown */}
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -76,8 +76,8 @@ export function TopBar() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-left hidden md:block">
-                  <p className="text-foreground">Admin User</p>
-                  <p className="text-muted-foreground">admin@org.com</p>
+                <p className="text-foreground">qwe</p>
+                <p className="text-muted-foreground">123</p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block" />
               </Button>
@@ -88,8 +88,8 @@ export function TopBar() {
             >
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-foreground">Admin User</p>
-                  <p className="text-muted-foreground">admin@org.com</p>
+                <p className="text-foreground">qwe</p>
+                <p className="text-muted-foreground">123</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -107,7 +107,8 @@ export function TopBar() {
                 <span>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
+          <UserDropdown />
         </div>
       </div>
     </header>
