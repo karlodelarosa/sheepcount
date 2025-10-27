@@ -19,6 +19,23 @@ import { useTenant } from "@/app/providers/tenant-provider";
 
 type ProfileRole = "admin" | "member";
 type AccountStatus = "active" | "inactive";
+type Organization = {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  image: string;
+  created_at: string;
+  updated_at: string;
+}
+type Subscription = {
+  provider: string;
+  plan: string;
+  status: string;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+}
 
 export type TenantMembership = {
   id: string;
@@ -30,6 +47,7 @@ export type TenantMembership = {
     slug: string;
     plan: string;
     status: AccountStatus;
+    organizations: Organization[];
   };
   profile: {
     id: string;
@@ -38,6 +56,7 @@ export type TenantMembership = {
     role: ProfileRole;
     avatar_url: string;
   };
+  subscription: Subscription;
 };
 
 export function LoginForm({
@@ -69,8 +88,7 @@ export function LoginForm({
 
       const { data: memberData, error: memberError } = await supabase
         .from("tenant_members")
-        .select(
-          `
+        .select(`
           id,
           user_id,
           status,
@@ -88,21 +106,29 @@ export function LoginForm({
             role,
             avatar_url
           )
-        `,
-        )
+        `)
         .eq("user_id", authData.user.id)
         .maybeSingle<TenantMembership>();
 
       if (memberError) throw memberError;
       if (!memberData) throw new Error("No tenant membership found");
 
+      // Fetch organizations for the tenant
       const { data: orgData, error: orgError } = await supabase
-        .from("organization")
-        .select("*")
-        .eq("tenant_id", memberData.tenant.id)
-        .maybeSingle();
+      .from("organization")
+      .select("*")
+      .eq("tenant_id", memberData.tenant.id);
 
       if (orgError) throw orgError;
+
+      // Fetch subscriptions for the tenant
+      const { data: subscriptionData, error: subscriptionError } = await supabase
+  .from("subscriptions")
+  .select("*")
+  .eq("tenant_id", memberData.tenant.id)
+  .maybeSingle();
+
+if (subscriptionError) throw subscriptionError;
 
       const { tenant, ...rest } = memberData;
 
@@ -111,6 +137,7 @@ export function LoginForm({
         tenant: {
           ...tenant,
           organization: orgData || null,
+          subscription: subscriptionData || null,
         },
       };
 

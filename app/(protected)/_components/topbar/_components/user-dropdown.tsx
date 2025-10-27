@@ -16,9 +16,11 @@ import {
 } from "@/components/ui/avatar/index";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { getInitials } from "@/app/helpers";
+import { useRouter } from "next/navigation";
 
 const UserDropdown = () => {
   const { user, tenant } = useTenant();
+  const router = useRouter();
 
   if (!tenant) return null;
 
@@ -61,7 +63,9 @@ const UserDropdown = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer rounded-lg">
+        <DropdownMenuItem className="cursor-pointer rounded-lg" onClick={() => {
+          router.push('/profile')
+        }}>
           <User className="w-4 h-4 mr-2" />
           <span>Profile</span>
         </DropdownMenuItem>
