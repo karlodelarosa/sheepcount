@@ -77,7 +77,7 @@ type AvatarInitialProps = {
   initials: string;
   size?: string;
   className?: string;
-}
+};
 
 function AvatarInitial({
   initials,

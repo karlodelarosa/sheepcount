@@ -1,8 +1,3 @@
 export default function Page() {
-
-  return (
-    <div>
-      Properties page
-    </div>
-  );
+  return <div>Properties page</div>;
 }

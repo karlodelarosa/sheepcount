@@ -1,5 +1,5 @@
 const AccountStatus = () => {
-  return <div></div>
-}
+  return <div></div>;
+};
 
 export { AccountStatus };

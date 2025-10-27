@@ -1,8 +1,3 @@
 export default function Page() {
-
-  return (
-    <div>
-      WOrker page
-    </div>
-  );
+  return <div>WOrker page</div>;
 }

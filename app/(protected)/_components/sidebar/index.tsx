@@ -76,7 +76,7 @@ export function Sidebar() {
     if (view === "dashboard") {
       return "/dashboard";
     }
-    
+
     return `/${view}`;
   };
 
@@ -107,7 +107,11 @@ export function Sidebar() {
     {
       title: "Leadership",
       items: [
-        { title: "Admin Positions", icon: Shield, value: "admin-position" as const },
+        {
+          title: "Admin Positions",
+          icon: Shield,
+          value: "admin-position" as const,
+        },
         {
           title: "Organization Chart",
           icon: Network,
@@ -123,7 +127,11 @@ export function Sidebar() {
           icon: UserCircle,
           value: "life-groups" as const,
         },
-        { title: "Work Ministry", icon: Award, value: "work-ministry" as const },
+        {
+          title: "Work Ministry",
+          icon: Award,
+          value: "work-ministry" as const,
+        },
       ],
     },
     {
@@ -169,7 +177,11 @@ export function Sidebar() {
       title: "Finance & Projects",
       items: [
         { title: "Financial", icon: DollarSign, value: "financial" as const },
-        { title: "Goal Projects", icon: Target, value: "goal-projects" as const },
+        {
+          title: "Goal Projects",
+          icon: Target,
+          value: "goal-projects" as const,
+        },
         {
           title: "Church Goals",
           icon: Lightbulb,

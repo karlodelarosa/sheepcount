@@ -1,8 +1,3 @@
 export default function Page() {
-
-  return (
-    <div>
-      Life group page
-    </div>
-  );
+  return <div>Life group page</div>;
 }

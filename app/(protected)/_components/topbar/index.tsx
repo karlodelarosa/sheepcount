@@ -1,25 +1,8 @@
 "use client";
 
-import {
-  Bell,
-  Settings,
-  LogOut,
-  User,
-  ChevronDown,
-  Moon,
-  Sun,
-} from "lucide-react";
+import { Bell, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button/index";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown/index";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar/index";
-import { SidebarTrigger } from "@/components/ui/sidebar/index";
+
 import { useTheme } from "@/context/theme-context";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { WelcomeMessage } from "./_components/welcome-message";
@@ -34,9 +17,7 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md">
       <div className="flex items-center justify-between px-6 py-4">
-        {tenant && (
-          <WelcomeMessage profile={tenant.profile} />
-        )}
+        {tenant && <WelcomeMessage profile={tenant.profile} />}
 
         <div className="flex items-center gap-3">
           {/* Dark Mode Toggle */}

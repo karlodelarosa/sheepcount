@@ -36,7 +36,9 @@ export const AllGradients: Story = {
       {GRADIENTS.map((g, i) => (
         <div key={i} className="flex flex-col items-center gap-2">
           <div className={`w-20 h-20 rounded-lg ${g}`} />
-          <span className="text-xs text-neutral-700 dark:text-neutral-300">{g}</span>
+          <span className="text-xs text-neutral-700 dark:text-neutral-300">
+            {g}
+          </span>
         </div>
       ))}
     </div>

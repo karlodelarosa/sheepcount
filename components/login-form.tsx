@@ -37,7 +37,7 @@ export type TenantMembership = {
     last_name: string;
     role: ProfileRole;
     avatar_url: string;
-  }
+  };
 };
 
 export function LoginForm({
@@ -68,8 +68,9 @@ export function LoginForm({
       if (!authData.user) throw new Error("No user found after login");
 
       const { data: memberData, error: memberError } = await supabase
-        .from('tenant_members')
-        .select(`
+        .from("tenant_members")
+        .select(
+          `
           id,
           user_id,
           status,
@@ -87,7 +88,8 @@ export function LoginForm({
             role,
             avatar_url
           )
-        `)
+        `,
+        )
         .eq("user_id", authData.user.id)
         .maybeSingle<TenantMembership>();
 

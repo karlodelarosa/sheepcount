@@ -1,8 +1,3 @@
 export default function Page() {
-
-  return (
-    <div>
-      Evangelism page
-    </div>
-  );
+  return <div>Evangelism page</div>;
 }

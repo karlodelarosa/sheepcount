@@ -5,7 +5,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TenantMembership } from "@/components/login-form";
 
-
 type TenantContextType = {
   user: any | null;
   tenant: TenantMembership | null;
