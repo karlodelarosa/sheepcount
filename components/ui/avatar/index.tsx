@@ -75,15 +75,9 @@ function AvatarFallback({
 
 type AvatarInitialProps = {
   initials: string;
-  size?: string;
-  className?: string;
 };
 
-function AvatarInitial({
-  initials,
-  size = "size-10",
-  className,
-}: AvatarInitialProps) {
+function AvatarInitial({ initials }: AvatarInitialProps) {
   const gradient = getGradients(initials);
 
   return (

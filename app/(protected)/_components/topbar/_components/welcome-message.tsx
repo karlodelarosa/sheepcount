@@ -7,7 +7,7 @@ export type WelcomMessageProps = {
 };
 
 const WelcomeMessage: FC<WelcomMessageProps> = ({ profile }) => {
-  const { first_name, last_name } = profile;
+  const { first_name } = profile;
 
   return (
     <div className="flex items-center gap-4">
