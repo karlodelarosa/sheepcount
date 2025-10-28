@@ -31,8 +31,12 @@ export function ProfilePage() {
   // Subscription info
   const plan = selectedOrg.plan || "Standard";
   const status = tenant.status || "Active";
-  const subscribedAt = dayjs(subscription?.current_period_start).format("MMM D, YYYY");
-  const expiresAt = dayjs(subscription?.current_period_end).format("MMM D, YYYY");
+  const subscribedAt = dayjs(subscription?.current_period_start).format(
+    "MMM D, YYYY",
+  );
+  const expiresAt = dayjs(subscription?.current_period_end).format(
+    "MMM D, YYYY",
+  );
 
   // Activity info
   const lastLogin = dayjs(user.last_sign_in_at).format("MMM D, YYYY, hh:mm A");
@@ -60,7 +64,9 @@ export function ProfilePage() {
             {firstName} {lastName}
           </h1>
           <p className="text-muted-foreground">{tenantName}</p>
-          <Button size="sm" className="mt-2">Change Avatar</Button>
+          <Button size="sm" className="mt-2">
+            Change Avatar
+          </Button>
         </div>
       </div>
 
@@ -72,11 +78,17 @@ export function ProfilePage() {
         <CardContent className="space-y-4">
           <div>
             <Label>First Name</Label>
-            <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            <Input
+              value={firstName}
+              onChange={e => setFirstName(e.target.value)}
+            />
           </div>
           <div>
             <Label>Last Name</Label>
-            <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            <Input
+              value={lastName}
+              onChange={e => setLastName(e.target.value)}
+            />
           </div>
           <div>
             <Label>Email (read-only)</Label>
@@ -98,7 +110,7 @@ export function ProfilePage() {
             <select
               className="w-full border border-input rounded-md p-2"
               value={selectedOrgIndex}
-              onChange={(e) => handleOrgChange(Number(e.target.value))}
+              onChange={e => handleOrgChange(Number(e.target.value))}
             >
               {organizations.map((org, index) => (
                 <option key={org.id} value={index}>
@@ -118,23 +130,33 @@ export function ProfilePage() {
         <CardContent className="space-y-4">
           <div>
             <Label>Organization Name</Label>
-            <Input value={tenantName} onChange={(e) => setTenantName(e.target.value)} />
+            <Input
+              value={tenantName}
+              onChange={e => setTenantName(e.target.value)}
+            />
           </div>
           <div>
             <Label>Phone</Label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <Input value={phone} onChange={e => setPhone(e.target.value)} />
           </div>
           <div>
             <Label>Address</Label>
-            <Input value={orgAddress} onChange={(e) => setOrgAddress(e.target.value)} />
+            <Input
+              value={orgAddress}
+              onChange={e => setOrgAddress(e.target.value)}
+            />
           </div>
         </CardContent>
         <CardContent className="flex justify-between items-center">
           <div className="text-sm text-muted-foreground">
-            Plan: <strong>{plan}</strong> • Status: <strong>{status}</strong> • Subscribed: <strong>{subscribedAt}</strong> • Expires: <strong>{expiresAt}</strong>
+            Plan: <strong>{plan}</strong> • Status: <strong>{status}</strong> •
+            Subscribed: <strong>{subscribedAt}</strong> • Expires:{" "}
+            <strong>{expiresAt}</strong>
           </div>
           <div className="flex gap-2">
-            <Button variant="destructive" size="sm">Cancel Subscription</Button>
+            <Button variant="destructive" size="sm">
+              Cancel Subscription
+            </Button>
             <Button size="sm">Save Organization</Button>
           </div>
         </CardContent>

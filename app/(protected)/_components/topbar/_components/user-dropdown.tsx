@@ -63,9 +63,12 @@ const UserDropdown = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer rounded-lg" onClick={() => {
-          router.push('/profile')
-        }}>
+        <DropdownMenuItem
+          className="cursor-pointer rounded-lg"
+          onClick={() => {
+            router.push("/profile");
+          }}
+        >
           <User className="w-4 h-4 mr-2" />
           <span>Profile</span>
         </DropdownMenuItem>

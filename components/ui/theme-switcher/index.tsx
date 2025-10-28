@@ -50,7 +50,7 @@ const ThemeSwitcher = () => {
       >
         <DropdownMenuRadioGroup
           value={theme}
-          onValueChange={(value) => setTheme(value)}
+          onValueChange={value => setTheme(value)}
         >
           {items.map(({ key, label, icon: Icon }) => (
             <DropdownMenuRadioItem
@@ -58,8 +58,7 @@ const ThemeSwitcher = () => {
               value={key}
               className={clsx(
                 "cursor-pointer rounded-lg flex items-center gap-2 px-2 py-2",
-                theme === key &&
-                  "bg-accent text-accent-foreground font-medium"
+                theme === key && "bg-accent text-accent-foreground font-medium",
               )}
               style={{ paddingLeft: "0.5rem" }}
             >

@@ -34,9 +34,7 @@ const NotificationDropdown = () => {
   const unreadCount = notifications.filter(n => n.unread).length;
 
   const markAllRead = () => {
-    setNotifications(prev =>
-      prev.map(n => ({ ...n, unread: false }))
-    );
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
   };
 
   return (
@@ -96,6 +94,6 @@ const NotificationDropdown = () => {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+};
 
 export { NotificationDropdown };

@@ -27,7 +27,7 @@ type Organization = {
   image: string;
   created_at: string;
   updated_at: string;
-}
+};
 type Subscription = {
   provider: string;
   plan: string;
@@ -35,7 +35,7 @@ type Subscription = {
   current_period_start: string;
   current_period_end: string;
   cancel_at_period_end: boolean;
-}
+};
 
 export type TenantMembership = {
   id: string;
@@ -88,7 +88,8 @@ export function LoginForm({
 
       const { data: memberData, error: memberError } = await supabase
         .from("tenant_members")
-        .select(`
+        .select(
+          `
           id,
           user_id,
           status,
@@ -106,7 +107,8 @@ export function LoginForm({
             role,
             avatar_url
           )
-        `)
+        `,
+        )
         .eq("user_id", authData.user.id)
         .maybeSingle<TenantMembership>();
 
@@ -115,20 +117,21 @@ export function LoginForm({
 
       // Fetch organizations for the tenant
       const { data: orgData, error: orgError } = await supabase
-      .from("organization")
-      .select("*")
-      .eq("tenant_id", memberData.tenant.id);
+        .from("organization")
+        .select("*")
+        .eq("tenant_id", memberData.tenant.id);
 
       if (orgError) throw orgError;
 
       // Fetch subscriptions for the tenant
-      const { data: subscriptionData, error: subscriptionError } = await supabase
-  .from("subscriptions")
-  .select("*")
-  .eq("tenant_id", memberData.tenant.id)
-  .maybeSingle();
+      const { data: subscriptionData, error: subscriptionError } =
+        await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("tenant_id", memberData.tenant.id)
+          .maybeSingle();
 
-if (subscriptionError) throw subscriptionError;
+      if (subscriptionError) throw subscriptionError;
 
       const { tenant, ...rest } = memberData;
 

@@ -1,8 +1,5 @@
 "use client";
 
-import { Bell, Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button/index";
-
 import { useTheme } from "@/context/theme-context";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { WelcomeMessage } from "./_components/welcome-message";
