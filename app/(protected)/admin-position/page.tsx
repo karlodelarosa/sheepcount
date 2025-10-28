@@ -1,3 +1,5 @@
+import { AdminPositionsView } from ".";
+
 export default function Page() {
-  return <div>Admin position page</div>;
+  return <AdminPositionsView />;
 }
