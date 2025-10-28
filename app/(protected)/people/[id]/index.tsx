@@ -139,7 +139,7 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
   };
 
   const ACCENT_COLOR_LIGHT = "#6366f1"; // Indigo-500
-  const ACCENT_COLOR_DARK = "#a78bfa";  // Violet-400
+  const ACCENT_COLOR_DARK = "#a78bfa"; // Violet-400
 
   // --- End of Data Processing ---
 
@@ -166,9 +166,7 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
 
       <div className="grid gap-6 md:grid-cols-3">
         {/* Main Info Card */}
-        <Card
-          className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 md:col-span-2"
-        >
+        <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 md:col-span-2">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
@@ -179,7 +177,9 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                   </span>
                 </div>
                 <div>
-                  <CardTitle className="text-2xl text-slate-900 dark:text-white">{person.name}</CardTitle>
+                  <CardTitle className="text-2xl text-slate-900 dark:text-white">
+                    {person.name}
+                  </CardTitle>
                   <CardDescription className="text-slate-600 dark:text-zinc-400">
                     {person.role} • {person.age} years old
                   </CardDescription>
@@ -229,14 +229,20 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                 <div className="flex items-center gap-3">
                   <Home className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
                   <div>
-                    <p className="text-slate-500 dark:text-zinc-500">Household</p>
-                    <p className="text-slate-900 dark:text-white">{person.householdName}</p>
+                    <p className="text-slate-500 dark:text-zinc-500">
+                      Household
+                    </p>
+                    <p className="text-slate-900 dark:text-white">
+                      {person.householdName}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
                   <div>
-                    <p className="text-slate-500 dark:text-zinc-500">Join Date</p>
+                    <p className="text-slate-500 dark:text-zinc-500">
+                      Join Date
+                    </p>
                     <p className="text-slate-900 dark:text-white">
                       {new Date(person.joinDate).toLocaleDateString()}
                     </p>
@@ -250,24 +256,42 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         {/* Quick Stats Card */}
         <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
           <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-white">Quick Stats</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-white">
+              Quick Stats
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-slate-500 dark:text-zinc-500">Ministries</span>
-              <span className="text-slate-900 dark:text-white">{ministries.length}</span>
+              <span className="text-slate-500 dark:text-zinc-500">
+                Ministries
+              </span>
+              <span className="text-slate-900 dark:text-white">
+                {ministries.length}
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500 dark:text-zinc-500">Life Groups</span>
-              <span className="text-slate-900 dark:text-white">{lifeGroups.length}</span>
+              <span className="text-slate-500 dark:text-zinc-500">
+                Life Groups
+              </span>
+              <span className="text-slate-900 dark:text-white">
+                {lifeGroups.length}
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500 dark:text-zinc-500">Attendance Rate</span>
-              <span className="text-slate-900 dark:text-white">{attendanceRate}%</span>
+              <span className="text-slate-500 dark:text-zinc-500">
+                Attendance Rate
+              </span>
+              <span className="text-slate-900 dark:text-white">
+                {attendanceRate}%
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500 dark:text-zinc-500">Total Attended</span>
-              <span className="text-slate-900 dark:text-white">{totalAttended}</span>
+              <span className="text-slate-500 dark:text-zinc-500">
+                Total Attended
+              </span>
+              <span className="text-slate-900 dark:text-white">
+                {totalAttended}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -276,7 +300,9 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
       {/* Attendance Trend Card */}
       <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
         <CardHeader>
-          <CardTitle className="text-slate-900 dark:text-white">Attendance Trend (Last 12 Weeks)</CardTitle>
+          <CardTitle className="text-slate-900 dark:text-white">
+            Attendance Trend (Last 12 Weeks)
+          </CardTitle>
           <CardDescription className="text-slate-600 dark:text-zinc-400">
             Weekly service attendance tracking
           </CardDescription>
@@ -285,8 +311,16 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={weeklyAttendance}>
               {/* Chart grid lines and axis colors (Dual Mode) */}
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-zinc-500" />
-              <XAxis dataKey="week" stroke="#64748b" className="dark:stroke-zinc-400" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#e2e8f0"
+                className="dark:stroke-zinc-500"
+              />
+              <XAxis
+                dataKey="week"
+                stroke="#64748b"
+                className="dark:stroke-zinc-400"
+              />
               <YAxis stroke="#64748b" className="dark:stroke-zinc-400" />
               <Tooltip
                 // Tooltip background and border must be styled using contentStyle object
@@ -301,7 +335,12 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                   value === 1 ? "Present" : "Absent"
                 }
               />
-              <Bar dataKey="attended" fill={ACCENT_COLOR_LIGHT} className="dark:fill-violet-400" radius={[8, 8, 0, 0]} />
+              <Bar
+                dataKey="attended"
+                fill={ACCENT_COLOR_LIGHT}
+                className="dark:fill-violet-400"
+                radius={[8, 8, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -312,7 +351,9 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-slate-900 dark:text-white">Ministry Assignments</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-white">
+                Ministry Assignments
+              </CardTitle>
               <Award className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
             </div>
           </CardHeader>
@@ -351,7 +392,9 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-slate-900 dark:text-white">Life Groups</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-white">
+                Life Groups
+              </CardTitle>
               <Users className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
             </div>
           </CardHeader>
@@ -368,7 +411,9 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                     // Dual-mode background for list item
                     className="p-4 bg-slate-50 rounded-xl border border-slate-200/60 dark:bg-zinc-700 dark:border-zinc-600/60"
                   >
-                    <p className="text-slate-900 dark:text-white">{membership.group?.name}</p>
+                    <p className="text-slate-900 dark:text-white">
+                      {membership.group?.name}
+                    </p>
                     <p className="text-slate-600 dark:text-zinc-400 mt-1">
                       {membership.group?.description}
                     </p>

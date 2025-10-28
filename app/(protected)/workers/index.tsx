@@ -66,7 +66,9 @@ export function WorkersView() {
         {/* Card styling: Light: white/slate, Dark: zinc-800/zinc-700, Light Text: slate-900, Dark Text: white */}
         <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50 dark:text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-slate-500 dark:text-zinc-300">Total Active</CardTitle>
+            <CardTitle className="text-slate-500 dark:text-zinc-300">
+              Total Active
+            </CardTitle>
             <Users className="h-5 w-5 text-slate-500 dark:text-zinc-500" />
           </CardHeader>
           <CardContent>
@@ -79,40 +81,52 @@ export function WorkersView() {
 
         <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50 dark:text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-slate-500 dark:text-zinc-300">Workers</CardTitle>
+            <CardTitle className="text-slate-500 dark:text-zinc-300">
+              Workers
+            </CardTitle>
             <UserCog className="h-5 w-5 text-purple-500 dark:text-purple-400" />
           </CardHeader>
           <CardContent>
             <div className="text-slate-900 dark:text-white text-2xl font-bold">
               {workers.length}
             </div>
-            <p className="text-slate-500 dark:text-zinc-500">Serving in ministries</p>
+            <p className="text-slate-500 dark:text-zinc-500">
+              Serving in ministries
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50 dark:text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-slate-500 dark:text-zinc-300">Members</CardTitle>
+            <CardTitle className="text-slate-500 dark:text-zinc-300">
+              Members
+            </CardTitle>
             <UserCheck className="h-5 w-5 text-blue-500 dark:text-blue-400" />
           </CardHeader>
           <CardContent>
             <div className="text-slate-900 dark:text-white text-2xl font-bold">
               {members.length}
             </div>
-            <p className="text-slate-500 dark:text-zinc-500">Official members</p>
+            <p className="text-slate-500 dark:text-zinc-500">
+              Official members
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50 dark:text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-slate-500 dark:text-zinc-300">Attenders</CardTitle>
+            <CardTitle className="text-slate-500 dark:text-zinc-300">
+              Attenders
+            </CardTitle>
             <UserPlus className="h-5 w-5 text-green-500 dark:text-green-400" />
           </CardHeader>
           <CardContent>
             <div className="text-slate-900 dark:text-white text-2xl font-bold">
               {attenders.length}
             </div>
-            <p className="text-slate-500 dark:text-zinc-500">Regular attenders</p>
+            <p className="text-slate-500 dark:text-zinc-500">
+              Regular attenders
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -163,7 +177,9 @@ export function WorkersView() {
       {/* Workers List */}
       <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50 dark:text-white">
         <CardHeader>
-          <CardTitle className="text-slate-900 dark:text-white">Workers ({workers.length})</CardTitle>
+          <CardTitle className="text-slate-900 dark:text-white">
+            Workers ({workers.length})
+          </CardTitle>
           <CardDescription className="text-slate-600 dark:text-zinc-400">
             Members serving in church ministries
           </CardDescription>
@@ -187,15 +203,21 @@ export function WorkersView() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="text-slate-900 dark:text-white font-medium">{person.name}</p>
+                        <p className="text-slate-900 dark:text-white font-medium">
+                          {person.name}
+                        </p>
                         <Badge
                           className={`rounded-lg ${getMembershipBadge(person.membershipType)}`}
                         >
                           {person.membershipType}
                         </Badge>
                       </div>
-                      <p className="text-slate-600 dark:text-zinc-400">{person.householdName}</p>
-                      <p className="text-slate-500 dark:text-zinc-500">{person.email}</p>
+                      <p className="text-slate-600 dark:text-zinc-400">
+                        {person.householdName}
+                      </p>
+                      <p className="text-slate-500 dark:text-zinc-500">
+                        {person.email}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -210,7 +232,9 @@ export function WorkersView() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-slate-900 dark:text-white">Members ({members.length})</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-white">
+                Members ({members.length})
+              </CardTitle>
               <CardDescription className="text-slate-600 dark:text-zinc-400">
                 Official church members
               </CardDescription>
@@ -236,15 +260,21 @@ export function WorkersView() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="text-slate-900 dark:text-white font-medium">{person.name}</p>
+                        <p className="text-slate-900 dark:text-white font-medium">
+                          {person.name}
+                        </p>
                         <Badge
                           className={`rounded-lg ${getMembershipBadge(person.membershipType)}`}
                         >
                           {person.membershipType}
                         </Badge>
                       </div>
-                      <p className="text-slate-600 dark:text-zinc-400">{person.householdName}</p>
-                      <p className="text-slate-500 dark:text-zinc-500">{person.email}</p>
+                      <p className="text-slate-600 dark:text-zinc-400">
+                        {person.householdName}
+                      </p>
+                      <p className="text-slate-500 dark:text-zinc-500">
+                        {person.email}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -259,7 +289,9 @@ export function WorkersView() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-slate-900 dark:text-white">Attenders ({attenders.length})</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-white">
+                Attenders ({attenders.length})
+              </CardTitle>
               <CardDescription className="text-slate-600 dark:text-zinc-400">
                 Regular visitors and newcomers
               </CardDescription>
@@ -285,14 +317,18 @@ export function WorkersView() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="text-slate-900 dark:text-white font-medium">{person.name}</p>
+                        <p className="text-slate-900 dark:text-white font-medium">
+                          {person.name}
+                        </p>
                         <Badge
                           className={`rounded-lg ${getMembershipBadge(person.membershipType)}`}
                         >
                           {person.membershipType}
                         </Badge>
                       </div>
-                      <p className="text-slate-600 dark:text-zinc-400">{person.householdName}</p>
+                      <p className="text-slate-600 dark:text-zinc-400">
+                        {person.householdName}
+                      </p>
                       <p className="text-slate-500 dark:text-zinc-500">
                         {person.email || "No email"}
                       </p>

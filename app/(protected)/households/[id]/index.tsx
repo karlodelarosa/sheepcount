@@ -95,7 +95,9 @@ function SetRoleDialog({
       {/* DialogContent: Apply dual-mode background and border */}
       <DialogContent className="sm:max-w-[425px] bg-white text-slate-900 border-slate-200 dark:bg-zinc-800 dark:text-white dark:border-zinc-700">
         <DialogHeader>
-          <DialogTitle className="dark:text-white">Set Role for {person.name}</DialogTitle>
+          <DialogTitle className="dark:text-white">
+            Set Role for {person.name}
+          </DialogTitle>
           <DialogDescription className="text-slate-600 dark:text-zinc-400">
             Define the primary role of this person within the household unit.
           </DialogDescription>
@@ -103,7 +105,10 @@ function SetRoleDialog({
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             {/* Label color */}
-            <Label htmlFor="role" className="text-right text-slate-700 dark:text-zinc-300">
+            <Label
+              htmlFor="role"
+              className="text-right text-slate-700 dark:text-zinc-300"
+            >
               Role
             </Label>
             {/* Select component styling (assuming SelectTrigger/Content handle light/dark mode internally, using overrides for safety) */}
@@ -134,7 +139,10 @@ function SetRoleDialog({
           >
             Cancel
           </Button>
-          <Button className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700" onClick={handleSave}>
+          <Button
+            className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700"
+            onClick={handleSave}
+          >
             Save Role
           </Button>
         </DialogFooter>
@@ -172,7 +180,9 @@ export function HouseholdDetails({
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-slate-900 dark:text-white">Household Not Found</h1>
+          <h1 className="text-slate-900 dark:text-white">
+            Household Not Found
+          </h1>
         </div>
         <Card className="bg-white border-slate-200 dark:bg-zinc-800 dark:border-zinc-700">
           <CardContent className="p-8 text-center text-slate-500 dark:text-zinc-500">
@@ -238,7 +248,9 @@ export function HouseholdDetails({
         </Button>
         <div>
           <h1 className="text-slate-900 dark:text-white">Household Details</h1>
-          <p className="text-slate-600 dark:text-zinc-400">Information for {household.name}</p>
+          <p className="text-slate-600 dark:text-zinc-400">
+            Information for {household.name}
+          </p>
         </div>
       </div>
 
@@ -266,7 +278,9 @@ export function HouseholdDetails({
                     <div className="flex items-center justify-between">
                       <p className="text-green-700 font-medium dark:text-emerald-300">
                         Group:{" "}
-                        <span className="text-green-800 dark:text-emerald-400">{group.name}</span>
+                        <span className="text-green-800 dark:text-emerald-400">
+                          {group.name}
+                        </span>
                       </p>
                       <Badge className="bg-green-700 text-white dark:bg-emerald-800 dark:text-emerald-300 rounded-lg">
                         <Check className="w-4 h-4 mr-1" /> Active
@@ -301,20 +315,28 @@ export function HouseholdDetails({
         {/* Quick Household Info Card (Dual Mode) */}
         <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
           <CardHeader>
-            <CardTitle className="text-lg text-slate-900 dark:text-white">Quick Info</CardTitle>
+            <CardTitle className="text-lg text-slate-900 dark:text-white">
+              Quick Info
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-2">
               <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-500 dark:text-zinc-500" />
               <div>
-                <p className="text-slate-500 text-sm dark:text-zinc-500">Address</p>
-                <p className="text-slate-900 dark:text-white">{household.address}</p>
+                <p className="text-slate-500 text-sm dark:text-zinc-500">
+                  Address
+                </p>
+                <p className="text-slate-900 dark:text-white">
+                  {household.address}
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-2">
               <Calendar className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-500 dark:text-zinc-500" />
               <div>
-                <p className="text-slate-500 text-sm dark:text-zinc-500">Created</p>
+                <p className="text-slate-500 text-sm dark:text-zinc-500">
+                  Created
+                </p>
                 <p className="text-slate-900 dark:text-white">
                   {new Date(household.createdDate).toLocaleDateString()}
                 </p>
@@ -351,15 +373,26 @@ export function HouseholdDetails({
                 <TableHeader>
                   {/* Dual mode table header row */}
                   <TableRow className="bg-slate-50/50 hover:bg-slate-100 dark:bg-zinc-700/50 dark:hover:bg-zinc-700/60">
-                    <TableHead className="text-slate-600 dark:text-zinc-300">Name</TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">Role</TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">Age</TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">Actions</TableHead>
+                    <TableHead className="text-slate-600 dark:text-zinc-300">
+                      Name
+                    </TableHead>
+                    <TableHead className="text-slate-600 dark:text-zinc-300">
+                      Role
+                    </TableHead>
+                    <TableHead className="text-slate-600 dark:text-zinc-300">
+                      Age
+                    </TableHead>
+                    <TableHead className="text-slate-600 dark:text-zinc-300">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {members.map(member => (
-                    <TableRow key={member.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50">
+                    <TableRow
+                      key={member.id}
+                      className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50"
+                    >
                       <TableCell className="font-medium text-slate-900 dark:text-white">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-indigo-600 dark:bg-purple-600 flex items-center justify-center shadow-sm">
@@ -427,14 +460,23 @@ export function HouseholdDetails({
                 <TableHeader>
                   {/* Dual mode table header with yellow accent */}
                   <TableRow className="bg-amber-100/50 hover:bg-amber-100 dark:bg-amber-900/30 dark:hover:bg-amber-900/40">
-                    <TableHead className="text-slate-600 dark:text-zinc-300">Name</TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">Relation</TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">Action</TableHead>
+                    <TableHead className="text-slate-600 dark:text-zinc-300">
+                      Name
+                    </TableHead>
+                    <TableHead className="text-slate-600 dark:text-zinc-300">
+                      Relation
+                    </TableHead>
+                    <TableHead className="text-slate-600 dark:text-zinc-300">
+                      Action
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {otherResidents.map(resident => (
-                    <TableRow key={resident.id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50">
+                    <TableRow
+                      key={resident.id}
+                      className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50"
+                    >
                       <TableCell className="font-medium text-slate-900 dark:text-white">
                         {resident.name}
                       </TableCell>

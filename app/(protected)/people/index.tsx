@@ -55,7 +55,7 @@ export function PeopleList() {
     },
     {} as Record<string, { name: string; members: any[] }>,
   );
-  
+
   // --- Dark Mode Badge Colors (Using dark: prefix in returned JSX) ---
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -86,14 +86,16 @@ export function PeopleList() {
 
   return (
     <div className="space-y-6">
-      <Card 
+      <Card
         // Card Background/Border
         className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50 dark:text-white"
       >
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-slate-900 dark:text-white">People Directory</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-white">
+                People Directory
+              </CardTitle>
               {/* CardDescription Text Color */}
               <CardDescription className="text-slate-600 dark:text-zinc-400">
                 Manage members and their household information
@@ -129,13 +131,27 @@ export function PeopleList() {
                 {/* Table Header Row */}
                 <TableRow className="bg-slate-50/50 hover:bg-slate-100/50 dark:bg-zinc-700/70 dark:hover:bg-zinc-700/80">
                   {/* Table Headers Text Color */}
-                  <TableHead className="text-slate-600 dark:text-zinc-300">Name</TableHead>
-                  <TableHead className="text-slate-600 dark:text-zinc-300">Role</TableHead>
-                  <TableHead className="text-slate-600 dark:text-zinc-300">Status</TableHead>
-                  <TableHead className="text-slate-600 dark:text-zinc-300">Type</TableHead>
-                  <TableHead className="text-slate-600 dark:text-zinc-300">Household</TableHead>
-                  <TableHead className="text-slate-600 dark:text-zinc-300">Contact</TableHead>
-                  <TableHead className="text-slate-600 dark:text-zinc-300">Actions</TableHead>
+                  <TableHead className="text-slate-600 dark:text-zinc-300">
+                    Name
+                  </TableHead>
+                  <TableHead className="text-slate-600 dark:text-zinc-300">
+                    Role
+                  </TableHead>
+                  <TableHead className="text-slate-600 dark:text-zinc-300">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-slate-600 dark:text-zinc-300">
+                    Type
+                  </TableHead>
+                  <TableHead className="text-slate-600 dark:text-zinc-300">
+                    Household
+                  </TableHead>
+                  <TableHead className="text-slate-600 dark:text-zinc-300">
+                    Contact
+                  </TableHead>
+                  <TableHead className="text-slate-600 dark:text-zinc-300">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -42,7 +42,9 @@ export function HouseholdsList() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-slate-900 dark:text-white">Households</CardTitle>
+              <CardTitle className="text-slate-900 dark:text-white">
+                Households
+              </CardTitle>
               <CardDescription className="text-slate-600 dark:text-zinc-400">
                 Manage household information and members
               </CardDescription>
