@@ -1,19 +1,49 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Phone, Users, Calendar, Clock, GraduationCap, Award, UserCircle } from "lucide-react";
-import { mockAttendance, mockPeople, mockTrainingCompletions, mockTrainingEvents, mockMinistryAssignments, mockMinistries, mockAdminPositions, mockLifeGroupMembers, mockLifeGroups } from "@/components/mock-data";
+import {
+  Mail,
+  Phone,
+  Users,
+  Calendar,
+  Clock,
+  GraduationCap,
+  Award,
+  UserCircle,
+} from "lucide-react";
+import {
+  mockAttendance,
+  mockPeople,
+  mockTrainingCompletions,
+  mockTrainingEvents,
+  mockMinistryAssignments,
+  mockMinistries,
+  mockAdminPositions,
+  mockLifeGroupMembers,
+  mockLifeGroups,
+} from "@/components/mock-data";
 
 interface PersonDetailsDialogProps {
   person: any;
   onClose: () => void;
 }
 
-export function PersonDetailsDialog({ person, onClose }: PersonDetailsDialogProps) {
+export function PersonDetailsDialog({
+  person,
+  onClose,
+}: PersonDetailsDialogProps) {
   if (!person) return null;
 
   // Get household members
-  const householdMembers = mockPeople.filter(p => p.householdId === person.householdId && p.id !== person.id);
+  const householdMembers = mockPeople.filter(
+    p => p.householdId === person.householdId && p.id !== person.id,
+  );
 
   // Get attendance history
   const attendanceHistory = mockAttendance
@@ -26,7 +56,7 @@ export function PersonDetailsDialog({ person, onClose }: PersonDetailsDialogProp
     .filter(tc => tc.personId === person.id)
     .map(tc => ({
       ...tc,
-      training: mockTrainingEvents.find(t => t.id === tc.trainingId)
+      training: mockTrainingEvents.find(t => t.id === tc.trainingId),
     }));
 
   // Get ministry assignments
@@ -34,18 +64,20 @@ export function PersonDetailsDialog({ person, onClose }: PersonDetailsDialogProp
     .filter(ma => ma.personId === person.id)
     .map(ma => ({
       ...ma,
-      ministry: mockMinistries.find(m => m.id === ma.ministryId)
+      ministry: mockMinistries.find(m => m.id === ma.ministryId),
     }));
 
   // Get admin positions
-  const adminPositions = mockAdminPositions.filter(ap => ap.personId === person.id);
+  const adminPositions = mockAdminPositions.filter(
+    ap => ap.personId === person.id,
+  );
 
   // Get life group memberships
   const lifeGroupMemberships = mockLifeGroupMembers
     .filter(lgm => lgm.personId === person.id)
     .map(lgm => ({
       ...lgm,
-      group: mockLifeGroups.find(lg => lg.id === lgm.lifeGroupId)
+      group: mockLifeGroups.find(lg => lg.id === lgm.lifeGroupId),
     }));
 
   return (
@@ -54,11 +86,15 @@ export function PersonDetailsDialog({ person, onClose }: PersonDetailsDialogProp
         <DialogHeader>
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center shadow-lg">
-              <span className="text-white text-2xl">{person.name.charAt(0)}</span>
+              <span className="text-white text-2xl">
+                {person.name.charAt(0)}
+              </span>
             </div>
             <div>
               <DialogTitle>{person.name}</DialogTitle>
-              <DialogDescription>Member since {new Date(person.joinDate).toLocaleDateString()}</DialogDescription>
+              <DialogDescription>
+                Member since {new Date(person.joinDate).toLocaleDateString()}
+              </DialogDescription>
             </div>
           </div>
         </DialogHeader>
@@ -100,9 +136,14 @@ export function PersonDetailsDialog({ person, onClose }: PersonDetailsDialogProp
             ) : (
               <div className="space-y-2">
                 {householdMembers.map(member => (
-                  <div key={member.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/60"
+                  >
                     <span className="text-slate-700">{member.name}</span>
-                    <Badge variant="secondary" className="rounded-lg">{member.role}</Badge>
+                    <Badge variant="secondary" className="rounded-lg">
+                      {member.role}
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -121,9 +162,16 @@ export function PersonDetailsDialog({ person, onClose }: PersonDetailsDialogProp
                 </h3>
                 <div className="space-y-2">
                   {lifeGroupMemberships.map(membership => (
-                    <div key={membership.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/60">
-                      <span className="text-slate-700">{membership.group?.name}</span>
-                      <Badge variant="secondary" className="rounded-lg">{membership.group?.category}</Badge>
+                    <div
+                      key={membership.id}
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/60"
+                    >
+                      <span className="text-slate-700">
+                        {membership.group?.name}
+                      </span>
+                      <Badge variant="secondary" className="rounded-lg">
+                        {membership.group?.category}
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -142,9 +190,16 @@ export function PersonDetailsDialog({ person, onClose }: PersonDetailsDialogProp
                 </h3>
                 <div className="space-y-2">
                   {ministryAssignments.map(assignment => (
-                    <div key={assignment.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/60">
-                      <span className="text-slate-700">{assignment.ministry?.name}</span>
-                      <Badge variant="secondary" className="rounded-lg">{assignment.role}</Badge>
+                    <div
+                      key={assignment.id}
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/60"
+                    >
+                      <span className="text-slate-700">
+                        {assignment.ministry?.name}
+                      </span>
+                      <Badge variant="secondary" className="rounded-lg">
+                        {assignment.role}
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -163,7 +218,10 @@ export function PersonDetailsDialog({ person, onClose }: PersonDetailsDialogProp
                 </h3>
                 <div className="space-y-2">
                   {adminPositions.map(position => (
-                    <div key={position.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+                    <div
+                      key={position.id}
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/60"
+                    >
                       <span className="text-slate-700">{position.title}</span>
                       <Badge className="rounded-lg">{position.term}</Badge>
                     </div>
@@ -184,16 +242,30 @@ export function PersonDetailsDialog({ person, onClose }: PersonDetailsDialogProp
                 </h3>
                 <div className="space-y-2">
                   {trainingCompletions.map(completion => (
-                    <div key={completion.id} className="p-3 border border-slate-200/60 rounded-xl hover:bg-slate-50 transition-colors">
+                    <div
+                      key={completion.id}
+                      className="p-3 border border-slate-200/60 rounded-xl hover:bg-slate-50 transition-colors"
+                    >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-slate-900">{completion.training?.name}</span>
+                        <span className="text-slate-900">
+                          {completion.training?.name}
+                        </span>
                         {completion.certified && (
-                          <Badge className="rounded-lg bg-green-500">Certified</Badge>
+                          <Badge className="rounded-lg bg-green-500">
+                            Certified
+                          </Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-4 text-slate-600">
-                        <span>Completed: {new Date(completion.completedDate).toLocaleDateString()}</span>
-                        {completion.score && <span>Score: {completion.score}</span>}
+                        <span>
+                          Completed:{" "}
+                          {new Date(
+                            completion.completedDate,
+                          ).toLocaleDateString()}
+                        </span>
+                        {completion.score && (
+                          <span>Score: {completion.score}</span>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -214,12 +286,19 @@ export function PersonDetailsDialog({ person, onClose }: PersonDetailsDialogProp
             ) : (
               <div className="space-y-2">
                 {attendanceHistory.map(record => (
-                  <div key={record.id} className="flex items-center justify-between p-3 border border-slate-200/60 rounded-xl hover:bg-slate-50 transition-colors">
+                  <div
+                    key={record.id}
+                    className="flex items-center justify-between p-3 border border-slate-200/60 rounded-xl hover:bg-slate-50 transition-colors"
+                  >
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-slate-400" />
-                      <span className="text-slate-700">{new Date(record.date).toLocaleDateString()}</span>
+                      <span className="text-slate-700">
+                        {new Date(record.date).toLocaleDateString()}
+                      </span>
                     </div>
-                    <Badge variant="secondary" className="rounded-lg">{record.type}</Badge>
+                    <Badge variant="secondary" className="rounded-lg">
+                      {record.type}
+                    </Badge>
                   </div>
                 ))}
               </div>

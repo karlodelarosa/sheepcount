@@ -1,11 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AddHouseholdMemberDialogProps {
   open: boolean;
@@ -14,7 +27,12 @@ interface AddHouseholdMemberDialogProps {
   householdName: string;
 }
 
-export function AddHouseholdMemberDialog({ open, onOpenChange, householdId, householdName }: AddHouseholdMemberDialogProps) {
+export function AddHouseholdMemberDialog({
+  open,
+  onOpenChange,
+  householdId,
+  householdName,
+}: AddHouseholdMemberDialogProps) {
   const [formData, setFormData] = useState({
     name: "",
     role: "",
@@ -47,16 +65,23 @@ export function AddHouseholdMemberDialog({ open, onOpenChange, householdId, hous
                 id="member-name"
                 placeholder="Enter full name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className="rounded-lg"
                 required
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+                <Select
+                  value={formData.role}
+                  onValueChange={value =>
+                    setFormData({ ...formData, role: value })
+                  }
+                >
                   <SelectTrigger className="rounded-lg">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
@@ -68,7 +93,7 @@ export function AddHouseholdMemberDialog({ open, onOpenChange, householdId, hous
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="age">Age</Label>
                 <Input
@@ -76,7 +101,9 @@ export function AddHouseholdMemberDialog({ open, onOpenChange, householdId, hous
                   type="number"
                   placeholder="Age"
                   value={formData.age}
-                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, age: e.target.value })
+                  }
                   className="rounded-lg"
                 />
               </div>
@@ -89,7 +116,9 @@ export function AddHouseholdMemberDialog({ open, onOpenChange, householdId, hous
                 type="email"
                 placeholder="email@example.com"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 className="rounded-lg"
               />
             </div>
@@ -101,16 +130,26 @@ export function AddHouseholdMemberDialog({ open, onOpenChange, householdId, hous
                 type="tel"
                 placeholder="(555) 123-4567"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 className="rounded-lg"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="rounded-lg"
+            >
               Cancel
             </Button>
-            <Button type="submit" className="rounded-lg bg-slate-900 hover:bg-slate-800">
+            <Button
+              type="submit"
+              className="rounded-lg bg-slate-900 hover:bg-slate-800"
+            >
               Add Member
             </Button>
           </DialogFooter>

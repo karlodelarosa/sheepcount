@@ -1,8 +1,20 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AddPersonDialogProps {
   open: boolean;
@@ -29,9 +41,14 @@ export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" placeholder="John Doe" required className="rounded-xl" />
+              <Input
+                id="name"
+                placeholder="John Doe"
+                required
+                className="rounded-xl"
+              />
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="role">Role</Label>
               <Select required>
@@ -50,31 +67,61 @@ export function AddPersonDialog({ open, onOpenChange }: AddPersonDialogProps) {
 
             <div className="grid gap-2">
               <Label htmlFor="household">Household Name</Label>
-              <Input id="household" placeholder="Smith Family" required className="rounded-xl" />
+              <Input
+                id="household"
+                placeholder="Smith Family"
+                required
+                className="rounded-xl"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="john@email.com" className="rounded-xl" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="john@email.com"
+                  className="rounded-xl"
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" type="tel" placeholder="(555) 123-4567" className="rounded-xl" />
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="(555) 123-4567"
+                  className="rounded-xl"
+                />
               </div>
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="age">Age</Label>
-              <Input id="age" type="number" placeholder="30" className="rounded-xl" />
+              <Input
+                id="age"
+                type="number"
+                placeholder="30"
+                className="rounded-xl"
+              />
             </div>
           </div>
 
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="rounded-xl"
+            >
               Cancel
             </Button>
-            <Button type="submit" className="rounded-xl bg-slate-900 hover:bg-slate-800">Add Person</Button>
+            <Button
+              type="submit"
+              className="rounded-xl bg-slate-900 hover:bg-slate-800"
+            >
+              Add Person
+            </Button>
           </div>
         </form>
       </DialogContent>

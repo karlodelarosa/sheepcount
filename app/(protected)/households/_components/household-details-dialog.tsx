@@ -1,10 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Home, MapPin, Users, Plus, Calendar } from "lucide-react";
 import { mockPeople } from "@/components/mock-data";
 import { AddHouseholdMemberDialog } from "./add-household-member-dialog";
@@ -14,7 +27,10 @@ interface HouseholdDetailsDialogProps {
   onClose: () => void;
 }
 
-export function HouseholdDetailsDialog({ household, onClose }: HouseholdDetailsDialogProps) {
+export function HouseholdDetailsDialog({
+  household,
+  onClose,
+}: HouseholdDetailsDialogProps) {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 
   if (!household) return null;
@@ -31,12 +47,16 @@ export function HouseholdDetailsDialog({ household, onClose }: HouseholdDetailsD
                 <Home className="w-6 h-6 text-white" />
               </div>
               <div>
-                <DialogTitle className="text-slate-900">{household.name}</DialogTitle>
-                <DialogDescription>Household information and members</DialogDescription>
+                <DialogTitle className="text-slate-900">
+                  {household.name}
+                </DialogTitle>
+                <DialogDescription>
+                  Household information and members
+                </DialogDescription>
               </div>
             </div>
           </DialogHeader>
-          
+
           <div className="space-y-6">
             {/* Household Info */}
             <div className="grid gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200/60">
@@ -51,7 +71,9 @@ export function HouseholdDetailsDialog({ household, onClose }: HouseholdDetailsD
                 <Calendar className="w-4 h-4 mt-0.5 text-slate-600" />
                 <div>
                   <p className="text-slate-500">Created</p>
-                  <p className="text-slate-900">{new Date(household.createdDate).toLocaleDateString()}</p>
+                  <p className="text-slate-900">
+                    {new Date(household.createdDate).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             </div>
@@ -61,10 +83,12 @@ export function HouseholdDetailsDialog({ household, onClose }: HouseholdDetailsD
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-slate-700" />
-                  <h3 className="text-slate-900">Household Members ({members.length})</h3>
+                  <h3 className="text-slate-900">
+                    Household Members ({members.length})
+                  </h3>
                 </div>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   onClick={() => setIsAddMemberOpen(true)}
                   className="rounded-lg bg-slate-900 hover:bg-slate-800"
                 >
@@ -85,23 +109,34 @@ export function HouseholdDetailsDialog({ household, onClose }: HouseholdDetailsD
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {members.map((member) => (
+                      {members.map(member => (
                         <TableRow key={member.id}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center shadow-sm">
-                                <span className="text-white">{member.name.charAt(0)}</span>
+                                <span className="text-white">
+                                  {member.name.charAt(0)}
+                                </span>
                               </div>
                               {member.name}
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={member.role === "Head" ? "default" : "secondary"} className="rounded-lg">
+                            <Badge
+                              variant={
+                                member.role === "Head" ? "default" : "secondary"
+                              }
+                              className="rounded-lg"
+                            >
                               {member.role}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-slate-600">{member.age}</TableCell>
-                          <TableCell className="text-slate-600">{member.email || member.phone || "-"}</TableCell>
+                          <TableCell className="text-slate-600">
+                            {member.age}
+                          </TableCell>
+                          <TableCell className="text-slate-600">
+                            {member.email || member.phone || "-"}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

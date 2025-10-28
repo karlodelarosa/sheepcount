@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { PersonDetails } from "../[id]/index";
 import { useParams, useRouter } from "next/navigation";
@@ -13,8 +13,12 @@ export default function PersonDetailsPage() {
   };
 
   if (!id) {
-    return <div className="p-8 text-center text-red-500">Error: Person ID not found.</div>;
+    return (
+      <div className="p-8 text-center text-red-500">
+        Error: Person ID not found.
+      </div>
+    );
   }
-  
+
   return <PersonDetails personId={id} onBack={handleBack} />;
 }

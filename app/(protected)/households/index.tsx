@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Home, Users, MapPin } from "lucide-react";
+import { Plus, Search, Home, MapPin } from "lucide-react";
 import { mockHouseholds, mockPeople } from "@/components/mock-data";
 import { AddHouseholdDialog } from "./_components/add-household-dialog";
 
@@ -20,9 +25,10 @@ export function HouseholdsList() {
     return mockPeople.filter(p => p.householdId === householdId);
   };
 
-  const filteredHouseholds = mockHouseholds.filter(household =>
-    household.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    household.address.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredHouseholds = mockHouseholds.filter(
+    household =>
+      household.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      household.address.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -32,9 +38,14 @@ export function HouseholdsList() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Households</CardTitle>
-              <CardDescription>Manage household information and members</CardDescription>
+              <CardDescription>
+                Manage household information and members
+              </CardDescription>
             </div>
-            <Button onClick={() => setIsAddDialogOpen(true)} className="rounded-xl bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20">
+            <Button
+              onClick={() => setIsAddDialogOpen(true)}
+              className="rounded-xl bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Household
             </Button>
@@ -46,7 +57,7 @@ export function HouseholdsList() {
             <Input
               placeholder="Search households..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
             />
           </div>
@@ -57,11 +68,11 @@ export function HouseholdsList() {
                 No households found
               </div>
             ) : (
-              filteredHouseholds.map((household) => {
+              filteredHouseholds.map(household => {
                 const members = getHouseholdMembers(household.id);
                 return (
-                  <Card 
-                    key={household.id} 
+                  <Card
+                    key={household.id}
                     className="border-slate-200/60 bg-white hover:shadow-lg transition-all duration-200 cursor-pointer"
                     // Navigation change: use router.push
                     onClick={() => router.push(`/households/${household.id}`)}
@@ -73,9 +84,15 @@ export function HouseholdsList() {
                             <Home className="w-6 h-6 text-white" />
                           </div>
                           <div>
-                            <CardTitle className="text-slate-900">{household.name}</CardTitle>
-                            <Badge variant="secondary" className="mt-1 rounded-lg">
-                              {members.length} {members.length === 1 ? 'member' : 'members'}
+                            <CardTitle className="text-slate-900">
+                              {household.name}
+                            </CardTitle>
+                            <Badge
+                              variant="secondary"
+                              className="mt-1 rounded-lg"
+                            >
+                              {members.length}{" "}
+                              {members.length === 1 ? "member" : "members"}
                             </Badge>
                           </div>
                         </div>
@@ -88,7 +105,8 @@ export function HouseholdsList() {
                           <p>{household.address}</p>
                         </div>
                         <p className="text-slate-500">
-                          Created: {new Date(household.createdDate).toLocaleDateString()}
+                          Created:{" "}
+                          {new Date(household.createdDate).toLocaleDateString()}
                         </p>
                       </div>
                     </CardContent>
@@ -100,7 +118,10 @@ export function HouseholdsList() {
         </CardContent>
       </Card>
 
-      <AddHouseholdDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
+      <AddHouseholdDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+      />
       {/* HouseholdDetailsDialog removed */}
     </div>
   );

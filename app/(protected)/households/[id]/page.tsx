@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { HouseholdDetails } from "../[id]/index";
 import { useParams, useRouter } from "next/navigation";
@@ -13,8 +13,12 @@ export default function HouseholdDetailsPage() {
   };
 
   if (!id) {
-    return <div className="p-8 text-center text-red-500">Error: Household ID not found.</div>;
+    return (
+      <div className="p-8 text-center text-red-500">
+        Error: Household ID not found.
+      </div>
+    );
   }
-  
+
   return <HouseholdDetails householdId={id} onBack={handleBack} />;
 }
