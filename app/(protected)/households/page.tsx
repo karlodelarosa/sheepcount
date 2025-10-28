@@ -1,3 +1,5 @@
-export default function Page() {
-  return <div>Household page</div>;
+import { HouseholdsList } from ".";
+
+export default function HouseholdsPage() {
+  return <HouseholdsList />;
 }

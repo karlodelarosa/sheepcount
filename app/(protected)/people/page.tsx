@@ -1,3 +1,5 @@
+import { PeopleList } from ".";
+
 export default function PeoplePage() {
-  return <div>People palge</div>;
+  return <PeopleList />;
 }

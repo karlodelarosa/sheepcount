@@ -1,3 +1,5 @@
+import { WorkersView } from ".";
+
 export default function Page() {
-  return <div>WOrker page</div>;
+  return <WorkersView />;
 }
