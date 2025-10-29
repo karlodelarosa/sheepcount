@@ -1,3 +1,5 @@
+import { ChurchGoalsView } from ".";
+
 export default function Page() {
-  return <div>Church goal page</div>;
+  return <ChurchGoalsView />;
 }

@@ -1,3 +1,5 @@
+import { PropertyManagementView } from ".";
+
 export default function Page() {
-  return <div>Properties page</div>;
+  return <PropertyManagementView />;
 }

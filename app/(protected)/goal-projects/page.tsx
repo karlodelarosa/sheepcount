@@ -1,3 +1,5 @@
+import { GoalProjectsView } from ".";
+
 export default function Page() {
-  return <div>Goal project page</div>;
+  return <GoalProjectsView />;
 }

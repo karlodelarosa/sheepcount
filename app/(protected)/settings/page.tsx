@@ -1,3 +1,5 @@
+import { SettingsView } from ".";
+
 export default function Page() {
-  return <div>Settings page</div>;
+  return <SettingsView />;
 }
