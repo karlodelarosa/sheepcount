@@ -1,3 +1,5 @@
+import { DiscipleshipView } from ".";
+
 export default function Page() {
-  return <div>Discipleship page</div>;
+  return <DiscipleshipView />;
 }

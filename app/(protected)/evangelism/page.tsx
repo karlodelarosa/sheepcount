@@ -1,3 +1,5 @@
+import { EvangelismFlowView } from ".";
+
 export default function Page() {
-  return <div>Evangelism page</div>;
+  return <EvangelismFlowView />;
 }

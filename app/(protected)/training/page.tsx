@@ -1,3 +1,5 @@
+import { TrainingView } from ".";
+
 export default function Page() {
-  return <div>training page</div>;
+  return <TrainingView />;
 }

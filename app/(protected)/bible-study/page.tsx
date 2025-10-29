@@ -1,3 +1,5 @@
+import { BibleStudyGroupsView } from ".";
+
 export default function Page() {
-  return <div>Household page</div>;
+  return <BibleStudyGroupsView />;
 }

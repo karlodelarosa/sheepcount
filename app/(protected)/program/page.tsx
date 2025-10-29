@@ -1,3 +1,5 @@
+import { ProgramsView } from ".";
+
 export default function Page() {
-  return <div>Program page</div>;
+  return <ProgramsView />;
 }
