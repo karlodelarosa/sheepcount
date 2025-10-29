@@ -57,7 +57,7 @@ export default function SearchView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div>
           <h1>Search Attendance</h1>
           <p className="text-muted-foreground">Find attendees by name, status or date</p>
@@ -66,7 +66,29 @@ export default function SearchView() {
         <Button variant="outline" size="icon" onClick={() => router.push("/service-attendance")}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-      </div>
+      </div> */}
+
+<div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => router.back()}
+            className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:text-white dark:hover:bg-zinc-700"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-slate-900 dark:text-white">
+              Search Attendance
+              </h1>
+              <p className="text-slate-600 dark:text-zinc-400">
+              Find attendees by name, status or date
+              </p>
+            </div>
+          </div>
+        </div>
 
       <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
         <CardHeader>

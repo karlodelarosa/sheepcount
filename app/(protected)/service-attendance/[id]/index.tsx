@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, ArrowLeft, Users, UserPlus, Edit2, Trash } from "lucide-react";
 import { mockServiceTypes, mockServiceAttendance, mockPeople } from "@/components/mock-data";
 import { useState } from "react";
+import { RecordAttendanceDialog } from "../_components/record-attendance-dialog";
 
 interface Props {
   attendanceId: string; // format: `${serviceId}---${date}`

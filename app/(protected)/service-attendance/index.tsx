@@ -1,90 +1,52 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, ChevronRight, Plus } from "lucide-react";
-import {
-  mockServiceTypes,
-  mockServiceAttendance as mockServiceAttendanceFromFile,
-  mockPeople,
-} from "@/components/mock-data";
+import { Calendar, Users, Clock, ChevronRight, Plus, Search } from "lucide-react";
+import { mockServiceTypes, mockServiceAttendance, mockPeople } from "@/components/mock-data";
 import { RecordAttendanceDialog, NewAttendanceRecord } from "./_components/record-attendance-dialog";
+
 
 export function ServiceAttendanceView() {
   const router = useRouter();
-
-  // Local modifiable attendance state (prototype only)
+  const [selectedService, setSelectedService] = useState<{ serviceId: string; date: string } | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [serviceAttendance, setServiceAttendance] = useState(
-    () => mockServiceAttendanceFromFile.slice()
+    () => mockServiceAttendance.slice()
   );
 
-  const [selectedService, setSelectedService] = useState<{
-    serviceId: string;
-    date: string;
-  } | null>(null);
-
-  // Dialog control (we pass as controlled)
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  // Group sessions by service + date into sessions (one session id per service+date)
-  const attendanceRecords = useMemo(() => {
-    const map: Record<
-      string,
-      {
-        id: string;
-        serviceId: string;
-        serviceType: string;
-        date: string;
-        attendees: string[]; // personIds
-      }
-    > = {};
-
-    for (const r of serviceAttendance) {
-      const key = `${r.serviceId}---${r.date}`; // deterministic id for grouped session
-      if (!map[key]) {
-        map[key] = {
-          id: key,
-          serviceId: r.serviceId,
-          serviceType: r.serviceType,
-          date: r.date,
-          attendees: [],
-        };
-      }
-      map[key].attendees.push(r.personId);
+  // Group attendance by service type and date
+  const groupedAttendance = mockServiceAttendance.reduce((acc: any, record) => {
+    const key = `${record.serviceId}-${record.date}`;
+    if (!acc[key]) {
+      acc[key] = {
+        serviceId: record.serviceId,
+        serviceType: record.serviceType,
+        date: record.date,
+        attendees: []
+      };
     }
+    acc[key].attendees.push(record.personId);
+    return acc;
+  }, {});
 
-    const arr = Object.values(map);
-    arr.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return arr;
-  }, [serviceAttendance]);
+  const attendanceRecords = Object.values(groupedAttendance) as any[];
+  attendanceRecords.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const selectedAttendance = selectedService
-    ? attendanceRecords.find(
-        (r) =>
-          r.serviceId === selectedService.serviceId && r.date === selectedService.date
-      ) ?? null
+    ? attendanceRecords.find(r => r.serviceId === selectedService.serviceId && r.date === selectedService.date)
     : null;
 
   const selectedAttendees = selectedAttendance
-    ? selectedAttendance.attendees
-        .map((id) => mockPeople.find((p) => p.id === id))
-        .filter(Boolean)
+    ? selectedAttendance.attendees.map((id: string) => mockPeople.find(p => p.id === id)).filter(Boolean)
     : [];
 
-  const evangelismCount = selectedAttendees.filter(
-    (p: any) => p.membershipType === "For Evangelism"
-  ).length;
+  // Count evangelism attendees
+  const evangelismCount = selectedAttendees.filter((p: any) => p.membershipType === "For Evangelism").length;
 
-  // handle new record from dialog (prototype: merge into serviceAttendance)
   const handleRecordAttendance = (newRecord: NewAttendanceRecord) => {
     // newRecord may include id (if created in dialog). If newRecord.id exists and it's a session-level id,
     // we will convert to individual attendance entries (one per person)
@@ -117,43 +79,26 @@ export function ServiceAttendanceView() {
             Track attendance for different services and events
           </p>
         </div>
-
-        <div className="flex items-center gap-3">
-          {/* Search button (placed above Recent Attendance per your choice B)
-              We keep it here visually so it appears on the right side but
-              it will be duplicated (rendered again above the list). This keeps header clean.
-          */}
-          <Button
-            variant="outline"
-            onClick={() => router.push("/service-attendance/search")}
-            className="mr-2"
-          >
-            Search
-          </Button>
-
-          <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
-            <Plus className="w-4 h-4" />
-            Record Attendance
-          </Button>
+        <div className="flex flex-row gap-x-2">
+        <Button variant="outline" className="gap-2" onClick={() => router.push(`service-attendance/search`)}>
+          <Search className="w-4 h-4" />
+          Search
+        </Button>
+        <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
+          <Plus className="w-4 h-4" />
+          Record Attendance
+        </Button>
         </div>
       </div>
 
       {/* Service Types Overview */}
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
         {mockServiceTypes.map((service) => {
-          const serviceRecords = attendanceRecords.filter(
-            (r) => r.serviceId === service.id
-          );
-          const totalAttendance = serviceRecords.reduce(
-            (sum, r) => sum + r.attendees.length,
-            0
-          );
+          const serviceRecords = attendanceRecords.filter(r => r.serviceId === service.id);
+          const totalAttendance = serviceRecords.reduce((sum, r) => sum + r.attendees.length, 0);
 
           return (
-            <Card
-              key={service.id}
-              className="border-border/60 bg-card/50 backdrop-blur-sm"
-            >
+            <Card key={service.id} className="border-border/60 bg-card/50 backdrop-blur-sm">
               <CardHeader className="pb-3">
                 <CardTitle className="text-foreground">{service.name}</CardTitle>
               </CardHeader>
@@ -167,50 +112,41 @@ export function ServiceAttendanceView() {
         })}
       </div>
 
-      {/* Search button (placement B: right above Recent Attendance Records) */}
-      <div>
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/service-attendance/search")}
-          className="mb-2"
-        >
-          Search attendance
-        </Button>
-      </div>
-
       {/* Attendance Records */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           <h3>Recent Attendance Records</h3>
           <div className="space-y-3">
             {attendanceRecords.map((record) => {
-              const service = mockServiceTypes.find((s) => s.id === record.serviceId);
-              const isSelected =
-                selectedService?.serviceId === record.serviceId &&
-                selectedService?.date === record.date;
+              const service = mockServiceTypes.find(s => s.id === record.serviceId);
+              const isSelected = selectedService?.serviceId === record.serviceId && selectedService?.date === record.date;
 
               return (
                 <Card
-                  key={record.id}
+                  key={`${record.serviceId}-${record.date}`}
                   className={`
                     border-border/60 bg-card/50 backdrop-blur-sm cursor-pointer transition-all duration-200
-                    ${isSelected ? "ring-2 ring-foreground shadow-lg" : "hover:shadow-lg hover:border-border"}
+                    ${isSelected 
+                      ? 'ring-2 ring-foreground shadow-lg' 
+                      : 'hover:shadow-lg hover:border-border'
+                    }
                   `}
-                  onClick={() =>
-                    setSelectedService({ serviceId: record.serviceId, date: record.date })
-                  }
+                  onClick={() => setSelectedService({ serviceId: record.serviceId, date: record.date })}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-black/20 flex items-center justify-center shadow-sm">
-                          <Calendar className="w-6 h-6" />
+                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-${service?.color || 'blue'}-500 to-${service?.color || 'blue'}-700 flex items-center justify-center shadow-sm`}>
+                          <Calendar className="w-6 h-6 text-white" />
                         </div>
                         <div>
                           <p className="text-foreground">{record.serviceType}</p>
-                          <p className="text-muted-foreground">
-                            {new Date(record.date).toLocaleDateString()}
-                          </p>
+                          <p className="text-muted-foreground">{new Date(record.date).toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -228,7 +164,7 @@ export function ServiceAttendanceView() {
           </div>
         </div>
 
-        {/* Attendance Details */}
+        {/* Detailed Attendance View */}
         <div className="space-y-4">
           <h3>Attendance Details</h3>
           {selectedAttendance ? (
@@ -238,7 +174,12 @@ export function ServiceAttendanceView() {
                   <div>
                     <CardTitle>{selectedAttendance.serviceType}</CardTitle>
                     <CardDescription>
-                      {new Date(selectedAttendance.date).toLocaleDateString()}
+                      {new Date(selectedAttendance.date).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
                     </CardDescription>
                   </div>
                   <Badge variant="outline" className="gap-1">
@@ -248,53 +189,112 @@ export function ServiceAttendanceView() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
+                {evangelismCount > 0 && (
+                  <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-blue-900 dark:text-blue-100">
+                        {evangelismCount} attendee{evangelismCount !== 1 ? 's' : ''} marked for evangelism follow-up
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <h4 className="text-foreground">Attendees</h4>
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {selectedAttendees.map((person: any) => (
                       <div
                         key={person.id}
-                        className="p-2 rounded-lg bg-background/30 flex items-center justify-between"
+                        className="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-background/50"
                       >
-                        <span>{person.name}</span>
-                        <Badge>{person.membershipType}</Badge>
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 flex items-center justify-center shadow-sm">
+                          <span className="text-white dark:text-slate-900">{person.name.charAt(0)}</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-foreground">{person.name}</p>
+                          <p className="text-muted-foreground">{person.householdName}</p>
+                        </div>
+                        <div className="text-right">
+                          <Badge 
+                            variant={person.membershipType === "For Evangelism" ? "default" : "outline"}
+                            className={person.membershipType === "For Evangelism" ? "bg-blue-500" : ""}
+                          >
+                            {person.membershipType}
+                          </Badge>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <Button
-                  className="w-full"
-                  onClick={() =>
-                    router.push(`/service-attendance/${selectedAttendance.id}`)
-                  }
-                >
-                  Open Full View
-                </Button>
+                <div className="pt-3 border-t border-border/60 space-y-2">
+                  <Button className="w-full gap-2" onClick={() => {
+                    router.push(`/service-attendance/${selectedAttendance.serviceId}---${selectedAttendance.date}`)
+                  }}>
+                    <Users className="w-4 h-4" />
+                    Open full view
+                  </Button>
+                  <p className="text-muted-foreground text-center">
+                    Add visitors for evangelism follow-up
+                  </p>
+                </div>
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardContent>Select attendance record</CardContent>
+            <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-12 text-center">
+                <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">
+                  Select an attendance record to view details
+                </p>
+              </CardContent>
             </Card>
           )}
         </div>
       </div>
 
-      {/* Record Attendance Dialog (controlled) */}
+      {/* Summary Statistics */}
+      <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle>Attendance Summary</CardTitle>
+          <CardDescription>Overall attendance statistics</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="p-4 rounded-xl border border-border/60 bg-background/50">
+              <p className="text-muted-foreground">Total Records</p>
+              <p className="text-foreground">{attendanceRecords.length} sessions</p>
+            </div>
+            <div className="p-4 rounded-xl border border-border/60 bg-background/50">
+              <p className="text-muted-foreground">Total Attendance</p>
+              <p className="text-foreground">
+                {attendanceRecords.reduce((sum, r) => sum + r.attendees.length, 0)} people
+              </p>
+            </div>
+            <div className="p-4 rounded-xl border border-border/60 bg-background/50">
+              <p className="text-muted-foreground">Average per Service</p>
+              <p className="text-foreground">
+                {Math.round(attendanceRecords.reduce((sum, r) => sum + r.attendees.length, 0) / attendanceRecords.length)} people
+              </p>
+            </div>
+            <div className="p-4 rounded-xl border border-border/60 bg-background/50">
+              <p className="text-muted-foreground">Evangelism Prospects</p>
+              <p className="text-foreground">
+                {mockPeople.filter(p => p.membershipType === "For Evangelism").length} people
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <RecordAttendanceDialog
         serviceTypes={mockServiceTypes}
         people={mockPeople}
         onRecordAttendance={handleRecordAttendance}
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-      >
-        {/* We still provide a trigger child as a fallback (the header button already opens it) */}
-        <Button onClick={() => setIsDialogOpen(true)} variant="default" className="gap-2">
-          <Plus className="w-4 h-4" />
-          Record Attendance
-        </Button>
-      </RecordAttendanceDialog>
+      />
     </div>
   );
 }
