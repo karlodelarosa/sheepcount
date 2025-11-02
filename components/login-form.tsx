@@ -128,6 +128,14 @@ export function LoginForm({
           .maybeSingle();
       if (subscriptionError) throw subscriptionError;
 
+      const { data: tenantSettings, error: tenantSettingsError } = 
+        await supabase
+          .from("tenant_settings")
+          .select("*")
+          .eq("tenant_id", memberData.tenant.id)
+          .maybeSingle();
+      if (tenantSettingsError) throw tenantSettingsError;
+
       const { tenant, ...rest } = memberData;
 
       const result = {
@@ -136,11 +144,13 @@ export function LoginForm({
           ...tenant,
           organization: orgData || null,
           subscription: subscriptionData || null,
+          settings: tenantSettings || null,
         },
       };
 
       setTenant(result);
       localStorage.setItem("tenant-data", JSON.stringify(result));
+      localStorage.setItem("theme-settings", JSON.stringify(tenantSettings.value));
       router.push("/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
