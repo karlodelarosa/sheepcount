@@ -17,6 +17,7 @@ import {
 import { useTenant } from "@/app/providers/tenant-provider";
 import { getInitials } from "@/app/helpers";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const UserDropdown = () => {
   const { user, tenant } = useTenant();
@@ -25,6 +26,17 @@ const UserDropdown = () => {
   if (!tenant) return null;
 
   const { profile } = tenant;
+
+  const logout = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      localStorage.removeItem("tenant-data"); // remove cached tenant info
+      router.replace("/auth/login"); // redirect to login
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -65,9 +77,7 @@ const UserDropdown = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer rounded-lg"
-          onClick={() => {
-            router.push("/profile");
-          }}
+          onClick={() => router.push("/profile")}
         >
           <User className="w-4 h-4 mr-2" />
           <span>Profile</span>
@@ -77,7 +87,10 @@ const UserDropdown = () => {
           <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400 rounded-lg">
+        <DropdownMenuItem
+          className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400 rounded-lg"
+          onClick={logout}
+        >
           <LogOut className="w-4 h-4 mr-2" />
           <span>Logout</span>
         </DropdownMenuItem>
