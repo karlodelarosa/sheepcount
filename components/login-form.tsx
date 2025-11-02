@@ -19,6 +19,7 @@ import { useTenant } from "@/app/providers/tenant-provider";
 
 type ProfileRole = "admin" | "member";
 type AccountStatus = "active" | "inactive";
+
 type Organization = {
   id: string;
   name: string;
@@ -28,6 +29,7 @@ type Organization = {
   created_at: string;
   updated_at: string;
 };
+
 type Subscription = {
   provider: string;
   plan: string;
@@ -78,10 +80,7 @@ export function LoginForm({
 
     try {
       const { data: authData, error: authError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        await supabase.auth.signInWithPassword({ email, password });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user found after login");
@@ -107,7 +106,7 @@ export function LoginForm({
             role,
             avatar_url
           )
-        `,
+        `
         )
         .eq("user_id", authData.user.id)
         .maybeSingle<TenantMembership>();
@@ -115,22 +114,18 @@ export function LoginForm({
       if (memberError) throw memberError;
       if (!memberData) throw new Error("No tenant membership found");
 
-      // Fetch organizations for the tenant
       const { data: orgData, error: orgError } = await supabase
         .from("organization")
         .select("*")
         .eq("tenant_id", memberData.tenant.id);
-
       if (orgError) throw orgError;
 
-      // Fetch subscriptions for the tenant
       const { data: subscriptionData, error: subscriptionError } =
         await supabase
           .from("subscriptions")
           .select("*")
           .eq("tenant_id", memberData.tenant.id)
           .maybeSingle();
-
       if (subscriptionError) throw subscriptionError;
 
       const { tenant, ...rest } = memberData;
@@ -146,7 +141,6 @@ export function LoginForm({
 
       setTenant(result);
       localStorage.setItem("tenant-data", JSON.stringify(result));
-
       router.push("/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -156,11 +150,18 @@ export function LoginForm({
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+    <div
+      className={cn(
+        "flex flex-col gap-6",
+        "bg-background text-foreground",
+        className
+      )}
+      {...props}
+    >
+      <Card className="border border-border bg-card text-card-foreground dark:border-neutral-800 dark:bg-neutral-900">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-semibold">Login</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Enter your email below to login to your account
           </CardDescription>
         </CardHeader>
@@ -175,15 +176,17 @@ export function LoginForm({
                   placeholder="m@example.com"
                   required
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100"
                 />
               </div>
+
               <div className="grid gap-2">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
                   <Link
                     href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    className="ml-auto inline-block text-sm text-muted-foreground hover:text-foreground hover:underline underline-offset-4"
                   >
                     Forgot your password?
                   </Link>
@@ -193,19 +196,28 @@ export function LoginForm({
                   type="password"
                   required
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100"
                 />
               </div>
+
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+                variant="default"
+              >
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
             </div>
-            <div className="mt-4 text-center text-sm">
+
+            <div className="mt-4 text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
               <Link
                 href="/auth/sign-up"
-                className="underline underline-offset-4"
+                className="underline underline-offset-4 hover:text-foreground"
               >
                 Sign up
               </Link>

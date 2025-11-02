@@ -13,13 +13,45 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import clsx from "clsx";
 
+const THEME_SETTINGS_KEY = "theme-settings";
+
 const ThemeSwitcher = () => {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
 
+  // Load theme settings from localStorage
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem(THEME_SETTINGS_KEY);
+      if (stored) {
+        const settings = JSON.parse(stored);
+        if (settings.mode) {
+          setTheme(settings.mode);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading theme settings:", err);
+    }
     setMounted(true);
-  }, []);
+  }, [setTheme]);
+
+  const handleThemeChange = (value: string) => {
+    setTheme(value);
+
+    try {
+      // Get existing settings (or create new)
+      const stored = localStorage.getItem(THEME_SETTINGS_KEY);
+      const settings = stored ? JSON.parse(stored) : {};
+
+      // Update mode only
+      settings.mode = value;
+
+      // Save back to localStorage
+      localStorage.setItem(THEME_SETTINGS_KEY, JSON.stringify(settings));
+    } catch (err) {
+      console.error("Error saving theme settings:", err);
+    }
+  };
 
   if (!mounted) return null;
 
@@ -50,7 +82,7 @@ const ThemeSwitcher = () => {
       >
         <DropdownMenuRadioGroup
           value={theme}
-          onValueChange={value => setTheme(value)}
+          onValueChange={handleThemeChange}
         >
           {items.map(({ key, label, icon: Icon }) => (
             <DropdownMenuRadioItem
