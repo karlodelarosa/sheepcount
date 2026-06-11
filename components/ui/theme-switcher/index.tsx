@@ -55,7 +55,7 @@ const ThemeSwitcher = () => {
 
   if (!mounted) return null;
 
-  const ICON_SIZE = 16;
+  const ICON_SIZE = 14;
   const items = [
     { key: "light", label: "Light", icon: Sun },
     { key: "dark", label: "Dark", icon: Moon },
@@ -65,7 +65,7 @@ const ThemeSwitcher = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="rounded-xl">
+        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg">
           {theme === "light" ? (
             <Sun size={ICON_SIZE} className="text-muted-foreground" />
           ) : theme === "dark" ? (

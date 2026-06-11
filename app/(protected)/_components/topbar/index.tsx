@@ -14,11 +14,11 @@ export function TopBar() {
   if (!tenant) return null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md">
-      <div className="flex items-center justify-between px-6 py-4">
-        {tenant && <WelcomeMessage profile={tenant.profile} />}
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md h-10">
+      <div className="flex items-center justify-between px-4 h-full">
+        <WelcomeMessage />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
           {/* Dark Mode Toggle */}
           <ThemeSwitcher />
 

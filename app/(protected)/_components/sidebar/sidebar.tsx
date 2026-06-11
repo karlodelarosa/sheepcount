@@ -7,7 +7,7 @@
 //         href={"/"}
 //         className="text-green-500 bg-clip-text text-transparent animated-gradient text-xl font-semibold mb-8"
 //       >
-//         Sheep<span className="font-bold">Count</span>
+//         Ministry Lens
 //       </Link>
 //       <nav className="flex flex-col gap-4 text-sm">
 //         <Link href="/">Dashboard</Link>

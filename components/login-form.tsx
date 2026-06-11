@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +15,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTenant } from "@/app/providers/tenant-provider";
+import { seedLocalSession } from "@/lib/mock-auth";
+import { DEMO_EMAIL } from "@/lib/branding";
+import { AppBrand } from "@/components/app-brand";
 
 type ProfileRole = "admin" | "member";
 type AccountStatus = "active" | "inactive";
@@ -57,100 +59,32 @@ export type TenantMembership = {
     last_name: string;
     role: ProfileRole;
     avatar_url: string;
+    created_at?: string;
   };
   subscription: Subscription;
+  organizations?: Organization[];
 };
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(DEMO_EMAIL);
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { setTenant } = useTenant();
+  const { setTenant, setUser } = useTenant();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
     try {
-      const { data: authData, error: authError } =
-        await supabase.auth.signInWithPassword({ email, password });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("No user found after login");
-
-      const { data: memberData, error: memberError } = await supabase
-        .from("tenant_members")
-        .select(
-          `
-          id,
-          user_id,
-          status,
-          tenant:tenant_id (
-            id,
-            name,
-            slug,
-            plan,
-            status
-          ),
-          profile:profile_id (
-            id,
-            first_name,
-            last_name,
-            role,
-            avatar_url
-          )
-        `
-        )
-        .eq("user_id", authData.user.id)
-        .maybeSingle<TenantMembership>();
-
-      if (memberError) throw memberError;
-      if (!memberData) throw new Error("No tenant membership found");
-
-      const { data: orgData, error: orgError } = await supabase
-        .from("organization")
-        .select("*")
-        .eq("tenant_id", memberData.tenant.id);
-      if (orgError) throw orgError;
-
-      const { data: subscriptionData, error: subscriptionError } =
-        await supabase
-          .from("subscriptions")
-          .select("*")
-          .eq("tenant_id", memberData.tenant.id)
-          .maybeSingle();
-      if (subscriptionError) throw subscriptionError;
-
-      const { data: tenantSettings, error: tenantSettingsError } = 
-        await supabase
-          .from("tenant_settings")
-          .select("*")
-          .eq("tenant_id", memberData.tenant.id)
-          .maybeSingle();
-      if (tenantSettingsError) throw tenantSettingsError;
-
-      const { tenant, ...rest } = memberData;
-
-      const result = {
-        ...rest,
-        tenant: {
-          ...tenant,
-          organization: orgData || null,
-          subscription: subscriptionData || null,
-          settings: tenantSettings || null,
-        },
-      };
-
-      setTenant(result);
-      localStorage.setItem("tenant-data", JSON.stringify(result));
-      localStorage.setItem("theme-settings", JSON.stringify(tenantSettings.value));
+      const { user, tenant } = seedLocalSession(email);
+      setUser(user);
+      setTenant(tenant);
       router.push("/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
@@ -168,11 +102,12 @@ export function LoginForm({
       )}
       {...props}
     >
+      <AppBrand size="lg" className="justify-center mb-2" />
       <Card className="border border-border bg-card text-card-foreground dark:border-neutral-800 dark:bg-neutral-900">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold">Login</CardTitle>
+          <CardTitle className="text-xl font-semibold">Sign in</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Enter your email below to login to your account
+            Demo mode — any credentials will sign you in
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -204,7 +139,6 @@ export function LoginForm({
                 <Input
                   id="password"
                   type="password"
-                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100"

@@ -15,7 +15,8 @@ export function ProfilePage() {
 
   if (!tenant) return <div>Loading...</div>;
 
-  const { profile, organizations, subscription } = tenant;
+  const { profile, subscription } = tenant;
+  const organizations = tenant.organizations ?? tenant.tenant.organizations;
 
   // Track selected organization
   const [selectedOrgIndex, setSelectedOrgIndex] = useState(0);
@@ -39,8 +40,12 @@ export function ProfilePage() {
   );
 
   // Activity info
-  const lastLogin = dayjs(user.last_sign_in_at).format("MMM D, YYYY, hh:mm A");
-  const memberSince = dayjs(profile.created_at).format("MMM D, YYYY");
+  const lastLogin = user
+    ? dayjs(user.last_sign_in_at).format("MMM D, YYYY, hh:mm A")
+    : "—";
+  const memberSince = profile.created_at
+    ? dayjs(profile.created_at).format("MMM D, YYYY")
+    : "—";
 
   // Handle organization selection
   const handleOrgChange = (index: number) => {
@@ -92,7 +97,7 @@ export function ProfilePage() {
           </div>
           <div>
             <Label>Email (read-only)</Label>
-            <Input value={user.email} disabled />
+            <Input value={user?.email ?? ""} disabled />
           </div>
         </CardContent>
         <CardContent>

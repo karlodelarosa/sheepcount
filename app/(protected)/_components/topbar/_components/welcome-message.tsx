@@ -1,25 +1,67 @@
-import { FC } from "react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import type { TenantMembership } from "@/components/login-form";
+"use client";
 
-export type WelcomMessageProps = {
-  profile: TenantMembership["profile"];
+import { usePathname } from "next/navigation";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useTheme } from "@/context/theme-context";
+import { Calendar } from "lucide-react";
+
+const routeTitles: Record<string, string> = {
+  dashboard: "Dashboard",
+  people: "People",
+  workers: "Workers",
+  households: "Households",
+  "admin-position": "Admin Positions",
+  "org-chart": "Organization Chart",
+  "life-groups": "Life Groups",
+  "work-ministry": "Work Ministry",
+  training: "Training",
+  discipleship: "Discipleship",
+  "bible-study": "Bible Studies",
+  program: "Programs",
+  evangelism: "Evangelism Flow",
+  "service-attendance": "Service Attendance",
+  "event-attendance": "Event Attendance",
+  "general-attendance": "General Attendance",
+  properties: "Properties",
+  financial: "Financial",
+  "goal-projects": "Goal Projects",
+  "church-goals": "Church Goals",
+  settings: "Settings",
+  profile: "Profile",
+  prospect: "Prospects",
 };
 
-const WelcomeMessage: FC<WelcomMessageProps> = ({ profile }) => {
-  const { first_name } = profile;
+function getPageTitle(pathname: string) {
+  const segment = pathname.split("/").filter(Boolean)[0] ?? "dashboard";
+  return routeTitles[segment] ?? segment.replace(/-/g, " ");
+}
+
+export function WelcomeMessage() {
+  const pathname = usePathname();
+  const { settings } = useTheme();
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
 
   return (
-    <div className="flex items-center gap-4">
-      <SidebarTrigger className="lg:hidden" />
-      <div>
-        <h1 className="text-foreground">Welcome back, {first_name}</h1>
-        <p className="text-muted-foreground">
-          Manage your organization efficiently
-        </p>
+    <div className="flex items-center gap-2 min-w-0">
+      <SidebarTrigger className="lg:hidden h-7 w-7" />
+      <div className="flex items-center gap-2 min-w-0 text-sm">
+        <span className="font-medium text-foreground truncate">
+          {getPageTitle(pathname)}
+        </span>
+        <span className="text-muted-foreground hidden sm:inline">·</span>
+        <span className="text-muted-foreground truncate hidden sm:inline text-xs">
+          {settings.organizationName}
+        </span>
+        <span className="text-muted-foreground hidden md:inline">·</span>
+        <span className="text-muted-foreground hidden md:inline-flex items-center gap-1 text-xs">
+          <Calendar className="w-3 h-3" />
+          {today}
+        </span>
       </div>
     </div>
   );
-};
-
-export { WelcomeMessage };
+}

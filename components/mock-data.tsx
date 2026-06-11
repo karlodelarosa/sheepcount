@@ -225,6 +225,21 @@ export const mockPeople = [
     evangelismStage: "Follow-up",
     lastAttendance: "2024-10-20",
   },
+  {
+    id: "16",
+    name: "Jordan Blake",
+    role: "Single",
+    householdId: "h-solo-16",
+    householdName: "Blake",
+    email: "",
+    phone: "(555) 111-2233",
+    age: 26,
+    joinDate: "2025-06-01",
+    status: "Active",
+    membershipType: "Prospect",
+    evangelismStage: "First-time Attendee",
+    lastAttendance: "2025-06-01",
+  },
 ];
 
 // Generate attendance records for the last 30 days

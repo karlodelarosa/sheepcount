@@ -18,6 +18,7 @@ import {
   Users,
   Calendar,
   Building2,
+  Eye,
   Home,
   Award,
   Shield,
@@ -35,6 +36,7 @@ import {
   Book,
   Network,
   Lightbulb,
+  Tent,
 } from "lucide-react";
 import {
   Collapsible,
@@ -42,6 +44,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible/index";
 import { useTheme } from "@/context/theme-context";
+import { APP_NAME } from "@/lib/branding";
 
 type ViewRoute =
   | "dashboard"
@@ -60,6 +63,7 @@ type ViewRoute =
   | "workers"
   | "settings"
   | "service-attendance"
+  | "event-attendance"
   | "evangelism"
   | "bible-study"
   | "org-chart"
@@ -159,6 +163,11 @@ export function Sidebar() {
           value: "service-attendance" as const,
         },
         {
+          title: "Event Attendance",
+          icon: Tent,
+          value: "event-attendance" as const,
+        },
+        {
           title: "General Attendance",
           icon: Calendar,
           value: "general-attendance" as const,
@@ -190,38 +199,40 @@ export function Sidebar() {
   ];
 
   return (
-    <SidebarComponent className="w-64 shrink-0 border-r border-border/60 bg-card/80 backdrop-blur-sm">
-      <SidebarHeader className="border-b border-border/60 p-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 flex items-center justify-center shadow-lg">
-            <Building2 className="w-5 h-5 text-white dark:text-slate-900" />
+    <SidebarComponent className="w-52 shrink-0 border-r border-border/60 bg-card/80 backdrop-blur-sm text-sm">
+      <SidebarHeader className="border-b border-border/60 px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 flex items-center justify-center">
+            <Eye className="w-3.5 h-3.5 text-white dark:text-slate-900" />
           </div>
-          <div>
-            <h2 className="text-foreground">
-              {settings?.organizationName || "My Organization"}
+          <div className="min-w-0">
+            <h2 className="text-foreground text-sm font-semibold truncate">
+              {APP_NAME}
             </h2>
-            <p className="text-muted-foreground">Management Suite</p>
+            <p className="text-muted-foreground text-xs truncate">
+              {settings?.organizationName || "My Church"}
+            </p>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="p-4">
-        <SidebarMenu className="space-y-1">
+      <SidebarContent className="p-2">
+        <SidebarMenu className="space-y-0.5">
           {/* Dashboard - Always visible */}
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={() => navigateTo("dashboard")}
               isActive={isActive("dashboard")}
               className={`
-                w-full px-4 py-3 rounded-xl transition-all duration-200
+                w-full px-2.5 py-1.5 rounded-lg transition-all duration-200 text-sm
                 ${
                   isActive("dashboard")
-                    ? "bg-foreground text-background shadow-lg shadow-foreground/20"
+                    ? "bg-foreground text-background"
                     : "hover:bg-muted text-foreground"
                 }
               `}
             >
-              <LayoutDashboard className="w-5 h-5 mr-3" />
+              <LayoutDashboard className="w-4 h-4 mr-2" />
               <span>Dashboard</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -230,14 +241,14 @@ export function Sidebar() {
           {menuGroups.map((group, groupIndex) => (
             <Collapsible
               key={groupIndex}
-              defaultOpen
+              defaultOpen={false}
               className="group/collapsible"
             >
               <SidebarGroup>
                 <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="px-4 py-2 text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-between group-data-[state=open]/collapsible:text-foreground">
+                  <SidebarGroupLabel className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-between group-data-[state=open]/collapsible:text-foreground">
                     <span>{group.title}</span>
-                    <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                    <ChevronDown className="w-3 h-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
                   </SidebarGroupLabel>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -249,15 +260,15 @@ export function Sidebar() {
                             onClick={() => navigateTo(item.value)}
                             isActive={isActive(item.value)}
                             className={`
-                              w-full px-4 py-2.5 rounded-xl transition-all duration-200
+                              w-full px-2.5 py-1.5 rounded-lg transition-all duration-200 text-sm
                               ${
                                 isActive(item.value)
-                                  ? "bg-foreground text-background shadow-lg shadow-foreground/20"
+                                  ? "bg-foreground text-background"
                                   : "hover:bg-muted text-foreground"
                               }
                             `}
                           >
-                            <item.icon className="w-5 h-5 mr-3" />
+                            <item.icon className="w-4 h-4 mr-2" />
                             <span>{item.title}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -270,28 +281,28 @@ export function Sidebar() {
           ))}
 
           {/* Settings - Always visible at bottom */}
-          <SidebarMenuItem className="mt-4">
+          <SidebarMenuItem className="mt-2">
             <SidebarMenuButton
               onClick={() => navigateTo("settings")}
               isActive={isActive("settings")}
               className={`
-                w-full px-4 py-3 rounded-xl transition-all duration-200
+                w-full px-2.5 py-1.5 rounded-lg transition-all duration-200 text-sm
                 ${
                   isActive("settings")
-                    ? "bg-foreground text-background shadow-lg shadow-foreground/20"
+                    ? "bg-foreground text-background"
                     : "hover:bg-muted text-foreground"
                 }
               `}
             >
-              <Settings className="w-5 h-5 mr-3" />
+              <Settings className="w-4 h-4 mr-2" />
               <span>Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-border/60">
-        <div className="px-4 py-3 rounded-xl bg-muted/50 border border-border/60">
+      <SidebarFooter className="p-2 border-t border-border/60">
+        <div className="px-2.5 py-1.5 rounded-lg bg-muted/50 border border-border/60 text-xs">
           <p className="text-foreground">Active Members</p>
           <p className="text-muted-foreground">247 people</p>
         </div>

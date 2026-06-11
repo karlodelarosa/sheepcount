@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { TenantProvider } from "@/app/providers/tenant-provider";
+import { APP_NAME, APP_DESCRIPTION } from "@/lib/branding";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -9,8 +11,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "SheepCount",
-  description: "SheepCount",
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
 };
 
 const geistSans = Geist({
@@ -33,7 +35,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <TenantProvider>{children}</TenantProvider>
         </ThemeProvider>
       </body>
     </html>

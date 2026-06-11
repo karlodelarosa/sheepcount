@@ -1,19 +1,11 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+const mockNotes = [
+  { id: 1, title: "Today I created a Supabase project." },
+  { id: 2, title: "I added some data and queried it from Next.js." },
+  { id: 3, title: "It was awesome!" },
+];
 
 export default function Page() {
-  const [notes, setNotes] = useState<any[] | null>(null);
-  const supabase = createClient();
-
-  useEffect(() => {
-    const getData = async () => {
-      const { data } = await supabase.from("notes").select();
-      setNotes(data);
-    };
-    getData();
-  }, []);
-
-  return <pre>{JSON.stringify(notes, null, 2)}</pre>;
+  return <pre>{JSON.stringify(mockNotes, null, 2)}</pre>;
 }

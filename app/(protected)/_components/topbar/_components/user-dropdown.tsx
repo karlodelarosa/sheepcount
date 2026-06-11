@@ -17,25 +17,18 @@ import {
 import { useTenant } from "@/app/providers/tenant-provider";
 import { getInitials } from "@/app/helpers";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 const UserDropdown = () => {
-  const { user, tenant } = useTenant();
+  const { user, tenant, logout } = useTenant();
   const router = useRouter();
 
   if (!tenant) return null;
 
   const { profile } = tenant;
 
-  const logout = async () => {
-    try {
-      const supabase = createClient();
-      await supabase.auth.signOut();
-      localStorage.removeItem("tenant-data"); // remove cached tenant info
-      router.replace("/auth/login"); // redirect to login
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+  const handleLogout = () => {
+    logout();
+    router.replace("/auth/login");
   };
 
   return (
@@ -43,23 +36,20 @@ const UserDropdown = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center gap-3 px-3 py-2 h-auto rounded-xl hover:bg-muted"
+          className="flex items-center gap-2 px-2 py-1 h-8 rounded-lg hover:bg-muted"
         >
-          <Avatar className="w-9 h-9 border-2 border-border">
+          <Avatar className="w-6 h-6 border border-border">
             <AvatarImage src="" />
             <AvatarInitial
               initials={getInitials(profile.first_name, profile.last_name)}
             />
           </Avatar>
-          <div className="text-left hidden md:block">
-            <p className="text-foreground">
+          <div className="text-left hidden md:block leading-tight">
+            <p className="text-foreground text-xs">
               {profile.first_name} {profile.last_name}
             </p>
-            <p className="text-muted-foreground font-black">
-              {tenant.tenant.name}
-            </p>
           </div>
-          <ChevronDown className="w-4 h-4 text-muted-foreground hidden md:block" />
+          <ChevronDown className="w-3 h-3 text-muted-foreground hidden md:block" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -89,7 +79,7 @@ const UserDropdown = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400 rounded-lg"
-          onClick={logout}
+          onClick={handleLogout}
         >
           <LogOut className="w-4 h-4 mr-2" />
           <span>Logout</span>

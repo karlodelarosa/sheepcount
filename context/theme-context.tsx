@@ -19,7 +19,7 @@ interface ThemeContextType {
 const defaultSettings: ThemeSettings = {
   mode: "system",
   accentColor: "#030213",
-  organizationName: "OrgTrack",
+  organizationName: "Grace Community Church",
   organizationLogo: null,
 };
 
