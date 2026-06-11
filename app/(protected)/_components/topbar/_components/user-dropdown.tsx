@@ -22,13 +22,20 @@ const UserDropdown = () => {
   const { user, tenant, logout } = useTenant();
   const router = useRouter();
 
-  if (!tenant) return null;
+  if (!user) return null;
 
-  const { profile } = tenant;
+  const profile = tenant?.profile;
+  const firstName = profile?.first_name ?? user.email.split("@")[0] ?? "User";
+  const lastName = profile?.last_name ?? "";
+  const displayName = [firstName, lastName].filter(Boolean).join(" ");
+  const initials = profile
+    ? getInitials(profile.first_name, profile.last_name)
+    : (user.email[0]?.toUpperCase() ?? "U");
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.replace("/auth/login");
+    router.refresh();
   };
 
   return (
@@ -40,14 +47,10 @@ const UserDropdown = () => {
         >
           <Avatar className="w-6 h-6 border border-border">
             <AvatarImage src="" />
-            <AvatarInitial
-              initials={getInitials(profile.first_name, profile.last_name)}
-            />
+            <AvatarInitial initials={initials} />
           </Avatar>
           <div className="text-left hidden md:block leading-tight">
-            <p className="text-foreground text-xs">
-              {profile.first_name} {profile.last_name}
-            </p>
+            <p className="text-foreground text-xs">{displayName}</p>
           </div>
           <ChevronDown className="w-3 h-3 text-muted-foreground hidden md:block" />
         </Button>
@@ -58,9 +61,7 @@ const UserDropdown = () => {
       >
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-foreground">
-              {profile.first_name} {profile.last_name}
-            </p>
+            <p className="text-foreground">{displayName}</p>
             <p className="text-muted-foreground">{user?.email}</p>
           </div>
         </DropdownMenuLabel>
@@ -72,7 +73,10 @@ const UserDropdown = () => {
           <User className="w-4 h-4 mr-2" />
           <span>Profile</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer rounded-lg">
+        <DropdownMenuItem
+          className="cursor-pointer rounded-lg"
+          onClick={() => router.push("/settings")}
+        >
           <Settings className="w-4 h-4 mr-2" />
           <span>Settings</span>
         </DropdownMenuItem>

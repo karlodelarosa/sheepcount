@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { PageLoader } from "@/components/page-loader";
 
 interface ThemeSettings {
   mode: "light" | "dark" | "system";
@@ -34,7 +35,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem("theme-settings");
     if (stored) {
-      setSettings(JSON.parse(stored));
+      try {
+        setSettings({ ...defaultSettings, ...JSON.parse(stored) });
+      } catch {
+        localStorage.removeItem("theme-settings");
+      }
     }
     setMounted(true);
   }, []);
@@ -79,7 +84,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  if (!mounted) return null; // prevent flash of wrong theme
+  if (!mounted) {
+    return <PageLoader message="Loading workspace..." fullScreen />;
+  }
 
   return (
     <ThemeContext.Provider value={{ settings, updateSettings, toggleMode, resolvedMode }}>

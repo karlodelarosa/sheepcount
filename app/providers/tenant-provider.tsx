@@ -1,61 +1,103 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { TenantMembership } from "@/components/login-form";
 import {
-  clearLocalSession,
-  mockTenantMembership,
-  mockUser,
-  seedLocalSession,
-} from "@/lib/mock-auth";
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { createClient } from "@/lib/supabase/client";
+import {
+  fetchTenantMembership,
+  toAuthUser,
+} from "@/lib/supabase/tenant";
+import type { AuthUser, TenantMembership } from "@/lib/types/tenant";
 
 type TenantContextType = {
-  user: typeof mockUser | null;
+  user: AuthUser | null;
   tenant: TenantMembership | null;
-  setTenant: (tenant: TenantMembership) => void;
-  setUser: (user: typeof mockUser) => void;
-  logout: () => void;
+  isLoading: boolean;
+  refreshSession: () => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 const TenantContext = createContext<TenantContextType>({
   user: null,
   tenant: null,
-  setTenant: () => {},
-  setUser: () => {},
-  logout: () => {},
+  isLoading: true,
+  refreshSession: async () => {},
+  logout: async () => {},
 });
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<typeof mockUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [tenant, setTenant] = useState<TenantMembership | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const supabase = useMemo(() => createClient(), []);
 
-  useEffect(() => {
-    const storedTenant = localStorage.getItem("tenant-data");
-    const storedUser = localStorage.getItem("mock-user");
+  const loadSession = useCallback(async () => {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
 
-    if (storedTenant && storedUser) {
-      setTenant(JSON.parse(storedTenant));
-      setUser(JSON.parse(storedUser));
+    if (!authUser) {
+      setUser(null);
+      setTenant(null);
       return;
     }
 
-    const session = seedLocalSession();
-    setUser(session.user);
-    setTenant(session.tenant);
-  }, []);
+    setUser(toAuthUser(authUser));
 
-  const logout = () => {
-    clearLocalSession();
+    let membership = await fetchTenantMembership(supabase, authUser.id);
+
+    if (!membership) {
+      const organizationName = authUser.user_metadata?.organization_name as
+        | string
+        | undefined;
+
+      if (organizationName) {
+        await supabase.rpc("setup_organization", {
+          org_name: organizationName,
+        });
+        membership = await fetchTenantMembership(supabase, authUser.id);
+      }
+    }
+
+    setTenant(membership);
+  }, [supabase]);
+
+  const refreshSession = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await loadSession();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadSession]);
+
+  useEffect(() => {
+    refreshSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      refreshSession();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [refreshSession, supabase]);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setUser(null);
     setTenant(null);
-    const session = seedLocalSession();
-    setUser(session.user);
-    setTenant(session.tenant);
-  };
+  }, [supabase]);
 
   return (
     <TenantContext.Provider
-      value={{ user, tenant, setTenant, setUser, logout }}
+      value={{ user, tenant, isLoading, refreshSession, logout }}
     >
       {children}
     </TenantContext.Provider>

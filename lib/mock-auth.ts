@@ -1,4 +1,4 @@
-import type { TenantMembership } from "@/components/login-form";
+import type { TenantMembership } from "@/lib/types/tenant";
 import { DEMO_EMAIL, DEMO_ORG_NAME, DEMO_TENANT_SLUG } from "@/lib/branding";
 
 export const mockUser = {

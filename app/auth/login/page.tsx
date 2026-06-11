@@ -3,18 +3,22 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { LoginForm } from "@/components/login-form";
+import { PageLoader } from "@/components/page-loader";
 
 export default function Page() {
-  const { user } = useTenant();
+  const { user, isLoading } = useTenant();
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
-      router.replace("/"); // redirect if already logged in
+    if (!isLoading && user) {
+      router.replace("/dashboard");
     }
-  }, [user, router]);
+  }, [user, isLoading, router]);
 
-  // Show nothing (or a loader) while checking session
+  if (isLoading) {
+    return <PageLoader message="Checking session..." fullScreen />;
+  }
+
   if (user) return null;
 
   return (

@@ -14,67 +14,27 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { useTenant } from "@/app/providers/tenant-provider";
-import { seedLocalSession } from "@/lib/mock-auth";
-import { DEMO_EMAIL } from "@/lib/branding";
 import { AppBrand } from "@/components/app-brand";
 
-type ProfileRole = "admin" | "member";
-type AccountStatus = "active" | "inactive";
-
-type Organization = {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  image: string;
-  created_at: string;
-  updated_at: string;
-};
-
-type Subscription = {
-  provider: string;
-  plan: string;
-  status: string;
-  current_period_start: string;
-  current_period_end: string;
-  cancel_at_period_end: boolean;
-};
-
-export type TenantMembership = {
-  id: string;
-  user_id: string;
-  status: string;
-  tenant: {
-    id: string;
-    name: string;
-    slug: string;
-    plan: string;
-    status: AccountStatus;
-    organizations: Organization[];
-  };
-  profile: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    role: ProfileRole;
-    avatar_url: string;
-    created_at?: string;
-  };
-  subscription: Subscription;
-  organizations?: Organization[];
-};
+export type {
+  TenantMembership,
+  Organization,
+  Subscription,
+} from "@/lib/types/tenant";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [email, setEmail] = useState(DEMO_EMAIL);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { setTenant, setUser } = useTenant();
+  const { refreshSession } = useTenant();
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,10 +42,18 @@ export function LoginForm({
     setError(null);
 
     try {
-      const { user, tenant } = seedLocalSession(email);
-      setUser(user);
-      setTenant(tenant);
-      router.push("/");
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      await refreshSession();
+      router.push("/dashboard");
+      router.refresh();
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -98,7 +66,7 @@ export function LoginForm({
       className={cn(
         "flex flex-col gap-6",
         "bg-background text-foreground",
-        className
+        className,
       )}
       {...props}
     >
@@ -107,7 +75,7 @@ export function LoginForm({
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Sign in</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Demo mode — any credentials will sign you in
+            Sign in to your organization account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -139,6 +107,7 @@ export function LoginForm({
                 <Input
                   id="password"
                   type="password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100"
