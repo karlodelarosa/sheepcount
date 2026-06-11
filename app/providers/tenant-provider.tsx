@@ -19,7 +19,7 @@ type TenantContextType = {
   user: AuthUser | null;
   tenant: TenantMembership | null;
   isLoading: boolean;
-  refreshSession: () => Promise<void>;
+  refreshSession: () => Promise<TenantMembership | null>;
   logout: () => Promise<void>;
 };
 
@@ -27,7 +27,7 @@ const TenantContext = createContext<TenantContextType>({
   user: null,
   tenant: null,
   isLoading: true,
-  refreshSession: async () => {},
+  refreshSession: async () => null,
   logout: async () => {},
 });
 
@@ -37,7 +37,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const supabase = useMemo(() => createClient(), []);
 
-  const loadSession = useCallback(async () => {
+  const loadSession = useCallback(async (): Promise<TenantMembership | null> => {
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
@@ -45,7 +45,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     if (!authUser) {
       setUser(null);
       setTenant(null);
-      return;
+      return null;
     }
 
     setUser(toAuthUser(authUser));
@@ -58,36 +58,59 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         | undefined;
 
       if (organizationName) {
-        await supabase.rpc("setup_organization", {
+        const { error } = await supabase.rpc("setup_organization", {
           org_name: organizationName,
         });
-        membership = await fetchTenantMembership(supabase, authUser.id);
+
+        if (!error) {
+          membership = await fetchTenantMembership(supabase, authUser.id);
+        }
       }
     }
 
     setTenant(membership);
+    return membership;
   }, [supabase]);
 
   const refreshSession = useCallback(async () => {
     setIsLoading(true);
     try {
-      await loadSession();
+      return await loadSession();
     } finally {
       setIsLoading(false);
     }
   }, [loadSession]);
 
   useEffect(() => {
-    refreshSession();
+    let mounted = true;
+
+    const init = async () => {
+      setIsLoading(true);
+      try {
+        await loadSession();
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+
+    void init();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      refreshSession();
+    } = supabase.auth.onAuthStateChange(event => {
+      if (event === "INITIAL_SESSION") return;
+
+      // Defer to avoid Supabase auth deadlocks when calling getUser inside the handler.
+      setTimeout(() => {
+        void loadSession();
+      }, 0);
     });
 
-    return () => subscription.unsubscribe();
-  }, [refreshSession, supabase]);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [loadSession, supabase]);
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();

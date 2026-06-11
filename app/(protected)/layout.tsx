@@ -2,6 +2,7 @@ import { TopBar } from "./_components/topbar";
 import { ThemeProvider } from "@/context/theme-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Sidebar } from "./_components/sidebar";
+import { Toaster } from "@/components/ui/toast";
 import { PeopleProvider } from "@/lib/people";
 
 export default function ProtectedLayout({
@@ -25,6 +26,7 @@ export default function ProtectedLayout({
             </main>
           </div>
         </div>
+        <Toaster richColors position="top-right" />
       </SidebarProvider>
     </ThemeProvider>
   );

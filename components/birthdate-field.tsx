@@ -179,7 +179,7 @@ export function BirthdateField({
             >
               <SelectValue placeholder="Month" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-60" position="popper">
               {MONTHS.map(m => (
                 <SelectItem key={m.value} value={m.value}>
                   {m.label}
@@ -208,7 +208,7 @@ export function BirthdateField({
             >
               <SelectValue placeholder="Day" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-60" position="popper">
               {dayOptions.map(d => (
                 <SelectItem key={d} value={d}>
                   {d}

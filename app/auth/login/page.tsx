@@ -1,19 +1,17 @@
 "use client";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { LoginForm } from "@/components/login-form";
 import { PageLoader } from "@/components/page-loader";
 
 export default function Page() {
   const { user, isLoading } = useTenant();
-  const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/dashboard");
+      window.location.replace("/dashboard");
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading]);
 
   if (isLoading) {
     return <PageLoader message="Checking session..." fullScreen />;

@@ -33,17 +33,28 @@ import {
   Save,
   Users,
   MapPin,
+  Trash2,
+  MoreHorizontal,
+  UserX,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown/index";
 import { useRouter } from "next/navigation";
 import {
   mockLifeGroupMembers,
   mockLifeGroups,
   mockAttendance,
 } from "@/components/mock-data";
-import { usePeople } from "@/lib/people";
+import { usePeople, type UpdatePersonInput } from "@/lib/people";
 import { PromoteMemberDialog } from "../_components/promote-member-dialog";
 import { AssignMinistryDialog } from "../_components/assign-ministry-dialog";
 import { AssignHouseholdDialog } from "../_components/assign-household-dialog";
+import { ConfirmPersonDialog } from "../_components/confirm-person-dialog";
 import { BirthdateField } from "@/components/birthdate-field";
 
 interface PersonDetailsProps {
@@ -61,10 +72,12 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
     getHouseholdMembers,
     isInFamilyHousehold,
     updatePerson,
+    deletePerson,
     promoteToMember,
     assignToMinistry,
     assignToHousehold,
     removeFromHousehold,
+    isSaving,
     ministries,
     households,
   } = usePeople();
@@ -73,6 +86,13 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
   const [promoteOpen, setPromoteOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [householdOpen, setHouseholdOpen] = useState(false);
+  const [confirmEditOpen, setConfirmEditOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmInactiveOpen, setConfirmInactiveOpen] = useState(false);
+  const [confirmActivateOpen, setConfirmActivateOpen] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState<UpdatePersonInput | null>(
+    null,
+  );
   const [editRole, setEditRole] = useState("");
   const [editStatus, setEditStatus] = useState("");
   const [editIsProspect, setEditIsProspect] = useState(false);
@@ -159,8 +179,10 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
   const handleUpdate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    updatePerson(personId, {
-      name: formData.get("name") as string,
+    setPendingUpdate({
+      firstName: formData.get("firstName") as string,
+      middleName: (formData.get("middleName") as string) || "",
+      lastName: formData.get("lastName") as string,
       phone: formData.get("phone") as string,
       birthdate: formData.get("birthdate") as string,
       email: (formData.get("email") as string) || "",
@@ -168,7 +190,35 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
       status: editStatus as "Active" | "Inactive" | "Exited",
       isProspect: editIsProspect,
     });
-    setIsEditing(false);
+    setConfirmEditOpen(true);
+  };
+
+  const handleConfirmEdit = async () => {
+    if (!pendingUpdate) return;
+    const updated = await updatePerson(personId, pendingUpdate);
+    if (updated) {
+      setConfirmEditOpen(false);
+      setPendingUpdate(null);
+      setIsEditing(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    const deleted = await deletePerson(personId);
+    if (deleted) {
+      setConfirmDeleteOpen(false);
+      onBack();
+    }
+  };
+
+  const handleConfirmInactive = async () => {
+    const updated = await updatePerson(personId, { status: "Inactive" });
+    if (updated) setConfirmInactiveOpen(false);
+  };
+
+  const handleConfirmActivate = async () => {
+    const updated = await updatePerson(personId, { status: "Active" });
+    if (updated) setConfirmActivateOpen(false);
   };
 
   const canPromote =
@@ -179,51 +229,27 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4 min-w-0">
           <Button
             variant="outline"
             size="icon"
             onClick={onBack}
-            className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:text-white dark:hover:bg-zinc-700"
+            className="shrink-0 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:text-white dark:hover:bg-zinc-700"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <div>
-            <h1 className="text-slate-900 dark:text-white">Person Details</h1>
+          <div className="min-w-0">
+            <h1 className="text-slate-900 dark:text-white truncate">
+              {person.name}
+            </h1>
             <p className="text-slate-600 dark:text-zinc-400">
-              View and manage person information
+              {person.role} • {person.membershipType}
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {canPromote && person.membershipType !== "Member" && (
-            <Button
-              variant="outline"
-              onClick={() => setPromoteOpen(true)}
-              className="rounded-xl"
-            >
-              <UserCheck className="w-4 h-4 mr-2" />
-              Promote to Member
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={() => setHouseholdOpen(true)}
-            className="rounded-xl"
-          >
-            <Home className="w-4 h-4 mr-2" />
-            {inFamilyHousehold ? "Change Household" : "Assign to Household"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setAssignOpen(true)}
-            className="rounded-xl"
-          >
-            <Award className="w-4 h-4 mr-2" />
-            Assign to Ministry
-          </Button>
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             onClick={() => (isEditing ? setIsEditing(false) : startEditing())}
             className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700"
@@ -231,15 +257,93 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
             {isEditing ? (
               <>
                 <X className="w-4 h-4 mr-2" />
-                Cancel Edit
+                Cancel
               </>
             ) : (
               <>
                 <Pencil className="w-4 h-4 mr-2" />
-                Edit Details
+                Edit
               </>
             )}
           </Button>
+
+          {!isEditing && (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-xl border-slate-200 dark:border-zinc-700"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                  <span className="sr-only">More actions</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 rounded-xl border-slate-200/60 dark:border-zinc-700/60"
+              >
+                {canPromote && person.membershipType !== "Member" && (
+                  <DropdownMenuItem
+                    className="cursor-pointer rounded-lg"
+                    onClick={() => setPromoteOpen(true)}
+                  >
+                    <UserCheck className="w-4 h-4 mr-2" />
+                    Promote to Member
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  className="cursor-pointer rounded-lg"
+                  onClick={() => setHouseholdOpen(true)}
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  {inFamilyHousehold
+                    ? "Change Household"
+                    : "Assign to Household"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer rounded-lg"
+                  onClick={() => setAssignOpen(true)}
+                >
+                  <Award className="w-4 h-4 mr-2" />
+                  Assign to Ministry
+                </DropdownMenuItem>
+
+                {(person.status === "Active" || person.status === "Inactive") && (
+                  <>
+                    <DropdownMenuSeparator />
+                    {person.status === "Active" && (
+                      <DropdownMenuItem
+                        className="cursor-pointer rounded-lg"
+                        onClick={() => setConfirmInactiveOpen(true)}
+                      >
+                        <UserX className="w-4 h-4 mr-2" />
+                        Mark as Inactive
+                      </DropdownMenuItem>
+                    )}
+                    {person.status === "Inactive" && (
+                      <DropdownMenuItem
+                        className="cursor-pointer rounded-lg"
+                        onClick={() => setConfirmActivateOpen(true)}
+                      >
+                        <UserCheck className="w-4 h-4 mr-2" />
+                        Mark as Active
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400 rounded-lg"
+                  onClick={() => setConfirmDeleteOpen(true)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Person
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -287,12 +391,36 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
               <form onSubmit={handleUpdate} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="firstName">First Name</Label>
                     <Input
-                      id="name"
-                      name="name"
-                      defaultValue={person.name}
+                      id="firstName"
+                      name="firstName"
+                      defaultValue={person.firstName}
                       required
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      defaultValue={person.lastName}
+                      required
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="col-span-2 grid gap-2">
+                    <Label htmlFor="middleName">
+                      Middle Name{" "}
+                      <span className="text-muted-foreground font-normal">
+                        (optional)
+                      </span>
+                    </Label>
+                    <Input
+                      id="middleName"
+                      name="middleName"
+                      defaultValue={person.middleName}
                       className="rounded-xl"
                     />
                   </div>
@@ -365,6 +493,7 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                 <div className="flex justify-end">
                   <Button
                     type="submit"
+                    disabled={isSaving}
                     className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
                   >
                     <Save className="w-4 h-4 mr-2" />
@@ -670,9 +799,47 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         onOpenChange={setPromoteOpen}
         personName={person.name}
         onConfirm={() => {
-          promoteToMember(personId);
-          setPromoteOpen(false);
+          void promoteToMember(personId).then(() => setPromoteOpen(false));
         }}
+      />
+
+      <ConfirmPersonDialog
+        open={confirmEditOpen}
+        onOpenChange={open => {
+          setConfirmEditOpen(open);
+          if (!open) setPendingUpdate(null);
+        }}
+        variant="edit"
+        personName={person.name}
+        onConfirm={handleConfirmEdit}
+        isLoading={isSaving}
+      />
+
+      <ConfirmPersonDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        variant="delete"
+        personName={person.name}
+        onConfirm={handleConfirmDelete}
+        isLoading={isSaving}
+      />
+
+      <ConfirmPersonDialog
+        open={confirmInactiveOpen}
+        onOpenChange={setConfirmInactiveOpen}
+        variant="inactive"
+        personName={person.name}
+        onConfirm={handleConfirmInactive}
+        isLoading={isSaving}
+      />
+
+      <ConfirmPersonDialog
+        open={confirmActivateOpen}
+        onOpenChange={setConfirmActivateOpen}
+        variant="activate"
+        personName={person.name}
+        onConfirm={handleConfirmActivate}
+        isLoading={isSaving}
       />
 
       <AssignMinistryDialog

@@ -18,6 +18,17 @@ import { useTenant } from "@/app/providers/tenant-provider";
 import { getInitials } from "@/app/helpers";
 import { useRouter } from "next/navigation";
 
+function getDisplayName(
+  firstName: string | undefined,
+  lastName: string | undefined,
+  email: string,
+) {
+  const fullName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(" ");
+  if (fullName) return fullName;
+  const emailLocal = email.split("@")[0]?.trim();
+  return emailLocal || "User";
+}
+
 const UserDropdown = () => {
   const { user, tenant, logout } = useTenant();
   const router = useRouter();
@@ -25,12 +36,14 @@ const UserDropdown = () => {
   if (!user) return null;
 
   const profile = tenant?.profile;
-  const firstName = profile?.first_name ?? user.email.split("@")[0] ?? "User";
-  const lastName = profile?.last_name ?? "";
-  const displayName = [firstName, lastName].filter(Boolean).join(" ");
-  const initials = profile
+  const displayName = getDisplayName(
+    profile?.first_name,
+    profile?.last_name,
+    user.email,
+  );
+  const initials = profile?.first_name?.trim() || profile?.last_name?.trim()
     ? getInitials(profile.first_name, profile.last_name)
-    : (user.email[0]?.toUpperCase() ?? "U");
+    : (displayName.charAt(0).toUpperCase() || "U");
 
   const handleLogout = async () => {
     await logout();
@@ -46,13 +59,13 @@ const UserDropdown = () => {
           className="flex items-center gap-2 px-2 py-1 h-8 rounded-lg hover:bg-muted"
         >
           <Avatar className="w-6 h-6 border border-border">
-            <AvatarImage src="" />
+            <AvatarImage src={profile?.avatar_url || ""} />
             <AvatarInitial initials={initials} />
           </Avatar>
-          <div className="text-left hidden md:block leading-tight">
-            <p className="text-foreground text-xs">{displayName}</p>
+          <div className="text-left leading-tight max-w-[140px]">
+            <p className="text-foreground text-xs truncate">{displayName}</p>
           </div>
-          <ChevronDown className="w-3 h-3 text-muted-foreground hidden md:block" />
+          <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -62,7 +75,7 @@ const UserDropdown = () => {
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-foreground">{displayName}</p>
-            <p className="text-muted-foreground">{user?.email}</p>
+            <p className="text-muted-foreground text-sm">{user.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

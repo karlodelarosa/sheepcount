@@ -70,8 +70,7 @@ export function SignUpForm({
           throw setupError;
         }
 
-        router.push("/dashboard");
-        router.refresh();
+        window.location.assign("/dashboard");
         return;
       }
 

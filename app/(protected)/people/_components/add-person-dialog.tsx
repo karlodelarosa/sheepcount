@@ -32,14 +32,15 @@ export function AddPersonDialog({
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     onAdd({
-      name: formData.get("name") as string,
+      firstName: formData.get("firstName") as string,
+      middleName: (formData.get("middleName") as string) || undefined,
+      lastName: formData.get("lastName") as string,
       phone: formData.get("phone") as string,
       birthdate: formData.get("birthdate") as string,
       isProspect,
     });
     e.currentTarget.reset();
     setIsProspect(false);
-    onOpenChange(false);
   };
 
   return (
@@ -54,13 +55,40 @@ export function AddPersonDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  placeholder="John"
+                  required
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  placeholder="Doe"
+                  required
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="middleName">
+                Middle Name{" "}
+                <span className="text-muted-foreground font-normal">
+                  (optional)
+                </span>
+              </Label>
               <Input
-                id="name"
-                name="name"
-                placeholder="John Doe"
-                required
+                id="middleName"
+                name="middleName"
+                placeholder="Michael"
                 className="rounded-xl"
               />
             </div>

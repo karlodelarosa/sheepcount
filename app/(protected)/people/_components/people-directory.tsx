@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -29,14 +30,18 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Plus, Search } from "lucide-react";
-import { usePeople, PEOPLE_PAGE_SIZE } from "@/lib/people";
+import { formatPersonName } from "@/lib/person-name";
+import { usePeople, PEOPLE_PAGE_SIZE, type AddPersonInput } from "@/lib/people";
 import { AddPersonDialog } from "./add-person-dialog";
+import { ConfirmPersonDialog } from "./confirm-person-dialog";
 
 export function PeopleDirectory() {
   const router = useRouter();
-  const { people, hydrated, addPerson } = usePeople();
+  const { people, hydrated, isSaving, addPerson } = usePeople();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [confirmAddOpen, setConfirmAddOpen] = useState(false);
+  const [pendingAdd, setPendingAdd] = useState<AddPersonInput | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const filteredPeople = useMemo(
@@ -85,6 +90,23 @@ export function PeopleDirectory() {
         return "bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300";
       default:
         return "bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
+    }
+  };
+
+  const handleAddRequest = (input: AddPersonInput) => {
+    setPendingAdd(input);
+    setIsAddDialogOpen(false);
+    // Defer confirm dialog until add dialog teardown completes (Radix layer bug).
+    requestAnimationFrame(() => setConfirmAddOpen(true));
+  };
+
+  const handleConfirmAdd = async () => {
+    if (!pendingAdd) return;
+    const person = await addPerson(pendingAdd);
+    if (person) {
+      setConfirmAddOpen(false);
+      setPendingAdd(null);
+      setIsAddDialogOpen(false);
     }
   };
 
@@ -167,6 +189,15 @@ export function PeopleDirectory() {
                       key={person.id}
                       className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-slate-900 dark:text-white transition-colors"
                       onClick={() => router.push(`/people/${person.id}`)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          router.push(`/people/${person.id}`);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="link"
+                      aria-label={`View ${person.name}`}
                     >
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
@@ -211,13 +242,15 @@ export function PeopleDirectory() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            router.push(`/people/${person.id}`);
-                          }}
+                          asChild
                           className="rounded-lg text-slate-900 hover:bg-slate-100 dark:text-white dark:hover:bg-zinc-700/70"
                         >
-                          View Details
+                          <Link
+                            href={`/people/${person.id}`}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            View Details
+                          </Link>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -288,7 +321,27 @@ export function PeopleDirectory() {
       <AddPersonDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onAdd={addPerson}
+        onAdd={handleAddRequest}
+      />
+
+      <ConfirmPersonDialog
+        open={confirmAddOpen}
+        onOpenChange={open => {
+          setConfirmAddOpen(open);
+          if (!open) setPendingAdd(null);
+        }}
+        variant="add"
+        personName={
+          pendingAdd
+            ? formatPersonName({
+                firstName: pendingAdd.firstName,
+                middleName: pendingAdd.middleName,
+                lastName: pendingAdd.lastName,
+              })
+            : ""
+        }
+        onConfirm={handleConfirmAdd}
+        isLoading={isSaving}
       />
     </div>
   );

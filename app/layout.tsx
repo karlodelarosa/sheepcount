@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { TenantProvider } from "@/app/providers/tenant-provider";
+import { ModalInteractionGuard } from "@/components/modal-interaction-guard";
 import { APP_NAME, APP_DESCRIPTION } from "@/lib/branding";
 import "./globals.css";
 
@@ -35,7 +36,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TenantProvider>{children}</TenantProvider>
+          <TenantProvider>
+            <ModalInteractionGuard />
+            {children}
+          </TenantProvider>
         </ThemeProvider>
       </body>
     </html>
