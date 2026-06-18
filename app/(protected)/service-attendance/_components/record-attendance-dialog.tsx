@@ -47,7 +47,11 @@ interface RecordAttendanceDialogProps {
   children?: React.ReactNode;
   serviceTypes: ServiceType[];
   people: Person[];
-  onRecordAttendance: (record: NewAttendanceRecord) => void;
+  onRecordAttendance: (
+    record: NewAttendanceRecord,
+  ) => void | Promise<void> | Promise<boolean>;
+  defaultServiceId?: string;
+  isSaving?: boolean;
   // optional controlled props
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -58,6 +62,8 @@ export function RecordAttendanceDialog({
   serviceTypes,
   people,
   onRecordAttendance,
+  defaultServiceId,
+  isSaving = false,
   open,
   onOpenChange,
 }: RecordAttendanceDialogProps) {
@@ -74,13 +80,16 @@ export function RecordAttendanceDialog({
   const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Auto select first service when loaded
   useEffect(() => {
-    if (serviceTypes?.length && !selectedServiceId) {
-      setSelectedServiceId(serviceTypes[0].id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serviceTypes]);
+    if (!serviceTypes?.length) return;
+
+    const preferred =
+      defaultServiceId && serviceTypes.some((s) => s.id === defaultServiceId)
+        ? defaultServiceId
+        : serviceTypes[0].id;
+
+    setSelectedServiceId(preferred);
+  }, [serviceTypes, defaultServiceId, isOpen]);
 
   const togglePerson = (personId: string) => {
     setSelectedPersonIds((prev) =>
@@ -88,21 +97,20 @@ export function RecordAttendanceDialog({
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedServiceId || !attendanceDate || selectedPersonIds.length === 0) {
-      console.error("Missing data");
       return;
     }
 
-    onRecordAttendance({
-      id: crypto?.randomUUID ? crypto.randomUUID() : `${selectedServiceId}-${attendanceDate}`,
+    const result = await onRecordAttendance({
       serviceId: selectedServiceId,
       date: attendanceDate,
       personIds: selectedPersonIds,
     });
 
-    // Reset + close
+    if (result === false) return;
+
     setSelectedPersonIds([]);
     setSearchTerm("");
     setIsOpen(false);
@@ -224,8 +232,12 @@ export function RecordAttendanceDialog({
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={!selectedPersonIds.length}>
-              <Plus className="w-4 h-4 mr-1" /> Save
+            <Button
+              type="submit"
+              disabled={!selectedPersonIds.length || isSaving}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              {isSaving ? "Saving…" : "Save"}
             </Button>
           </DialogFooter>
         </form>

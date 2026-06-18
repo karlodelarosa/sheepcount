@@ -23,29 +23,32 @@ import {
 import { usePeople } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
 
-interface LifeGroupDetailsProps {
+interface CellGroupDetailsProps {
   groupId: string;
   onBack: () => void;
 }
 
-export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
+const MAX_CELL_SIZE = 4;
+
+export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
   const { people } = usePeople();
   const {
-    lifeGroups,
-    lifeGroupMembers,
+    cellGroups,
+    cellGroupMembers,
     hydrated,
     isSaving,
-    assignLifeGroupMember,
-    removeLifeGroupMemberById,
+    assignCellGroupMember,
+    removeCellGroupMemberById,
   } = useGroupsMinistry();
   const [searchTerm, setSearchTerm] = useState("");
   const [newPersonId, setNewPersonId] = useState("");
+  const [newRole, setNewRole] = useState<"Leader" | "Member">("Member");
 
-  const group = lifeGroups.find(g => g.id === groupId);
+  const group = cellGroups.find(g => g.id === groupId);
 
   const memberships = useMemo(
-    () => lifeGroupMembers.filter(m => m.lifeGroupId === groupId),
-    [lifeGroupMembers, groupId],
+    () => cellGroupMembers.filter(m => m.cellGroupId === groupId),
+    [cellGroupMembers, groupId],
   );
 
   const members = useMemo(
@@ -57,26 +60,38 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
     [memberships, people],
   );
 
+  const peopleInOtherCells = useMemo(
+    () => new Set(cellGroupMembers.map(m => m.personId)),
+    [cellGroupMembers],
+  );
+
   const availablePeople = useMemo(
     () =>
       people.filter(
-        person => !memberships.some(m => m.personId === person.id),
+        person =>
+          !memberships.some(m => m.personId === person.id) &&
+          !peopleInOtherCells.has(person.id),
       ),
-    [people, memberships],
+    [people, memberships, peopleInOtherCells],
   );
 
   const filteredMembers = members.filter(member =>
     member.person?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  const atCapacity = members.length >= MAX_CELL_SIZE;
+
   const handleAddMember = async () => {
-    if (!newPersonId) return;
-    const result = await assignLifeGroupMember(groupId, newPersonId);
-    if (result) setNewPersonId("");
+    if (!newPersonId || atCapacity) return;
+    const result = await assignCellGroupMember(groupId, newPersonId, newRole);
+    if (result) {
+      setNewPersonId("");
+      setNewRole("Member");
+    }
   };
 
   const handleRemoveMember = async (membershipId: string) => {
-    await removeLifeGroupMemberById(membershipId);
+    await removeCellGroupMemberById(membershipId);
   };
 
   const DualModePrimaryButtonClass =
@@ -91,7 +106,7 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
   if (!hydrated) {
     return (
       <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading life group...
+        Loading cell group...
       </div>
     );
   }
@@ -100,21 +115,11 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
     return (
       <div className="space-y-6 p-6">
         <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onBack}
-            className="rounded-xl"
-          >
+          <Button variant="outline" size="icon" onClick={onBack} className="rounded-xl">
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-slate-900 dark:text-white">Group Not Found</h1>
         </div>
-        <Card>
-          <CardContent className="p-8 text-center text-slate-500 dark:text-zinc-400">
-            The requested life group could not be found.
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -134,12 +139,12 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
           <div>
             <h1 className="text-slate-900 dark:text-white">{group.name}</h1>
             <p className="text-slate-600 dark:text-zinc-400">
-              {group.description}
+              {group.description || "Small group Bible study and accountability"}
             </p>
           </div>
         </div>
         <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
-          {group.category}
+          {members.length}/{MAX_CELL_SIZE} members
         </Badge>
       </div>
 
@@ -147,17 +152,16 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
         <Card className="lg:col-span-1 border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 h-fit">
           <CardHeader>
             <CardTitle className="text-slate-900 dark:text-white">
-              Add New Member
+              Add Member
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-zinc-400">
-              Select a person to add to this life group.
+              Cell groups are kept small (3–4 people). A person can only belong
+              to one cell group at a time.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-slate-700 dark:text-zinc-300">
-                Select Person
-              </Label>
+              <Label>Select Person</Label>
               <Select value={newPersonId} onValueChange={setNewPersonId}>
                 <SelectTrigger className={DualModeInputClass}>
                   <SelectValue placeholder="Choose a person" />
@@ -171,13 +175,28 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select
+                value={newRole}
+                onValueChange={v => setNewRole(v as "Leader" | "Member")}
+              >
+                <SelectTrigger className={DualModeInputClass}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Leader">Leader</SelectItem>
+                  <SelectItem value="Member">Member</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               onClick={() => void handleAddMember()}
-              disabled={!newPersonId || isSaving}
+              disabled={!newPersonId || atCapacity || isSaving}
               className={`w-full ${DualModePrimaryButtonClass}`}
             >
               <UserPlus className="w-4 h-4 mr-2" />
-              Add to Group
+              {atCapacity ? "Group Full" : "Add to Cell Group"}
             </Button>
           </CardContent>
         </Card>
@@ -187,10 +206,10 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg text-slate-900 dark:text-white flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Current Members ({members.length})
+                Members ({members.length})
               </CardTitle>
               <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   placeholder="Search members..."
                   value={searchTerm}
@@ -200,25 +219,22 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
               </div>
             </div>
           </CardHeader>
-
           <CardContent className="p-0">
             <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60">
               {filteredMembers.length === 0 ? (
                 <div className="p-8 text-center text-slate-500 dark:text-zinc-500">
-                  {searchTerm
-                    ? "No members found matching your search."
-                    : "No members have been assigned yet."}
+                  No members yet.
                 </div>
               ) : (
-                <div className="divide-y divide-slate-200/60 dark:divide-zinc-700/60 max-h-[60vh] overflow-y-auto">
+                <div className="divide-y divide-slate-200/60 dark:divide-zinc-700/60">
                   {filteredMembers.map(member => (
                     <div
                       key={member.id}
-                      className="p-4 flex items-center justify-between transition-colors hover:bg-slate-50 dark:hover:bg-zinc-700/50"
+                      className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-zinc-700/50"
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-10 h-10 rounded-xl bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center shadow-sm`}
+                          className={`w-10 h-10 rounded-xl bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center`}
                         >
                           <span className="text-white">
                             {member.person?.name.charAt(0)}
@@ -234,19 +250,15 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge
-                          variant="secondary"
-                          className={DualModeSecondaryBadgeClass}
-                        >
-                          Joined{" "}
-                          {new Date(member.joinedDate).toLocaleDateString()}
+                        <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
+                          {member.role}
                         </Badge>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => void handleRemoveMember(member.id)}
                           disabled={isSaving}
-                          className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/50"
+                          className="text-red-600 hover:text-red-700"
                         >
                           <X className="w-4 h-4" />
                         </Button>

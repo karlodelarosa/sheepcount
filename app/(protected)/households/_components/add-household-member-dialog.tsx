@@ -19,6 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
+import { usePeople } from "@/lib/people";
+import type { MembershipType } from "@/lib/people";
 
 interface AddHouseholdMemberDialogProps {
   open: boolean;
@@ -33,19 +36,42 @@ export function AddHouseholdMemberDialog({
   householdId,
   householdName,
 }: AddHouseholdMemberDialogProps) {
+  const { addPersonToHousehold, isSaving } = usePeople();
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     role: "",
-    age: "",
     email: "",
     phone: "",
+    birthdate: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const resetForm = () => {
+    setFormData({
+      firstName: "",
+      lastName: "",
+      role: "",
+      email: "",
+      phone: "",
+      birthdate: "",
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Adding member to household:", householdId, formData);
-    onOpenChange(false);
-    setFormData({ name: "", role: "", age: "", email: "", phone: "" });
+    const person = await addPersonToHousehold(householdId, {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phone: formData.phone || undefined,
+      email: formData.email || undefined,
+      birthdate: formData.birthdate || undefined,
+      role: formData.role || "Single",
+      membershipType: "Member" as MembershipType,
+    });
+    if (person) {
+      onOpenChange(false);
+      resetForm();
+    }
   };
 
   return (
@@ -54,23 +80,40 @@ export function AddHouseholdMemberDialog({
         <DialogHeader>
           <DialogTitle>Add Household Member</DialogTitle>
           <DialogDescription>
-            Add a new member to {householdName}
+            Add a new church member to {householdName}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="member-name">Full Name</Label>
-              <Input
-                id="member-name"
-                placeholder="Enter full name"
-                value={formData.name}
-                onChange={e =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="rounded-lg"
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="first-name">First Name</Label>
+                <Input
+                  id="first-name"
+                  placeholder="First name"
+                  value={formData.firstName}
+                  onChange={e =>
+                    setFormData({ ...formData, firstName: e.target.value })
+                  }
+                  className="rounded-lg"
+                  required
+                  disabled={isSaving}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="last-name">Last Name</Label>
+                <Input
+                  id="last-name"
+                  placeholder="Last name"
+                  value={formData.lastName}
+                  onChange={e =>
+                    setFormData({ ...formData, lastName: e.target.value })
+                  }
+                  className="rounded-lg"
+                  required
+                  disabled={isSaving}
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -81,6 +124,7 @@ export function AddHouseholdMemberDialog({
                   onValueChange={value =>
                     setFormData({ ...formData, role: value })
                   }
+                  disabled={isSaving}
                 >
                   <SelectTrigger className="rounded-lg">
                     <SelectValue placeholder="Select role" />
@@ -89,22 +133,23 @@ export function AddHouseholdMemberDialog({
                     <SelectItem value="Head">Head</SelectItem>
                     <SelectItem value="Spouse">Spouse</SelectItem>
                     <SelectItem value="Child">Child</SelectItem>
+                    <SelectItem value="Single">Single</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="age">Age</Label>
+                <Label htmlFor="birthdate">Birthdate</Label>
                 <Input
-                  id="age"
-                  type="number"
-                  placeholder="Age"
-                  value={formData.age}
+                  id="birthdate"
+                  type="date"
+                  value={formData.birthdate}
                   onChange={e =>
-                    setFormData({ ...formData, age: e.target.value })
+                    setFormData({ ...formData, birthdate: e.target.value })
                   }
                   className="rounded-lg"
+                  disabled={isSaving}
                 />
               </div>
             </div>
@@ -120,6 +165,7 @@ export function AddHouseholdMemberDialog({
                   setFormData({ ...formData, email: e.target.value })
                 }
                 className="rounded-lg"
+                disabled={isSaving}
               />
             </div>
 
@@ -134,6 +180,7 @@ export function AddHouseholdMemberDialog({
                   setFormData({ ...formData, phone: e.target.value })
                 }
                 className="rounded-lg"
+                disabled={isSaving}
               />
             </div>
           </div>
@@ -143,14 +190,23 @@ export function AddHouseholdMemberDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               className="rounded-lg"
+              disabled={isSaving}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               className="rounded-lg bg-slate-900 hover:bg-slate-800"
+              disabled={isSaving || !formData.role}
             >
-              Add Member
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                "Add Member"
+              )}
             </Button>
           </DialogFooter>
         </form>

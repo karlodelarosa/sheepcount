@@ -1,297 +1,517 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Users, Clock, ChevronRight, Plus, Search } from "lucide-react";
-import { mockServiceTypes, mockServiceAttendance, mockPeople } from "@/components/mock-data";
-import { RecordAttendanceDialog, NewAttendanceRecord } from "./_components/record-attendance-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Calendar,
+  Users,
+  ChevronRight,
+  Plus,
+  Search,
+  Church,
+  UsersRound,
+  LayoutDashboard,
+} from "lucide-react";
+import { usePeople } from "@/lib/people";
+import { useServiceAttendance } from "@/lib/service-attendance";
+import { buildSessionPath } from "@/lib/supabase/service-attendance";
+import { getMembershipDisplayLabel } from "@/lib/membership-path";
+import {
+  RecordAttendanceDialog,
+  NewAttendanceRecord,
+} from "./_components/record-attendance-dialog";
+import {
+  groupAttendanceBySession,
+  getSundayStats,
+  getDataDateBounds,
+  isSundayRecord,
+  type GroupedAttendanceRecord,
+  type DateRangeValue,
+} from "./_lib/group-attendance";
+import { AttendanceDashboardTab } from "./_components/attendance-dashboard-tab";
+import { StatCard } from "./_components/stat-card";
 
+function formatLongDate(date: string) {
+  return new Date(date).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function toGroupedRows(
+  rows: ReturnType<typeof useServiceAttendance>["attendanceRows"],
+) {
+  return groupAttendanceBySession(
+    rows.map((r) => ({
+      id: r.id,
+      serviceId: r.serviceId,
+      date: r.date,
+      personId: r.personId,
+      serviceType: r.serviceType,
+      serviceCategory: r.serviceCategory,
+    })),
+  );
+}
+
+function AttendanceRecordCard({
+  record,
+  isSelected,
+  onSelect,
+  compact = false,
+}: {
+  record: GroupedAttendanceRecord;
+  isSelected?: boolean;
+  onSelect?: () => void;
+  compact?: boolean;
+}) {
+  const sunday = isSundayRecord(record);
+
+  return (
+    <Card
+      className={`
+        border transition-all duration-150
+        ${sunday ? "border-violet-200/60 dark:border-violet-800/40 bg-violet-50/30 dark:bg-violet-950/10" : "border-border/60 bg-card/50"}
+        ${onSelect ? "cursor-pointer hover:shadow-md" : ""}
+        ${isSelected ? "ring-2 ring-violet-500 shadow-md" : ""}
+      `}
+      onClick={onSelect}
+    >
+      <CardContent className={compact ? "p-2.5" : "p-3"}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              className={`${compact ? "w-8 h-8" : "w-9 h-9"} rounded-lg flex items-center justify-center shrink-0 ${
+                sunday
+                  ? "bg-violet-500 text-white"
+                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">{record.serviceType}</p>
+              <p className="text-[11px] text-muted-foreground truncate">
+                {formatLongDate(record.date)}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Badge variant="outline" className="gap-1 text-[10px] h-5 px-1.5">
+              <Users className="w-3 h-3" />
+              {record.attendees.length}
+            </Badge>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AttendanceDetailsPanel({
+  record,
+  people,
+  onOpenFullView,
+}: {
+  record: GroupedAttendanceRecord;
+  people: ReturnType<typeof usePeople>["people"];
+  onOpenFullView: () => void;
+}) {
+  const attendees = record.attendees
+    .map((id) => people.find((p) => p.id === id))
+    .filter(Boolean);
+  const evangelismCount = attendees.filter(
+    (p) => p?.membershipType === "For Evangelism",
+  ).length;
+
+  return (
+    <Card className="border-violet-200/60 dark:border-violet-800/40 bg-card/50">
+      <CardHeader className="py-3 px-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <CardTitle className="text-sm truncate">{record.serviceType}</CardTitle>
+            <CardDescription className="text-xs">
+              {formatLongDate(record.date)}
+            </CardDescription>
+          </div>
+          <Badge variant="outline" className="gap-1 text-[10px] shrink-0">
+            <Users className="w-3 h-3" />
+            {attendees.length}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="px-4 pb-4 pt-0 space-y-3">
+        {evangelismCount > 0 && (
+          <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-100">
+            {evangelismCount} for evangelism follow-up
+          </div>
+        )}
+
+        <div className="space-y-1.5 max-h-64 overflow-y-auto">
+          {attendees.map((person) => (
+            <div
+              key={person!.id}
+              className="flex items-center gap-2 p-2 rounded-lg border border-border/50 bg-background/50 text-sm"
+            >
+              <div className="w-7 h-7 rounded-md bg-violet-500 text-white flex items-center justify-center text-xs shrink-0">
+                {person!.name.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="truncate text-sm">{person!.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  {person!.householdName}
+                </p>
+              </div>
+              <Badge variant="outline" className="text-[10px] shrink-0">
+                {getMembershipDisplayLabel(
+                  person!.membershipType,
+                  person!.joinDate,
+                )}
+              </Badge>
+            </div>
+          ))}
+        </div>
+
+        <Button size="sm" className="w-full gap-1.5" onClick={onOpenFullView}>
+          <Users className="w-3.5 h-3.5" />
+          Open full view
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function getInitialDateRange(records: GroupedAttendanceRecord[]): DateRangeValue {
+  const bounds = getDataDateBounds(records);
+  if (bounds) return bounds;
+
+  const to = new Date().toISOString().split("T")[0];
+  const from = new Date();
+  from.setMonth(from.getMonth() - 3);
+  return { from: from.toISOString().split("T")[0], to };
+}
 
 export function ServiceAttendanceView() {
   const router = useRouter();
-  const [selectedService, setSelectedService] = useState<{ serviceId: string; date: string } | null>(null);
+  const { people, hydrated: peopleHydrated } = usePeople();
+  const {
+    attendanceRows,
+    sundayServiceTypes,
+    lifeGroupServiceTypes,
+    primarySundayServiceId,
+    hydrated,
+    isSaving,
+    recordAttendance,
+  } = useServiceAttendance();
+
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [selectedSunday, setSelectedSunday] = useState<{
+    serviceId: string;
+    date: string;
+  } | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [serviceAttendance, setServiceAttendance] = useState(
-    () => mockServiceAttendance.slice()
+
+  const attendanceRecords = useMemo(
+    () => toGroupedRows(attendanceRows),
+    [attendanceRows],
   );
 
-  // Group attendance by service type and date
-  const groupedAttendance = mockServiceAttendance.reduce((acc: any, record) => {
-    const key = `${record.serviceId}-${record.date}`;
-    if (!acc[key]) {
-      acc[key] = {
-        serviceId: record.serviceId,
-        serviceType: record.serviceType,
-        date: record.date,
-        attendees: []
-      };
-    }
-    acc[key].attendees.push(record.personId);
-    return acc;
-  }, {});
+  const dataBounds = useMemo(
+    () => getDataDateBounds(attendanceRecords),
+    [attendanceRecords],
+  );
 
-  const attendanceRecords = Object.values(groupedAttendance) as any[];
-  attendanceRecords.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const [dateRange, setDateRange] = useState<DateRangeValue>(() =>
+    getInitialDateRange([]),
+  );
+  const dateRangeSynced = useRef(false);
 
-  const selectedAttendance = selectedService
-    ? attendanceRecords.find(r => r.serviceId === selectedService.serviceId && r.date === selectedService.date)
+  useEffect(() => {
+    if (!hydrated || !dataBounds || dateRangeSynced.current) return;
+    setDateRange(dataBounds);
+    dateRangeSynced.current = true;
+  }, [hydrated, dataBounds]);
+
+  const sundayRecords = useMemo(
+    () => attendanceRecords.filter(isSundayRecord),
+    [attendanceRecords],
+  );
+
+  const otherRecords = useMemo(
+    () => attendanceRecords.filter((r) => !isSundayRecord(r)),
+    [attendanceRecords],
+  );
+
+  const sundayStats = useMemo(
+    () => getSundayStats(attendanceRecords),
+    [attendanceRecords],
+  );
+
+  const selectedSundayRecord = selectedSunday
+    ? sundayRecords.find(
+        (r) =>
+          r.serviceId === selectedSunday.serviceId &&
+          r.date === selectedSunday.date,
+      )
     : null;
 
-  const selectedAttendees = selectedAttendance
-    ? selectedAttendance.attendees.map((id: string) => mockPeople.find(p => p.id === id)).filter(Boolean)
-    : [];
+  const loading = !hydrated || !peopleHydrated;
 
-  // Count evangelism attendees
-  const evangelismCount = selectedAttendees.filter((p: any) => p.membershipType === "For Evangelism").length;
-
-  const handleRecordAttendance = (newRecord: NewAttendanceRecord) => {
-    // newRecord may include id (if created in dialog). If newRecord.id exists and it's a session-level id,
-    // we will convert to individual attendance entries (one per person)
-    // newRecord: { id?: string, serviceId, date, personIds }
-    const toInsert = newRecord.personIds.map((pid) => ({
-      id: newRecord.id ? `${newRecord.id}-${pid}` : `gen-${newRecord.serviceId}-${newRecord.date}-${pid}`,
+  const handleRecordAttendance = async (newRecord: NewAttendanceRecord) => {
+    const sessionId = await recordAttendance({
       serviceId: newRecord.serviceId,
       date: newRecord.date,
-      personId: pid,
-      serviceType:
-        mockServiceTypes.find((s) => s.id === newRecord.serviceId)?.name ||
-        newRecord.serviceId,
-    }));
-
-    setServiceAttendance((prev) => {
-      return [...toInsert, ...prev];
+      personIds: newRecord.personIds,
     });
 
-    // open the newly created session's detail page (use generated session id)
-    const sessionId = `${newRecord.serviceId}---${newRecord.date}`;
-    router.push(`/service-attendance/${sessionId}`);
+    if (!sessionId) return false;
+
+    router.push(
+      `/service-attendance/${buildSessionPath(newRecord.serviceId, newRecord.date)}`,
+    );
+    return true;
+  };
+
+  const openSession = (record: GroupedAttendanceRecord) => {
+    router.push(
+      `/service-attendance/${buildSessionPath(record.serviceId, record.date)}`,
+    );
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1>Service Attendance</h1>
-          <p className="text-muted-foreground">
-            Track attendance for different services and events
+          <h1 className="text-xl font-semibold">Service Attendance</h1>
+          <p className="text-sm text-muted-foreground">
+            Sunday worship and life group gatherings
           </p>
         </div>
-        <div className="flex flex-row gap-x-2">
-        <Button variant="outline" className="gap-2" onClick={() => router.push(`service-attendance/search`)}>
-          <Search className="w-4 h-4" />
-          Search
-        </Button>
-        <Button className="gap-2" onClick={() => setIsDialogOpen(true)}>
-          <Plus className="w-4 h-4" />
-          Record Attendance
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => router.push("/service-attendance/search")}
+          >
+            <Search className="w-3.5 h-3.5" />
+            Search
+          </Button>
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setIsDialogOpen(true)}
+            disabled={isSaving || loading}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Record
+          </Button>
         </div>
       </div>
 
-      {/* Service Types Overview */}
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-        {mockServiceTypes.map((service) => {
-          const serviceRecords = attendanceRecords.filter(r => r.serviceId === service.id);
-          const totalAttendance = serviceRecords.reduce((sum, r) => sum + r.attendees.length, 0);
-
-          return (
-            <Card key={service.id} className="border-border/60 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-foreground">{service.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-foreground">{serviceRecords.length}</div>
-                <p className="text-muted-foreground">Sessions recorded</p>
-                <p className="text-muted-foreground mt-1">{totalAttendance} total</p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Attendance Records */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4">
-          <h3>Recent Attendance Records</h3>
-          <div className="space-y-3">
-            {attendanceRecords.map((record) => {
-              const service = mockServiceTypes.find(s => s.id === record.serviceId);
-              const isSelected = selectedService?.serviceId === record.serviceId && selectedService?.date === record.date;
-
-              return (
-                <Card
-                  key={`${record.serviceId}-${record.date}`}
-                  className={`
-                    border-border/60 bg-card/50 backdrop-blur-sm cursor-pointer transition-all duration-200
-                    ${isSelected 
-                      ? 'ring-2 ring-foreground shadow-lg' 
-                      : 'hover:shadow-lg hover:border-border'
-                    }
-                  `}
-                  onClick={() => setSelectedService({ serviceId: record.serviceId, date: record.date })}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-${service?.color || 'blue'}-500 to-${service?.color || 'blue'}-700 flex items-center justify-center shadow-sm`}>
-                          <Calendar className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-foreground">{record.serviceType}</p>
-                          <p className="text-muted-foreground">{new Date(record.date).toLocaleDateString('en-US', { 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          })}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="gap-1">
-                          <Users className="w-3 h-3" />
-                          {record.attendees.length}
-                        </Badge>
-                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+      {loading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-9 w-80" />
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-20" />
+            ))}
           </div>
+          <Skeleton className="h-64" />
         </div>
+      ) : (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="h-8">
+            <TabsTrigger value="dashboard" className="gap-1 text-xs px-2.5">
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="sunday" className="gap-1 text-xs px-2.5">
+              <Church className="w-3.5 h-3.5" />
+              Sunday
+            </TabsTrigger>
+            <TabsTrigger value="other" className="gap-1 text-xs px-2.5">
+              <UsersRound className="w-3.5 h-3.5" />
+              Life Groups
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Detailed Attendance View */}
-        <div className="space-y-4">
-          <h3>Attendance Details</h3>
-          {selectedAttendance ? (
-            <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>{selectedAttendance.serviceType}</CardTitle>
-                    <CardDescription>
-                      {new Date(selectedAttendance.date).toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
-                    </CardDescription>
-                  </div>
-                  <Badge variant="outline" className="gap-1">
-                    <Users className="w-3 h-3" />
-                    {selectedAttendees.length} attendees
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {evangelismCount > 0 && (
-                  <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-blue-900 dark:text-blue-100">
-                        {evangelismCount} attendee{evangelismCount !== 1 ? 's' : ''} marked for evangelism follow-up
-                      </span>
-                    </div>
-                  </div>
-                )}
+          <TabsContent value="dashboard" className="mt-3">
+            <AttendanceDashboardTab
+              attendanceRecords={attendanceRecords}
+              rawAttendance={attendanceRows.map((r) => ({
+                id: r.id,
+                serviceId: r.serviceId,
+                date: r.date,
+                personId: r.personId,
+                serviceType: r.serviceType,
+                serviceCategory: r.serviceCategory,
+              }))}
+              people={people}
+              dateRange={dateRange}
+              onDateRangeChange={setDateRange}
+              dataBounds={dataBounds}
+            />
+          </TabsContent>
 
-                <div className="space-y-2">
-                  <h4 className="text-foreground">Attendees</h4>
+          <TabsContent value="sunday" className="space-y-4 mt-3">
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+              <StatCard
+                variant="violet"
+                label="Last Sunday"
+                value={sundayStats.lastSundayCount}
+                hint={
+                  sundayStats.lastSundayDate
+                    ? formatLongDate(sundayStats.lastSundayDate)
+                    : "No records"
+                }
+              />
+              <StatCard
+                variant="blue"
+                label="Sessions"
+                value={sundayStats.sessionCount}
+                hint="Recorded"
+              />
+              <StatCard
+                variant="emerald"
+                label="Average"
+                value={sundayStats.averageAttendance}
+                hint="Per Sunday"
+              />
+              <StatCard
+                variant="rose"
+                label="Total"
+                value={sundayStats.totalAttendance}
+                hint="All time"
+              />
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+                  Records
+                </h3>
+                {sundayRecords.length === 0 ? (
+                  <Card className="border-dashed">
+                    <CardContent className="p-8 text-center">
+                      <Church className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground mb-3">
+                        No Sunday attendance yet
+                      </p>
+                      <Button size="sm" onClick={() => setIsDialogOpen(true)}>
+                        Record attendance
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
                   <div className="space-y-2">
-                    {selectedAttendees.map((person: any) => (
-                      <div
-                        key={person.id}
-                        className="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-background/50"
-                      >
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 flex items-center justify-center shadow-sm">
-                          <span className="text-white dark:text-slate-900">{person.name.charAt(0)}</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-foreground">{person.name}</p>
-                          <p className="text-muted-foreground">{person.householdName}</p>
-                        </div>
-                        <div className="text-right">
-                          <Badge 
-                            variant={person.membershipType === "For Evangelism" ? "default" : "outline"}
-                            className={person.membershipType === "For Evangelism" ? "bg-blue-500" : ""}
-                          >
-                            {person.membershipType}
-                          </Badge>
-                        </div>
-                      </div>
+                    {sundayRecords.map((record) => (
+                      <AttendanceRecordCard
+                        key={`${record.serviceId}-${record.date}`}
+                        record={record}
+                        isSelected={
+                          selectedSunday?.serviceId === record.serviceId &&
+                          selectedSunday?.date === record.date
+                        }
+                        onSelect={() =>
+                          setSelectedSunday({
+                            serviceId: record.serviceId,
+                            date: record.date,
+                          })
+                        }
+                      />
                     ))}
                   </div>
-                </div>
+                )}
+              </div>
 
-                <div className="pt-3 border-t border-border/60 space-y-2">
-                  <Button className="w-full gap-2" onClick={() => {
-                    router.push(`/service-attendance/${selectedAttendance.serviceId}---${selectedAttendance.date}`)
-                  }}>
-                    <Users className="w-4 h-4" />
-                    Open full view
-                  </Button>
-                  <p className="text-muted-foreground text-center">
-                    Add visitors for evangelism follow-up
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Details</h3>
+                {selectedSundayRecord ? (
+                  <AttendanceDetailsPanel
+                    record={selectedSundayRecord}
+                    people={people}
+                    onOpenFullView={() => openSession(selectedSundayRecord)}
+                  />
+                ) : (
+                  <Card className="border-dashed">
+                    <CardContent className="p-8 text-center text-sm text-muted-foreground">
+                      Select a record to preview
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="other" className="mt-3">
+            <Card className="border-blue-200/50 dark:border-blue-800/40 bg-blue-50/20 dark:bg-blue-950/10">
+              <CardHeader className="py-3 px-4">
+                <CardTitle className="text-sm">Life groups &amp; other</CardTitle>
+                <CardDescription className="text-xs">
+                  Fellowships, Sunday school, prayer meetings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-4 pb-4 pt-0">
+                {otherRecords.length === 0 ? (
+                  <div className="text-center py-8">
+                    <UsersRound className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-3">
+                      No records yet
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(true)}
+                    >
+                      Record attendance
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {otherRecords.map((record) => (
+                      <AttendanceRecordCard
+                        key={`${record.serviceId}-${record.date}`}
+                        record={record}
+                        compact
+                        onSelect={() => openSession(record)}
+                      />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          ) : (
-            <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-              <CardContent className="p-12 text-center">
-                <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  Select an attendance record to view details
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Summary Statistics */}
-      <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Attendance Summary</CardTitle>
-          <CardDescription>Overall attendance statistics</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="p-4 rounded-xl border border-border/60 bg-background/50">
-              <p className="text-muted-foreground">Total Records</p>
-              <p className="text-foreground">{attendanceRecords.length} sessions</p>
-            </div>
-            <div className="p-4 rounded-xl border border-border/60 bg-background/50">
-              <p className="text-muted-foreground">Total Attendance</p>
-              <p className="text-foreground">
-                {attendanceRecords.reduce((sum, r) => sum + r.attendees.length, 0)} people
-              </p>
-            </div>
-            <div className="p-4 rounded-xl border border-border/60 bg-background/50">
-              <p className="text-muted-foreground">Average per Service</p>
-              <p className="text-foreground">
-                {Math.round(attendanceRecords.reduce((sum, r) => sum + r.attendees.length, 0) / attendanceRecords.length)} people
-              </p>
-            </div>
-            <div className="p-4 rounded-xl border border-border/60 bg-background/50">
-              <p className="text-muted-foreground">Evangelism Prospects</p>
-              <p className="text-foreground">
-                {mockPeople.filter(p => p.membershipType === "For Evangelism").length} people
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </TabsContent>
+        </Tabs>
+      )}
 
       <RecordAttendanceDialog
-        serviceTypes={mockServiceTypes}
-        people={mockPeople}
+        serviceTypes={(activeTab === "other"
+          ? lifeGroupServiceTypes
+          : sundayServiceTypes
+        ).map((s) => ({ id: s.id, name: s.name, color: "violet" }))}
+        defaultServiceId={
+          activeTab === "other"
+            ? lifeGroupServiceTypes[0]?.id
+            : primarySundayServiceId
+        }
+        people={people}
         onRecordAttendance={handleRecordAttendance}
+        isSaving={isSaving}
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
       />

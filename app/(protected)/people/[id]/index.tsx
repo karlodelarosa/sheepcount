@@ -4,9 +4,6 @@ import { useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +29,6 @@ import {
   X,
   Save,
   Users,
-  MapPin,
   Trash2,
   MoreHorizontal,
   UserX,
@@ -45,17 +41,30 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/index";
 import { useRouter } from "next/navigation";
-import {
-  mockLifeGroupMembers,
-  mockLifeGroups,
-  mockAttendance,
-} from "@/components/mock-data";
+import { mockAttendance } from "@/components/mock-data";
 import { usePeople, type UpdatePersonInput } from "@/lib/people";
+import { useGroupsMinistry } from "@/lib/groups-ministry";
+import {
+  getMembershipDisplayColor,
+  getMembershipDisplayLabel,
+  getNextMembershipPathType,
+  MEMBERSHIP_PATH_LABELS,
+} from "@/lib/membership-path";
 import { PromoteMemberDialog } from "../_components/promote-member-dialog";
 import { AssignMinistryDialog } from "../_components/assign-ministry-dialog";
 import { AssignHouseholdDialog } from "../_components/assign-household-dialog";
 import { ConfirmPersonDialog } from "../_components/confirm-person-dialog";
 import { BirthdateField } from "@/components/birthdate-field";
+import {
+  EmptyState,
+  InfoTile,
+  panelCard,
+  PersonAvatar,
+  SectionHeader,
+  StatTile,
+} from "../_components/person-detail-ui";
+import { PersonHouseholdSection } from "../_components/person-household-section";
+import { cn } from "@/lib/utils";
 
 interface PersonDetailsProps {
   personId: string;
@@ -67,20 +76,23 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
   const {
     hydrated,
     getPerson,
-    getPersonMinistries,
     getHousehold,
     getHouseholdMembers,
     isInFamilyHousehold,
     updatePerson,
     deletePerson,
-    promoteToMember,
-    assignToMinistry,
+    promoteAlongPath,
     assignToHousehold,
     removeFromHousehold,
     isSaving,
-    ministries,
     households,
   } = usePeople();
+  const {
+    getPersonMinistries,
+    getPersonLifeGroups,
+    workMinistries,
+    assignWorkMinistryMember,
+  } = useGroupsMinistry();
 
   const [isEditing, setIsEditing] = useState(false);
   const [promoteOpen, setPromoteOpen] = useState(false);
@@ -104,13 +116,9 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
     ? getHouseholdMembers(person.householdId, personId)
     : [];
   const inFamilyHousehold = person ? isInFamilyHousehold(person) : false;
+  const hasHousehold = !!(person?.householdId && household);
 
-  const lifeGroups = mockLifeGroupMembers
-    .filter(m => m.personId === personId)
-    .map(m => ({
-      ...m,
-      group: mockLifeGroups.find(g => g.id === m.lifeGroupId),
-    }));
+  const lifeGroups = getPersonLifeGroups(personId);
 
   const attendanceRecords = mockAttendance.filter(r => r.personId === personId);
   const totalAttended = attendanceRecords.length;
@@ -149,21 +157,6 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         return "bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300";
       case "Exited":
         return "bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-300";
-      default:
-        return "bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
-    }
-  };
-
-  const getMembershipColor = (type: string) => {
-    switch (type) {
-      case "Worker":
-        return "bg-purple-100 text-purple-700 dark:bg-purple-800 dark:text-purple-300";
-      case "Member":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-300";
-      case "Attender":
-        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-800 dark:text-emerald-300";
-      case "Prospect":
-        return "bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300";
       default:
         return "bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
     }
@@ -221,16 +214,14 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
     if (updated) setConfirmActivateOpen(false);
   };
 
-  const canPromote =
-    person.isProspect ||
-    person.membershipType === "Attender" ||
-    person.membershipType === "Prospect" ||
-    person.membershipType === "For Evangelism";
+  const nextMembershipStep = getNextMembershipPathType(person.membershipType);
+  const canPromote = nextMembershipStep !== null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Top bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="outline"
             size="icon"
@@ -240,12 +231,12 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="min-w-0">
-            <h1 className="text-slate-900 dark:text-white truncate">
+            <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-500">
+              Person Profile
+            </p>
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white truncate">
               {person.name}
             </h1>
-            <p className="text-slate-600 dark:text-zinc-400">
-              {person.role} • {person.membershipType}
-            </p>
           </div>
         </div>
 
@@ -283,13 +274,13 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                 align="end"
                 className="w-56 rounded-xl border-slate-200/60 dark:border-zinc-700/60"
               >
-                {canPromote && person.membershipType !== "Member" && (
+                {canPromote && nextMembershipStep && (
                   <DropdownMenuItem
                     className="cursor-pointer rounded-lg"
                     onClick={() => setPromoteOpen(true)}
                   >
                     <UserCheck className="w-4 h-4 mr-2" />
-                    Promote to Member
+                    Promote to {MEMBERSHIP_PATH_LABELS[nextMembershipStep]}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
@@ -299,7 +290,9 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                   <Home className="w-4 h-4 mr-2" />
                   {inFamilyHousehold
                     ? "Change Household"
-                    : "Assign to Household"}
+                    : hasHousehold
+                      ? "Join Family Household"
+                      : "Assign to Household"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer rounded-lg"
@@ -347,459 +340,352 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 md:col-span-2">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-700 to-indigo-500 dark:from-purple-700 dark:to-purple-500 flex items-center justify-center shadow-lg">
-                  <span className="text-white text-3xl">
-                    {person.name.charAt(0)}
-                  </span>
-                </div>
-                <div>
-                  <CardTitle className="text-2xl text-slate-900 dark:text-white">
-                    {person.name}
-                  </CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-zinc-400">
-                    {person.role} • {person.age} years old
-                  </CardDescription>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <Badge
-                      className={`rounded-lg ${getStatusColor(person.status)}`}
-                    >
-                      {person.status}
-                    </Badge>
-                    <Badge
-                      className={`rounded-lg ${getMembershipColor(person.membershipType)}`}
-                    >
-                      {person.membershipType}
-                    </Badge>
-                    {person.isProspect && (
-                      <Badge className="rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300">
-                        Prospect
-                      </Badge>
-                    )}
-                  </div>
-                </div>
+      {/* Profile hero */}
+      <div className={cn(panelCard, "overflow-hidden")}>
+        <div className="h-1.5 bg-gradient-to-r from-slate-700 via-slate-500 to-slate-400 dark:from-purple-700 dark:via-purple-600 dark:to-purple-500" />
+        <div className="p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+            <PersonAvatar name={person.name} size="lg" />
+            <div className="flex-1 min-w-0 space-y-3">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {person.name}
+                </h2>
+                <p className="text-slate-600 dark:text-zinc-400 mt-0.5">
+                  {person.role} · {person.age} years old
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Badge
+                  className={`rounded-lg ${getStatusColor(person.status)}`}
+                >
+                  {person.status}
+                </Badge>
+                <Badge
+                  className={`rounded-lg ${getMembershipDisplayColor(person.membershipType, person.joinDate)}`}
+                >
+                  {getMembershipDisplayLabel(
+                    person.membershipType,
+                    person.joinDate,
+                  )}
+                </Badge>
+                {person.isProspect && (
+                  <Badge className="rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300">
+                    Prospect
+                  </Badge>
+                )}
               </div>
             </div>
-          </CardHeader>
-
-          <CardContent>
-            {isEditing ? (
-              <form onSubmit={handleUpdate} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      defaultValue={person.firstName}
-                      required
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      defaultValue={person.lastName}
-                      required
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="col-span-2 grid gap-2">
-                    <Label htmlFor="middleName">
-                      Middle Name{" "}
-                      <span className="text-muted-foreground font-normal">
-                        (optional)
-                      </span>
-                    </Label>
-                    <Input
-                      id="middleName"
-                      name="middleName"
-                      defaultValue={person.middleName}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      defaultValue={person.phone}
-                      required
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <BirthdateField
-                      key={`${personId}-${isEditing}`}
-                      name="birthdate"
-                      defaultValue={person.birthdate}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      defaultValue={person.email}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select value={editRole} onValueChange={setEditRole}>
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Head">Head of Household</SelectItem>
-                        <SelectItem value="Spouse">Spouse</SelectItem>
-                        <SelectItem value="Child">Child</SelectItem>
-                        <SelectItem value="Single">Single</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select value={editStatus} onValueChange={setEditStatus}>
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                        <SelectItem value="Exited">Exited</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-center justify-between rounded-xl border border-slate-200/60 p-4 dark:border-zinc-700/60">
-                    <Label htmlFor="isProspect">Prospect</Label>
-                    <Switch
-                      id="isProspect"
-                      checked={editIsProspect}
-                      onCheckedChange={setEditIsProspect}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    disabled={isSaving}
-                    className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
-                    <div>
-                      <p className="text-slate-500 dark:text-zinc-500">Email</p>
-                      <p className="text-slate-900 dark:text-white">
-                        {person.email || "Not provided"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
-                    <div>
-                      <p className="text-slate-500 dark:text-zinc-500">Phone</p>
-                      <p className="text-slate-900 dark:text-white">
-                        {person.phone || "Not provided"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
-                    <div>
-                      <p className="text-slate-500 dark:text-zinc-500">
-                        Birthdate
-                      </p>
-                      <p className="text-slate-900 dark:text-white">
-                        {person.birthdate
-                          ? new Date(person.birthdate).toLocaleDateString()
-                          : "Not provided"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Home className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
-                    <div>
-                      <p className="text-slate-500 dark:text-zinc-500">
-                        Household
-                      </p>
-                      {inFamilyHousehold ? (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            router.push(`/households/${person.householdId}`)
-                          }
-                          className="text-slate-900 dark:text-white hover:underline text-left"
-                        >
-                          {person.householdName}
-                        </button>
-                      ) : (
-                        <p className="text-slate-900 dark:text-white">
-                          Not assigned
-                        </p>
-                      )}
-                      {inFamilyHousehold && (
-                        <p className="text-sm text-slate-500 dark:text-zinc-500">
-                          Role: {person.role}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
-                    <div>
-                      <p className="text-slate-500 dark:text-zinc-500">
-                        Join Date
-                      </p>
-                      <p className="text-slate-900 dark:text-white">
-                        {new Date(person.joinDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            {!isEditing && (
+              <div className="grid grid-cols-2 gap-2 sm:w-48 shrink-0">
+                <StatTile label="Ministries" value={ministriesList.length} />
+                <StatTile label="Life groups" value={lifeGroups.length} />
+                <StatTile label="Attendance" value={`${attendanceRate}%`} />
+                <StatTile label="Services" value={totalAttended} />
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-white">
-              Quick Stats
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500 dark:text-zinc-500">
-                Ministries
-              </span>
-              <span className="text-slate-900 dark:text-white">
-                {ministriesList.length}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500 dark:text-zinc-500">
-                Life Groups
-              </span>
-              <span className="text-slate-900 dark:text-white">
-                {lifeGroups.length}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500 dark:text-zinc-500">
-                Attendance Rate
-              </span>
-              <span className="text-slate-900 dark:text-white">
-                {attendanceRate}%
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500 dark:text-zinc-500">
-                Total Attended
-              </span>
-              <span className="text-slate-900 dark:text-white">
-                {totalAttended}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-slate-900 dark:text-white">
-                Household
-              </CardTitle>
-              <Users className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {!inFamilyHousehold ? (
-              <div className="text-center py-8">
-                <p className="text-slate-500 dark:text-zinc-500 mb-4">
-                  Not part of a family household
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setHouseholdOpen(true)}
-                  className="rounded-xl"
-                >
-                  <Home className="w-4 h-4 mr-2" />
-                  Assign to Household
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/60 dark:bg-zinc-700 dark:border-zinc-600/60">
-                  <div className="flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        router.push(`/households/${person.householdId}`)
-                      }
-                      className="text-slate-900 dark:text-white font-medium hover:underline"
-                    >
-                      {person.householdName}
-                    </button>
-                    <Badge variant="secondary" className="rounded-lg">
-                      {person.role}
-                    </Badge>
-                  </div>
-                  {household?.address && (
-                    <p className="text-slate-600 dark:text-zinc-400 mt-2 text-sm flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5" />
-                      {household.address}
-                    </p>
-                  )}
-                </div>
-
-                {householdMembers.length > 0 && (
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-zinc-500 mb-2">
-                      Family Members
-                    </p>
-                    <div className="space-y-2">
-                      {householdMembers.map(member => (
-                        <button
-                          key={member.id}
-                          type="button"
-                          onClick={() => router.push(`/people/${member.id}`)}
-                          className="w-full p-3 flex items-center justify-between bg-slate-50 rounded-xl border border-slate-200/60 hover:bg-slate-100 dark:bg-zinc-700 dark:border-zinc-600/60 dark:hover:bg-zinc-600/60 transition-colors text-left"
-                        >
-                          <span className="text-slate-900 dark:text-white">
-                            {member.name}
-                          </span>
-                          <Badge variant="secondary" className="rounded-lg">
-                            {member.role}
-                          </Badge>
-                        </button>
-                      ))}
+      {/* Main content */}
+      <div className="grid gap-5 lg:grid-cols-5">
+        <div className="lg:col-span-3 space-y-5">
+          <div className={cn(panelCard, "p-5")}>
+            <SectionHeader
+              icon={Mail}
+              title="Contact & Details"
+              description={
+                isEditing ? "Update profile information" : "How to reach them"
+              }
+            />
+            <div className="mt-4">
+              {isEditing ? (
+                <form onSubmit={handleUpdate} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        name="firstName"
+                        defaultValue={person.firstName}
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        name="lastName"
+                        defaultValue={person.lastName}
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div className="col-span-2 grid gap-2">
+                      <Label htmlFor="middleName">
+                        Middle Name{" "}
+                        <span className="text-muted-foreground font-normal">
+                          (optional)
+                        </span>
+                      </Label>
+                      <Input
+                        id="middleName"
+                        name="middleName"
+                        defaultValue={person.middleName}
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        defaultValue={person.phone}
+                        required
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <BirthdateField
+                        key={`${personId}-${isEditing}`}
+                        name="birthdate"
+                        defaultValue={person.birthdate}
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        defaultValue={person.email}
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="role">Role</Label>
+                      <Select value={editRole} onValueChange={setEditRole}>
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Head">Head of Household</SelectItem>
+                          <SelectItem value="Spouse">Spouse</SelectItem>
+                          <SelectItem value="Child">Child</SelectItem>
+                          <SelectItem value="Single">Single</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select value={editStatus} onValueChange={setEditStatus}>
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Inactive">Inactive</SelectItem>
+                          <SelectItem value="Exited">Exited</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-between rounded-xl border border-slate-200/60 p-4 dark:border-zinc-700/60">
+                      <Label htmlFor="isProspect">Prospect</Label>
+                      <Switch
+                        id="isProspect"
+                        checked={editIsProspect}
+                        onCheckedChange={setEditIsProspect}
+                      />
                     </div>
                   </div>
-                )}
+                  <div className="flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={isSaving}
+                      className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <InfoTile icon={Mail} label="Email">
+                    {person.email || (
+                      <span className="text-slate-400 font-normal">
+                        Not provided
+                      </span>
+                    )}
+                  </InfoTile>
+                  <InfoTile icon={Phone} label="Phone">
+                    {person.phone || (
+                      <span className="text-slate-400 font-normal">
+                        Not provided
+                      </span>
+                    )}
+                  </InfoTile>
+                  <InfoTile icon={Calendar} label="Birthdate">
+                    {person.birthdate
+                      ? new Date(person.birthdate).toLocaleDateString()
+                      : "Not provided"}
+                  </InfoTile>
+                  <InfoTile icon={Calendar} label="Join date">
+                    {new Date(person.joinDate).toLocaleDateString()}
+                  </InfoTile>
+                  <InfoTile
+                    icon={Home}
+                    label="Household"
+                    onClick={
+                      hasHousehold
+                        ? () => router.push(`/households/${person.householdId}`)
+                        : undefined
+                    }
+                  >
+                    {hasHousehold ? (
+                      <>
+                        {person.householdName || household?.name}
+                        <span className="block text-xs font-normal text-slate-500 dark:text-zinc-500 mt-0.5">
+                          {person.role}
+                          {!inFamilyHousehold && " · Solo household"}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-slate-400 font-normal">
+                        Not assigned
+                      </span>
+                    )}
+                  </InfoTile>
+                </div>
+              )}
+            </div>
+          </div>
 
+          {/* Ministry */}
+          <div className={cn(panelCard, "p-5")}>
+            <SectionHeader
+              icon={Award}
+              title="Ministry Assignments"
+              description={`${ministriesList.length} active assignment${ministriesList.length !== 1 ? "s" : ""}`}
+              action={
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setHouseholdOpen(true)}
-                  className="rounded-xl"
-                >
-                  Change Household
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-slate-900 dark:text-white">
-                Ministry Assignments
-              </CardTitle>
-              <Award className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            {ministriesList.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-slate-500 dark:text-zinc-500 mb-4">
-                  Not assigned to any ministries
-                </p>
-                <Button
-                  variant="outline"
+                  className="rounded-lg shrink-0"
                   onClick={() => setAssignOpen(true)}
-                  className="rounded-xl"
                 >
-                  <Award className="w-4 h-4 mr-2" />
-                  Assign to Ministry
+                  Assign
                 </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {ministriesList.map(assignment => (
-                  <div
-                    key={assignment.id}
-                    className="p-4 bg-slate-50 rounded-xl border border-slate-200/60 dark:bg-zinc-700 dark:border-zinc-600/60"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="text-slate-900 dark:text-white">
-                        {assignment.ministry?.name}
-                      </p>
-                      <Badge variant="secondary" className="rounded-lg">
+              }
+            />
+            <div className="mt-4">
+              {ministriesList.length === 0 ? (
+                <EmptyState
+                  icon={Award}
+                  title="No ministry assignments"
+                  description="Assign this person to a work ministry team."
+                  action={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAssignOpen(true)}
+                      className="rounded-xl"
+                    >
+                      Assign to Ministry
+                    </Button>
+                  }
+                />
+              ) : (
+                <div className="space-y-2">
+                  {ministriesList.map(assignment => (
+                    <div
+                      key={assignment.id}
+                      className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/40 dark:border-zinc-700/70 dark:bg-zinc-800/30"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-900 dark:text-white truncate">
+                          {assignment.ministry?.name}
+                        </p>
+                        {assignment.ministry?.description && (
+                          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5 line-clamp-1">
+                            {assignment.ministry.description}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant="secondary" className="rounded-lg shrink-0">
                         {assignment.role}
                       </Badge>
                     </div>
-                    <p className="text-slate-600 dark:text-zinc-400 mt-1 text-sm">
-                      {assignment.ministry?.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-        <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-white">
-              Life Groups
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {lifeGroups.length === 0 ? (
-              <p className="text-slate-500 dark:text-zinc-500 text-center py-8">
-                Not part of any life groups
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {lifeGroups.map(membership => (
-                  <div
-                    key={membership.id}
-                    className="p-4 bg-slate-50 rounded-xl border border-slate-200/60 dark:bg-zinc-700 dark:border-zinc-600/60"
-                  >
-                    <p className="text-slate-900 dark:text-white">
-                      {membership.group?.name}
-                    </p>
-                    <p className="text-slate-600 dark:text-zinc-400 mt-1 text-sm">
-                      {membership.group?.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-2 space-y-5">
+          <PersonHouseholdSection
+            person={person}
+            household={household}
+            householdMembers={householdMembers}
+            hasHousehold={hasHousehold}
+            inFamilyHousehold={inFamilyHousehold}
+            onAssignClick={() => setHouseholdOpen(true)}
+          />
+
+          <div className={cn(panelCard, "p-5")}>
+            <SectionHeader
+              icon={Users}
+              title="Life Groups"
+              description={`${lifeGroups.length} group${lifeGroups.length !== 1 ? "s" : ""}`}
+            />
+            <div className="mt-4">
+              {lifeGroups.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  title="No life groups"
+                  description="This person isn't enrolled in a life group yet."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {lifeGroups.map(membership => (
+                    <div
+                      key={membership.id}
+                      className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/40 dark:border-zinc-700/70 dark:bg-zinc-800/30"
+                    >
+                      <p className="font-medium text-slate-900 dark:text-white">
+                        {membership.group?.name}
+                      </p>
+                      {membership.group?.description && (
+                        <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
+                          {membership.group.description}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <PromoteMemberDialog
         open={promoteOpen}
         onOpenChange={setPromoteOpen}
         personName={person.name}
+        nextStepLabel={
+          nextMembershipStep
+            ? MEMBERSHIP_PATH_LABELS[nextMembershipStep]
+            : "Next step"
+        }
         onConfirm={() => {
-          void promoteToMember(personId).then(() => setPromoteOpen(false));
+          void promoteAlongPath(personId).then(() => setPromoteOpen(false));
         }}
       />
 
@@ -846,10 +732,10 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         open={assignOpen}
         onOpenChange={setAssignOpen}
         personName={person.name}
-        ministries={ministries}
+        ministries={workMinistries}
         assignedMinistryIds={ministriesList.map(a => a.ministryId)}
         onAssign={(ministryId, role) =>
-          assignToMinistry(personId, ministryId, role)
+          void assignWorkMinistryMember(personId, ministryId, role)
         }
       />
 
@@ -857,14 +743,19 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         open={householdOpen}
         onOpenChange={setHouseholdOpen}
         personName={person.name}
-        households={households}
-        currentHouseholdId={
-          inFamilyHousehold ? person.householdId : undefined
-        }
-        onAssign={(householdId, role) =>
-          assignToHousehold(personId, householdId, role)
-        }
-        onRemove={() => removeFromHousehold(personId)}
+        households={households.filter(
+          h =>
+            h.id !== person.householdId ||
+            inFamilyHousehold,
+        )}
+        currentHouseholdId={hasHousehold ? person.householdId : undefined}
+        canRemoveFromHousehold={inFamilyHousehold}
+        onAssign={async (householdId, role) => {
+          await assignToHousehold(personId, householdId, role);
+        }}
+        onRemove={async () => {
+          await removeFromHousehold(personId);
+        }}
       />
     </div>
   );

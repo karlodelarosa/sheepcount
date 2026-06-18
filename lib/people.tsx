@@ -9,16 +9,35 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
-import { mockMinistryAssignments, mockMinistries } from "@/components/mock-data";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
+import { evangelismStageForMembershipType, getNextMembershipPathType } from "@/lib/membership-path";
 import {
   createPerson as createPersonDb,
+  createPersonInHousehold as createPersonInHouseholdDb,
   deletePerson as deletePersonDb,
   fetchPeople,
   updatePerson as updatePersonDb,
 } from "@/lib/supabase/people";
+import {
+  createHousehold as createHouseholdDb,
+  setHouseholdHead as setHouseholdHeadDb,
+  updateHousehold as updateHouseholdDb,
+  type CreateHouseholdInput,
+  type UpdateHouseholdInput,
+} from "@/lib/supabase/households";
+import {
+  createOtherResident as createOtherResidentDb,
+  deleteOtherResident as deleteOtherResidentDb,
+  fetchOtherResidents,
+  updateOtherResident as updateOtherResidentDb,
+  type HouseholdOtherResident,
+  type OtherResidentInput,
+  type OtherResidentRelation,
+} from "@/lib/supabase/household-residents";
+
+export type { HouseholdOtherResident, OtherResidentRelation };
 
 export interface Household {
   id: string;
@@ -30,6 +49,7 @@ export interface Household {
 export type PersonStatus = "Active" | "Inactive" | "Exited";
 export type MembershipType =
   | "Worker"
+  | "Volunteer Worker"
   | "Member"
   | "Attender"
   | "For Evangelism"
@@ -75,9 +95,9 @@ export type AddPersonInput = {
   firstName: string;
   middleName?: string;
   lastName: string;
-  phone: string;
-  birthdate: string;
-  isProspect: boolean;
+  phone?: string;
+  birthdate?: string;
+  membershipType: MembershipType;
 };
 
 export type UpdatePersonInput = Partial<
@@ -107,29 +127,43 @@ type PeopleContextValue = {
   hydrated: boolean;
   organizationId: string | undefined;
   isSaving: boolean;
-  addPerson: (input: AddPersonInput) => Promise<Person | null>;
+  addPerson: (
+    input: AddPersonInput,
+    options?: { quiet?: boolean },
+  ) => Promise<Person | null>;
   updatePerson: (id: string, input: UpdatePersonInput) => Promise<Person | null>;
   deletePerson: (id: string) => Promise<boolean>;
-  promoteToMember: (id: string) => Promise<Person | null>;
-  assignToMinistry: (
-    personId: string,
-    ministryId: string,
-    role: string,
-  ) => MinistryAssignment;
+  promoteAlongPath: (id: string) => Promise<Person | null>;
   assignToHousehold: (
     personId: string,
     householdId: string,
     role: string,
   ) => Promise<Person | null>;
+  addHousehold: (input: CreateHouseholdInput) => Promise<Household | null>;
+  addPersonToHousehold: (
+    householdId: string,
+    input: AddPersonInput & { role?: string; email?: string },
+  ) => Promise<Person | null>;
+  updateHouseholdDetails: (
+    householdId: string,
+    input: UpdateHouseholdInput & { headPersonId?: string | null },
+  ) => Promise<Household | null>;
+  addOtherResident: (
+    householdId: string,
+    input: OtherResidentInput,
+  ) => Promise<HouseholdOtherResident | null>;
+  updateOtherResident: (
+    residentId: string,
+    input: Partial<OtherResidentInput>,
+  ) => Promise<HouseholdOtherResident | null>;
+  deleteOtherResident: (residentId: string) => Promise<boolean>;
   removeFromHousehold: (personId: string) => Promise<Person | null>;
   getPerson: (id: string) => Person | undefined;
-  getPersonMinistries: (
-    personId: string,
-  ) => (MinistryAssignment & { ministry?: (typeof mockMinistries)[number] })[];
   getHousehold: (householdId: string) => Household | undefined;
   getHouseholdMembers: (householdId: string, excludePersonId?: string) => Person[];
+  getOtherResidents: (householdId: string) => HouseholdOtherResident[];
+  getHouseholdHead: (householdId: string) => Person | undefined;
   isInFamilyHousehold: (person: Person) => boolean;
-  ministries: typeof mockMinistries;
   refreshPeople: () => Promise<void>;
 };
 
@@ -150,9 +184,9 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
 
   const [people, setPeople] = useState<Person[]>([]);
   const [households, setHouseholds] = useState<Household[]>([]);
-  const [ministryAssignments, setMinistryAssignments] = useState<
-    MinistryAssignment[]
-  >(mockMinistryAssignments.map(a => ({ ...a })));
+  const [otherResidents, setOtherResidents] = useState<HouseholdOtherResident[]>(
+    [],
+  );
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -160,14 +194,19 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
     if (!organizationId) {
       setPeople([]);
       setHouseholds([]);
+      setOtherResidents([]);
       setHydrated(!tenantLoading);
       return;
     }
 
     try {
-      const data = await fetchPeople(supabase, organizationId);
+      const [data, residents] = await Promise.all([
+        fetchPeople(supabase, organizationId),
+        fetchOtherResidents(supabase, organizationId),
+      ]);
       setPeople(data.people);
       setHouseholds(data.households);
+      setOtherResidents(residents);
     } catch (error) {
       toast.error("Failed to load people", {
         description: getErrorMessage(error),
@@ -183,7 +222,10 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
   }, [refreshPeople, tenantLoading]);
 
   const addPerson = useCallback(
-    async (input: AddPersonInput): Promise<Person | null> => {
+    async (
+      input: AddPersonInput,
+      options?: { quiet?: boolean },
+    ): Promise<Person | null> => {
       let orgId = organizationId;
       if (!orgId) {
         const membership = await refreshSession();
@@ -200,9 +242,11 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
       try {
         const person = await createPersonDb(supabase, orgId, input);
         await refreshPeople();
-        toast.success("Person added", {
-          description: `${person.name} was added to your directory.`,
-        });
+        if (!options?.quiet) {
+          toast.success("Person added", {
+            description: `${person.name} was added to your directory.`,
+          });
+        }
         return person;
       } catch (error) {
         toast.error("Failed to add person", {
@@ -306,31 +350,27 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
     [organizationId, people, refreshPeople, refreshSession, supabase],
   );
 
-  const promoteToMember = useCallback(
+  const promoteAlongPath = useCallback(
     async (id: string): Promise<Person | null> => {
+      const person = people.find(p => p.id === id);
+      if (!person) {
+        toast.error("Person not found");
+        return null;
+      }
+
+      const nextType = getNextMembershipPathType(person.membershipType);
+      if (!nextType) {
+        toast.error("Already at the highest step on the journey");
+        return null;
+      }
+
       return updatePerson(id, {
         isProspect: false,
-        membershipType: "Member",
-        evangelismStage: "Discipleship",
+        membershipType: nextType,
+        evangelismStage: evangelismStageForMembershipType(nextType),
       });
     },
-    [updatePerson],
-  );
-
-  const assignToMinistry = useCallback(
-    (personId: string, ministryId: string, role: string) => {
-      const assignment: MinistryAssignment = {
-        id: `ma-${Date.now()}`,
-        personId,
-        ministryId,
-        role,
-        assignedDate: new Date().toISOString().split("T")[0],
-      };
-      setMinistryAssignments(prev => [...prev, assignment]);
-      toast.success("Assigned to ministry");
-      return assignment;
-    },
-    [],
+    [people, updatePerson],
   );
 
   const assignToHousehold = useCallback(
@@ -352,6 +392,256 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
       });
     },
     [households, updatePerson],
+  );
+
+  const addHousehold = useCallback(
+    async (input: CreateHouseholdInput): Promise<Household | null> => {
+      let orgId = organizationId;
+      if (!orgId) {
+        const membership = await refreshSession();
+        orgId = getOrganizationId(membership);
+      }
+      if (!orgId) {
+        toast.error("No organization found", {
+          description: "Your account is not linked to an organization yet.",
+        });
+        return null;
+      }
+
+      setIsSaving(true);
+      try {
+        const household = await createHouseholdDb(supabase, orgId, input);
+        await refreshPeople();
+        toast.success("Household created", {
+          description: `${household.name} was added.`,
+        });
+        return household;
+      } catch (error) {
+        toast.error("Failed to create household", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshPeople, refreshSession, supabase],
+  );
+
+  const addPersonToHousehold = useCallback(
+    async (
+      householdId: string,
+      input: AddPersonInput & { role?: string; email?: string },
+    ): Promise<Person | null> => {
+      let orgId = organizationId;
+      if (!orgId) {
+        const membership = await refreshSession();
+        orgId = getOrganizationId(membership);
+      }
+      if (!orgId) {
+        toast.error("No organization found", {
+          description: "Your account is not linked to an organization yet.",
+        });
+        return null;
+      }
+
+      const household = households.find(h => h.id === householdId);
+      if (!household) {
+        toast.error("Household not found");
+        return null;
+      }
+
+      setIsSaving(true);
+      try {
+        const person = await createPersonInHouseholdDb(supabase, orgId, {
+          ...input,
+          householdId,
+        });
+        await refreshPeople();
+        toast.success("Member added", {
+          description: `${person.name} was added to ${household.name}.`,
+        });
+        return person;
+      } catch (error) {
+        toast.error("Failed to add member", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [households, organizationId, refreshPeople, refreshSession, supabase],
+  );
+
+  const updateHouseholdDetails = useCallback(
+    async (
+      householdId: string,
+      input: UpdateHouseholdInput & { headPersonId?: string | null },
+    ): Promise<Household | null> => {
+      let orgId = organizationId;
+      if (!orgId) {
+        const membership = await refreshSession();
+        orgId = getOrganizationId(membership);
+      }
+      if (!orgId) {
+        toast.error("No organization found");
+        return null;
+      }
+
+      setIsSaving(true);
+      try {
+        let household: Household | null =
+          households.find(h => h.id === householdId) ?? null;
+
+        if (input.name !== undefined || input.address !== undefined) {
+          const { headPersonId: _, ...householdInput } = input;
+          household = await updateHouseholdDb(
+            supabase,
+            orgId,
+            householdId,
+            householdInput,
+          );
+        }
+
+        if (input.headPersonId) {
+          await setHouseholdHeadDb(
+            supabase,
+            orgId,
+            householdId,
+            input.headPersonId,
+          );
+        }
+
+        await refreshPeople();
+        toast.success("Household updated");
+        return (
+          household ??
+          households.find(h => h.id === householdId) ??
+          null
+        );
+      } catch (error) {
+        toast.error("Failed to update household", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [
+      households,
+      organizationId,
+      refreshPeople,
+      refreshSession,
+      supabase,
+    ],
+  );
+
+  const addOtherResident = useCallback(
+    async (
+      householdId: string,
+      input: OtherResidentInput,
+    ): Promise<HouseholdOtherResident | null> => {
+      let orgId = organizationId;
+      if (!orgId) {
+        const membership = await refreshSession();
+        orgId = getOrganizationId(membership);
+      }
+      if (!orgId) {
+        toast.error("No organization found");
+        return null;
+      }
+
+      setIsSaving(true);
+      try {
+        const resident = await createOtherResidentDb(
+          supabase,
+          orgId,
+          householdId,
+          input,
+        );
+        await refreshPeople();
+        toast.success("Resident added");
+        return resident;
+      } catch (error) {
+        toast.error("Failed to add resident", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshPeople, refreshSession, supabase],
+  );
+
+  const updateOtherResident = useCallback(
+    async (
+      residentId: string,
+      input: Partial<OtherResidentInput>,
+    ): Promise<HouseholdOtherResident | null> => {
+      let orgId = organizationId;
+      if (!orgId) {
+        const membership = await refreshSession();
+        orgId = getOrganizationId(membership);
+      }
+      if (!orgId) {
+        toast.error("No organization found");
+        return null;
+      }
+
+      setIsSaving(true);
+      try {
+        const resident = await updateOtherResidentDb(
+          supabase,
+          orgId,
+          residentId,
+          input,
+        );
+        await refreshPeople();
+        toast.success("Resident updated");
+        return resident;
+      } catch (error) {
+        toast.error("Failed to update resident", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshPeople, refreshSession, supabase],
+  );
+
+  const deleteOtherResident = useCallback(
+    async (residentId: string): Promise<boolean> => {
+      let orgId = organizationId;
+      if (!orgId) {
+        const membership = await refreshSession();
+        orgId = getOrganizationId(membership);
+      }
+      if (!orgId) {
+        toast.error("No organization found");
+        return false;
+      }
+
+      setIsSaving(true);
+      try {
+        await deleteOtherResidentDb(supabase, orgId, residentId);
+        await refreshPeople();
+        toast.success("Resident removed");
+        return true;
+      } catch (error) {
+        toast.error("Failed to remove resident", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshPeople, refreshSession, supabase],
   );
 
   const removeFromHousehold = useCallback(
@@ -404,17 +694,6 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
     [people],
   );
 
-  const getPersonMinistries = useCallback(
-    (personId: string) =>
-      ministryAssignments
-        .filter(a => a.personId === personId)
-        .map(a => ({
-          ...a,
-          ministry: mockMinistries.find(m => m.id === a.ministryId),
-        })),
-    [ministryAssignments],
-  );
-
   const getHousehold = useCallback(
     (householdId: string) => households.find(h => h.id === householdId),
     [households],
@@ -425,6 +704,18 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
       people.filter(
         p => p.householdId === householdId && p.id !== excludePersonId,
       ),
+    [people],
+  );
+
+  const getOtherResidents = useCallback(
+    (householdId: string) =>
+      otherResidents.filter(r => r.householdId === householdId),
+    [otherResidents],
+  );
+
+  const getHouseholdHead = useCallback(
+    (householdId: string) =>
+      people.find(p => p.householdId === householdId && p.role === "Head"),
     [people],
   );
 
@@ -447,16 +738,21 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
         addPerson,
         updatePerson,
         deletePerson,
-        promoteToMember,
-        assignToMinistry,
+        promoteAlongPath,
         assignToHousehold,
+        addHousehold,
+        addPersonToHousehold,
+        updateHouseholdDetails,
+        addOtherResident,
+        updateOtherResident,
+        deleteOtherResident,
         removeFromHousehold,
         getPerson,
-        getPersonMinistries,
         getHousehold,
         getHouseholdMembers,
+        getOtherResidents,
+        getHouseholdHead,
         isInFamilyHousehold,
-        ministries: mockMinistries,
         refreshPeople,
       }}
     >

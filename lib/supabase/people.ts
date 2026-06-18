@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatPersonName } from "@/lib/person-name";
+import { evangelismStageForMembershipType, isMembershipPathType } from "@/lib/membership-path";
 import type {
   AddPersonInput,
   EvangelismStage,
@@ -28,7 +29,7 @@ type DbPersonRow = {
   last_name: string;
   phone: string;
   email: string;
-  birthdate: string;
+  birthdate: string | null;
   role: string;
   status: string;
   membership_type: string;
@@ -50,7 +51,8 @@ function getHouseholdName(households: DbPersonRow["households"]): string {
   return household?.name ?? "";
 }
 
-function computeAge(birthdate: string): number {
+function computeAge(birthdate: string | null): number {
+  if (!birthdate) return 0;
   const born = new Date(birthdate);
   const today = new Date();
   let age = today.getFullYear() - born.getFullYear();
@@ -87,7 +89,7 @@ function toPerson(row: DbPersonRow): Person {
     }),
     phone: row.phone,
     email: row.email,
-    birthdate: row.birthdate,
+    birthdate: row.birthdate ?? "",
     isProspect: row.is_prospect,
     role: row.role,
     householdId: row.household_id,
@@ -167,6 +169,52 @@ function buildNameFields(input: {
   return { firstName, middleName, lastName };
 }
 
+export type AddPersonToHouseholdInput = AddPersonInput & {
+  householdId: string;
+  role?: string;
+  email?: string;
+};
+
+export async function createPersonInHousehold(
+  supabase: SupabaseClient,
+  organizationId: string,
+  input: AddPersonToHouseholdInput,
+): Promise<Person> {
+  const { firstName, middleName, lastName } = buildNameFields(input);
+
+  const membershipType = input.membershipType;
+  const isProspect = membershipType === "Prospect";
+  const evangelismStage = isMembershipPathType(membershipType)
+    ? evangelismStageForMembershipType(membershipType)
+    : isProspect
+      ? "First-time Attendee"
+      : "Follow-up";
+
+  const { data: person, error: personError } = await supabase
+    .from("people")
+    .insert({
+      organization_id: organizationId,
+      household_id: input.householdId,
+      first_name: firstName,
+      middle_name: middleName || null,
+      last_name: lastName,
+      phone: input.phone?.trim() ?? "",
+      email: input.email?.trim() ?? "",
+      birthdate: input.birthdate?.trim() || null,
+      is_prospect: isProspect,
+      role: input.role?.trim() || "Single",
+      status: "Active",
+      membership_type: membershipType,
+      evangelism_stage: evangelismStage,
+    })
+    .select(personSelect)
+    .single();
+
+  if (personError) throw personError;
+
+  return toPerson(person as unknown as DbPersonRow);
+}
+
 export async function createPerson(
   supabase: SupabaseClient,
   organizationId: string,
@@ -185,6 +233,14 @@ export async function createPerson(
 
   if (householdError) throw householdError;
 
+  const membershipType = input.membershipType;
+  const isProspect = membershipType === "Prospect";
+  const evangelismStage = isMembershipPathType(membershipType)
+    ? evangelismStageForMembershipType(membershipType)
+    : isProspect
+      ? "First-time Attendee"
+      : "Follow-up";
+
   const { data: person, error: personError } = await supabase
     .from("people")
     .insert({
@@ -193,13 +249,13 @@ export async function createPerson(
       first_name: firstName,
       middle_name: middleName || null,
       last_name: lastName,
-      phone: input.phone.trim(),
-      birthdate: input.birthdate,
-      is_prospect: input.isProspect,
+      phone: input.phone?.trim() ?? "",
+      birthdate: input.birthdate?.trim() || null,
+      is_prospect: isProspect,
       role: "Single",
       status: "Active",
-      membership_type: input.isProspect ? "Prospect" : "Attender",
-      evangelism_stage: input.isProspect ? "First-time Attendee" : "Follow-up",
+      membership_type: membershipType,
+      evangelism_stage: evangelismStage,
     })
     .select(personSelect)
     .single();

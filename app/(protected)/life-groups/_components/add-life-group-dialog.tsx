@@ -21,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useGroupsMinistry } from "@/lib/groups-ministry";
+import type { LifeGroupCategory } from "@/lib/supabase/life-groups";
 
 interface AddLifeGroupDialogProps {
   open: boolean;
@@ -31,37 +33,42 @@ export function AddLifeGroupDialog({
   open,
   onOpenChange,
 }: AddLifeGroupDialogProps) {
+  const { addLifeGroup, isSaving } = useGroupsMinistry();
   const [groupName, setGroupName] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<LifeGroupCategory | "">("");
   const [color, setColor] = useState("purple");
 
-  const handleSave = () => {
-    console.log("Saving new Life Group:", {
-      name: groupName,
-      description: description,
-      category: category,
-      color: color,
-    });
-
+  const resetForm = () => {
     setGroupName("");
     setDescription("");
     setCategory("");
     setColor("purple");
-    onOpenChange(false);
   };
 
-  const isFormValid = groupName.trim() !== "" && category.trim() !== "";
+  const handleSave = async () => {
+    if (!groupName.trim() || !category) return;
+
+    const group = await addLifeGroup({
+      name: groupName,
+      description,
+      category,
+      color,
+    });
+
+    if (group) {
+      resetForm();
+      onOpenChange(false);
+    }
+  };
+
+  const isFormValid = groupName.trim() !== "" && category !== "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        // 🔑 Dual-Mode Background & Border
-        className="sm:max-w-[425px] border-slate-200/60 bg-white dark:bg-zinc-800 dark:border-zinc-700/60 dark:text-white"
-      >
+      <DialogContent className="sm:max-w-[425px] border-slate-200/60 bg-white dark:bg-zinc-800 dark:border-zinc-700/60 dark:text-white">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            {/* 🔑 Dual-Mode Icon Color */}
             <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             <div>
               <DialogTitle className="text-slate-900 dark:text-white">
@@ -84,7 +91,6 @@ export function AddLifeGroupDialog({
               value={groupName}
               onChange={e => setGroupName(e.target.value)}
               placeholder="e.g., Sons of Thunder"
-              // 🔑 Dual-Mode Input Styling
               className="rounded-lg border-slate-200 dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
             />
           </div>
@@ -96,12 +102,13 @@ export function AddLifeGroupDialog({
             >
               Category
             </Label>
-            <Select value={category} onValueChange={setCategory}>
-              {/* 🔑 Dual-Mode Select Trigger Styling */}
+            <Select
+              value={category}
+              onValueChange={v => setCategory(v as LifeGroupCategory)}
+            >
               <SelectTrigger className="rounded-lg border-slate-200 dark:bg-zinc-700 dark:border-zinc-600 dark:text-white">
                 <SelectValue placeholder="Select Category" />
               </SelectTrigger>
-              {/* SelectContent inherits dark mode from global Shadcn styles */}
               <SelectContent>
                 <SelectItem value="Adults">Adults</SelectItem>
                 <SelectItem value="Youth">Youth</SelectItem>
@@ -122,16 +129,12 @@ export function AddLifeGroupDialog({
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Brief summary of the group's focus"
-              // 🔑 Dual-Mode Textarea Styling
               className="rounded-lg border-slate-200 dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
             />
           </div>
 
           <div className="space-y-2">
-            <Label
-              htmlFor="color"
-              className="text-slate-700 dark:text-zinc-300"
-            >
+            <Label htmlFor="color" className="text-slate-700 dark:text-zinc-300">
               Group Color
             </Label>
             <Select value={color} onValueChange={setColor}>
@@ -143,6 +146,7 @@ export function AddLifeGroupDialog({
                 <SelectItem value="blue">Blue</SelectItem>
                 <SelectItem value="green">Green</SelectItem>
                 <SelectItem value="pink">Pink</SelectItem>
+                <SelectItem value="indigo">Indigo</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -152,15 +156,13 @@ export function AddLifeGroupDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            // 🔑 Dual-Mode Border and Text
             className="rounded-lg dark:border-zinc-600 dark:text-zinc-300"
           >
             Cancel
           </Button>
           <Button
-            onClick={handleSave}
-            disabled={!isFormValid}
-            // 🔑 Dual-Mode Primary Button Styling
+            onClick={() => void handleSave()}
+            disabled={!isFormValid || isSaving}
             className="rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
           >
             <Plus className="w-4 h-4 mr-2" />

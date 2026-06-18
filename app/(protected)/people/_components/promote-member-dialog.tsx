@@ -16,6 +16,7 @@ interface PromoteMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   personName: string;
+  nextStepLabel: string;
   onConfirm: () => void;
 }
 
@@ -23,6 +24,7 @@ export function PromoteMemberDialog({
   open,
   onOpenChange,
   personName,
+  nextStepLabel,
   onConfirm,
 }: PromoteMemberDialogProps) {
   return (
@@ -31,11 +33,11 @@ export function PromoteMemberDialog({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <UserCheck className="w-5 h-5" />
-            Promote to Official Member
+            Promote to {nextStepLabel}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Promote <strong>{personName}</strong> to official member status?
-            This will update their membership type and remove prospect status.
+            Move <strong>{personName}</strong> to <strong>{nextStepLabel}</strong>{" "}
+            on their journey? This updates their membership type in your directory.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -44,7 +46,7 @@ export function PromoteMemberDialog({
             onClick={onConfirm}
             className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
           >
-            Promote to Member
+            Promote to {nextStepLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

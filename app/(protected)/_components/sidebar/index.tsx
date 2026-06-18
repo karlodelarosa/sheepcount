@@ -37,6 +37,7 @@ import {
   Network,
   Lightbulb,
   Tent,
+  HeartHandshake,
 } from "lucide-react";
 import {
   Collapsible,
@@ -52,6 +53,7 @@ type ViewRoute =
   | "general-attendance"
   | "households"
   | "life-groups"
+  | "cell-groups"
   | "work-ministry"
   | "admin-position"
   | "training"
@@ -107,6 +109,26 @@ export function Sidebar() {
       ],
     },
     {
+      title: "Groups & Ministry",
+      items: [
+        {
+          title: "Life Groups",
+          icon: UserCircle,
+          value: "life-groups" as const,
+        },
+        {
+          title: "Cell Groups",
+          icon: HeartHandshake,
+          value: "cell-groups" as const,
+        },
+        {
+          title: "Work Ministry",
+          icon: Award,
+          value: "work-ministry" as const,
+        },
+      ],
+    },
+    {
       title: "Leadership",
       items: [
         {
@@ -118,21 +140,6 @@ export function Sidebar() {
           title: "Organization Chart",
           icon: Network,
           value: "org-chart" as const,
-        },
-      ],
-    },
-    {
-      title: "Groups & Ministry",
-      items: [
-        {
-          title: "Life Groups",
-          icon: UserCircle,
-          value: "life-groups" as const,
-        },
-        {
-          title: "Work Ministry",
-          icon: Award,
-          value: "work-ministry" as const,
         },
       ],
     },

@@ -30,18 +30,15 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Plus, Search } from "lucide-react";
-import { formatPersonName } from "@/lib/person-name";
+import { getMembershipDisplayColor, getMembershipDisplayLabel } from "@/lib/membership-path";
 import { usePeople, PEOPLE_PAGE_SIZE, type AddPersonInput } from "@/lib/people";
 import { AddPersonDialog } from "./add-person-dialog";
-import { ConfirmPersonDialog } from "./confirm-person-dialog";
 
 export function PeopleDirectory() {
   const router = useRouter();
   const { people, hydrated, isSaving, addPerson } = usePeople();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [confirmAddOpen, setConfirmAddOpen] = useState(false);
-  const [pendingAdd, setPendingAdd] = useState<AddPersonInput | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const filteredPeople = useMemo(
@@ -78,36 +75,12 @@ export function PeopleDirectory() {
     }
   };
 
-  const getMembershipColor = (type: string) => {
-    switch (type) {
-      case "Worker":
-        return "bg-purple-100 text-purple-700 dark:bg-purple-800 dark:text-purple-300";
-      case "Member":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-300";
-      case "Attender":
-        return "bg-green-100 text-green-700 dark:bg-emerald-800 dark:text-emerald-300";
-      case "Prospect":
-        return "bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300";
-      default:
-        return "bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
-    }
-  };
-
-  const handleAddRequest = (input: AddPersonInput) => {
-    setPendingAdd(input);
-    setIsAddDialogOpen(false);
-    // Defer confirm dialog until add dialog teardown completes (Radix layer bug).
-    requestAnimationFrame(() => setConfirmAddOpen(true));
-  };
-
-  const handleConfirmAdd = async () => {
-    if (!pendingAdd) return;
-    const person = await addPerson(pendingAdd);
-    if (person) {
-      setConfirmAddOpen(false);
-      setPendingAdd(null);
-      setIsAddDialogOpen(false);
-    }
+  const handleAdd = async (
+    input: AddPersonInput,
+    { addAnother }: { addAnother: boolean },
+  ) => {
+    const person = await addPerson(input, { quiet: addAnother });
+    return person !== null;
   };
 
   if (!hydrated) return null;
@@ -233,9 +206,12 @@ export function PeopleDirectory() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          className={`rounded-lg ${getMembershipColor(person.membershipType)}`}
+                          className={`rounded-lg ${getMembershipDisplayColor(person.membershipType, person.joinDate)}`}
                         >
-                          {person.membershipType}
+                          {getMembershipDisplayLabel(
+                            person.membershipType,
+                            person.joinDate,
+                          )}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -321,27 +297,8 @@ export function PeopleDirectory() {
       <AddPersonDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onAdd={handleAddRequest}
-      />
-
-      <ConfirmPersonDialog
-        open={confirmAddOpen}
-        onOpenChange={open => {
-          setConfirmAddOpen(open);
-          if (!open) setPendingAdd(null);
-        }}
-        variant="add"
-        personName={
-          pendingAdd
-            ? formatPersonName({
-                firstName: pendingAdd.firstName,
-                middleName: pendingAdd.middleName,
-                lastName: pendingAdd.lastName,
-              })
-            : ""
-        }
-        onConfirm={handleConfirmAdd}
-        isLoading={isSaving}
+        onAdd={handleAdd}
+        isSaving={isSaving}
       />
     </div>
   );

@@ -26,8 +26,9 @@ interface AssignHouseholdDialogProps {
   personName: string;
   households: Household[];
   currentHouseholdId?: string;
-  onAssign: (householdId: string, role: string) => void;
-  onRemove: () => void;
+  canRemoveFromHousehold?: boolean;
+  onAssign: (householdId: string, role: string) => void | Promise<void>;
+  onRemove: () => void | Promise<void>;
 }
 
 export function AssignHouseholdDialog({
@@ -36,32 +37,50 @@ export function AssignHouseholdDialog({
   personName,
   households,
   currentHouseholdId,
+  canRemoveFromHousehold = false,
   onAssign,
   onRemove,
 }: AssignHouseholdDialogProps) {
   const [householdId, setHouseholdId] = useState(currentHouseholdId ?? "");
   const [role, setRole] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!householdId || !role) return;
-    onAssign(householdId, role);
-    setRole("");
-    onOpenChange(false);
+    if (!householdId || !role || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onAssign(householdId, role);
+      setRole("");
+      onOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleRemove = () => {
-    onRemove();
-    setHouseholdId("");
-    setRole("");
-    onOpenChange(false);
+  const handleRemove = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onRemove();
+      setHouseholdId("");
+      setRole("");
+      onOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Dialog
       open={open}
       onOpenChange={open => {
-        if (open) setHouseholdId(currentHouseholdId ?? "");
+        if (open) {
+          setHouseholdId(
+            canRemoveFromHousehold ? (currentHouseholdId ?? "") : "",
+          );
+          setRole("");
+        }
         onOpenChange(open);
       }}
     >
@@ -84,11 +103,18 @@ export function AssignHouseholdDialog({
                 <SelectValue placeholder="Select household" />
               </SelectTrigger>
               <SelectContent>
-                {households.map(h => (
-                  <SelectItem key={h.id} value={h.id}>
-                    {h.name}
-                  </SelectItem>
-                ))}
+                {households.length === 0 ? (
+                  <div className="p-2 text-sm text-muted-foreground">
+                    No other households available. Create one from the
+                    Households page first.
+                  </div>
+                ) : (
+                  households.map(h => (
+                    <SelectItem key={h.id} value={h.id}>
+                      {h.name}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -110,11 +136,12 @@ export function AssignHouseholdDialog({
           </div>
 
           <div className="flex justify-between gap-3">
-            {currentHouseholdId && (
+            {canRemoveFromHousehold && currentHouseholdId && (
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleRemove}
+                disabled={isSubmitting}
                 className="rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
               >
                 Remove from Household
@@ -125,16 +152,17 @@ export function AssignHouseholdDialog({
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
                 className="rounded-xl"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={!householdId || !role}
+                disabled={!householdId || !role || isSubmitting || households.length === 0}
                 className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
               >
-                Assign
+                {isSubmitting ? "Saving…" : "Assign"}
               </Button>
             </div>
           </div>

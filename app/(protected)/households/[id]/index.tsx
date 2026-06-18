@@ -29,14 +29,18 @@ import {
   UserPlus,
   Check,
   Edit2,
+  Loader2,
+  Pencil,
+  Trash2,
+  Crown,
 } from "lucide-react";
 import {
-  mockHouseholds,
-  mockPeople,
   mockBibleStudyMembers,
   mockBibleStudyGroups,
 } from "@/components/mock-data";
 import { AddHouseholdMemberDialog } from "../_components/add-household-member-dialog";
+import { EditHouseholdDialog } from "../_components/edit-household-dialog";
+import { OtherResidentDialog } from "../_components/other-resident-dialog";
 import {
   Dialog,
   DialogContent,
@@ -53,12 +57,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-
-const mockNonMembers = [
-  { id: "nm1", name: "Sarah Connor", relation: "Tenant", householdId: "h1" },
-  { id: "nm2", name: "Kyle Reese", relation: "Friend", householdId: "h1" },
-];
-// --------------------------------------------------------
+import { usePeople, type HouseholdOtherResident, type Person } from "@/lib/people";
 
 interface HouseholdDetailsProps {
   householdId: string;
@@ -69,7 +68,7 @@ interface HouseholdDetailsProps {
 interface SetRoleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  person: any;
+  person: Person | null;
   onRoleSet: (personId: string, role: string) => void;
 }
 
@@ -125,7 +124,8 @@ function SetRoleDialog({
                 <SelectItem value="Head">Head</SelectItem>
                 <SelectItem value="Spouse">Spouse</SelectItem>
                 <SelectItem value="Child">Child</SelectItem>
-                <SelectItem value="Member">General Member</SelectItem>
+                <SelectItem value="Single">Single</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -157,15 +157,38 @@ export function HouseholdDetails({
   onBack,
 }: HouseholdDetailsProps) {
   const router = useRouter();
+  const {
+    hydrated,
+    getHousehold,
+    getHouseholdMembers,
+    getHouseholdHead,
+    getOtherResidents,
+    updatePerson,
+    deleteOtherResident,
+    people,
+    isSaving,
+  } = usePeople();
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isEditHouseholdOpen, setIsEditHouseholdOpen] = useState(false);
+  const [isOtherResidentOpen, setIsOtherResidentOpen] = useState(false);
+  const [editingResident, setEditingResident] =
+    useState<HouseholdOtherResident | null>(null);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
-  const [personToSetRole, setPersonToSetRole] = useState<any>(null);
+  const [personToSetRole, setPersonToSetRole] = useState<Person | null>(null);
 
-  const household = mockHouseholds.find(h => h.id === householdId);
-  const members = mockPeople.filter(p => p.householdId === householdId); // Filter members by household ID
-  const otherResidents = mockNonMembers.filter(
-    nm => nm.householdId === householdId,
-  );
+  if (!hydrated) {
+    return (
+      <div className="flex items-center justify-center py-24 text-slate-500 dark:text-zinc-400">
+        <Loader2 className="w-6 h-6 animate-spin mr-2" />
+        Loading household...
+      </div>
+    );
+  }
+
+  const household = getHousehold(householdId);
+  const members = getHouseholdMembers(householdId);
+  const householdHead = getHouseholdHead(householdId);
+  const otherResidents = getOtherResidents(householdId);
 
   // --- Not Found State (Dual Mode) ---
   if (!household) {
@@ -202,7 +225,7 @@ export function HouseholdDetails({
         const group = mockBibleStudyGroups.find(g => g.id === bsm.bibleStudyId);
         if (group) {
           acc.set(bsm.bibleStudyId, {
-            name: group.name,
+            name: group.householdName,
             membersCount: 0,
             memberNames: [] as string[],
           });
@@ -211,7 +234,7 @@ export function HouseholdDetails({
       if (acc.has(bsm.bibleStudyId)) {
         acc.get(bsm.bibleStudyId)!.membersCount++;
         const personName =
-          mockPeople.find(p => p.id === bsm.personId)?.name || "Unknown";
+          people.find(p => p.id === bsm.personId)?.name || "Unknown";
         acc.get(bsm.bibleStudyId)!.memberNames.push(personName);
       }
       return acc;
@@ -220,14 +243,22 @@ export function HouseholdDetails({
   const bibleStudyGroups = Array.from(householdGroups.values());
   // -------------------------------
 
-  const handleOpenRoleDialog = (person: any) => {
+  const handleOpenRoleDialog = (person: Person) => {
     setPersonToSetRole(person);
     setIsRoleDialogOpen(true);
   };
 
-  const handleRoleSet = (personId: string, role: string) => {
-    console.log(`Updated role for ${personId} to: ${role}`);
-    // Simulate update by refreshing or mutating state if necessary
+  const handleRoleSet = async (personId: string, role: string) => {
+    await updatePerson(personId, { role });
+  };
+
+  const handleOpenOtherResident = (resident?: HouseholdOtherResident) => {
+    setEditingResident(resident ?? null);
+    setIsOtherResidentOpen(true);
+  };
+
+  const handleDeleteResident = async (residentId: string) => {
+    await deleteOtherResident(residentId);
   };
 
   const DualModeButtonClass =
@@ -315,9 +346,20 @@ export function HouseholdDetails({
         {/* Quick Household Info Card (Dual Mode) */}
         <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
           <CardHeader>
-            <CardTitle className="text-lg text-slate-900 dark:text-white">
-              Quick Info
-            </CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-lg text-slate-900 dark:text-white">
+                Quick Info
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-lg"
+                onClick={() => setIsEditHouseholdOpen(true)}
+              >
+                <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                Edit
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-2">
@@ -327,7 +369,18 @@ export function HouseholdDetails({
                   Address
                 </p>
                 <p className="text-slate-900 dark:text-white">
-                  {household.address}
+                  {household.address || "No address on file"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <Crown className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-500 dark:text-zinc-500" />
+              <div>
+                <p className="text-slate-500 text-sm dark:text-zinc-500">
+                  Head of Family
+                </p>
+                <p className="text-slate-900 dark:text-white">
+                  {householdHead?.name ?? "Not assigned"}
                 </p>
               </div>
             </div>
@@ -394,14 +447,18 @@ export function HouseholdDetails({
                       className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50"
                     >
                       <TableCell className="font-medium text-slate-900 dark:text-white">
-                        <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          className="flex items-center gap-3 text-left hover:underline"
+                          onClick={() => router.push(`/people/${member.id}`)}
+                        >
                           <div className="w-8 h-8 rounded-lg bg-indigo-600 dark:bg-purple-600 flex items-center justify-center shadow-sm">
                             <span className="text-white">
                               {member.name.charAt(0)}
                             </span>
                           </div>
                           {member.name}
-                        </div>
+                        </button>
                       </TableCell>
                       <TableCell>
                         {/* Assuming default/secondary badges are globally styled for dark mode */}
@@ -440,26 +497,37 @@ export function HouseholdDetails({
         </CardContent>
       </Card>
 
-      {/* Other Residents Section (Non-Members) (Dual Mode) */}
+      {/* Other Residents */}
       <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-amber-500 dark:text-amber-400" />
-            <CardTitle className="text-lg text-slate-900 dark:text-white">
-              Other Residents ({otherResidents.length})
-            </CardTitle>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+                <CardTitle className="text-lg text-slate-900 dark:text-white">
+                  Other Residents ({otherResidents.length})
+                </CardTitle>
+              </div>
+              <CardDescription className="text-slate-600 dark:text-zinc-400 mt-1">
+                People living here who have not attended church yet.
+              </CardDescription>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => handleOpenOtherResident()}
+              className={DualModeButtonClass}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Resident
+            </Button>
           </div>
-          <CardDescription className="text-slate-600 dark:text-zinc-400">
-            People living here who are not current church members.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {otherResidents.length > 0 ? (
             <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60">
               <Table>
                 <TableHeader>
-                  {/* Dual mode table header with yellow accent */}
-                  <TableRow className="bg-amber-100/50 hover:bg-amber-100 dark:bg-amber-900/30 dark:hover:bg-amber-900/40">
+                  <TableRow className="bg-amber-50/50 dark:bg-amber-900/20">
                     <TableHead className="text-slate-600 dark:text-zinc-300">
                       Name
                     </TableHead>
@@ -467,7 +535,10 @@ export function HouseholdDetails({
                       Relation
                     </TableHead>
                     <TableHead className="text-slate-600 dark:text-zinc-300">
-                      Action
+                      Contact
+                    </TableHead>
+                    <TableHead className="text-slate-600 dark:text-zinc-300">
+                      Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -479,22 +550,39 @@ export function HouseholdDetails({
                     >
                       <TableCell className="font-medium text-slate-900 dark:text-white">
                         {resident.name}
+                        {resident.notes && (
+                          <p className="text-xs text-slate-500 dark:text-zinc-500 font-normal mt-0.5">
+                            {resident.notes}
+                          </p>
+                        )}
                       </TableCell>
                       <TableCell className="text-slate-600 dark:text-zinc-400">
                         {resident.relation}
                       </TableCell>
+                      <TableCell className="text-slate-600 dark:text-zinc-400 text-sm">
+                        {resident.phone || "—"}
+                      </TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          // Dual mode blue accent for follow-up button
-                          className="rounded-lg text-blue-700 border-blue-400 bg-blue-100 hover:bg-blue-200 dark:text-blue-300 dark:border-blue-800 dark:bg-blue-900/40 dark:hover:bg-blue-900/60"
-                          onClick={() =>
-                            router.push(`/evangelism/prospects/${resident.id}`)
-                          }
-                        >
-                          View/Follow Up
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-lg"
+                            disabled={isSaving}
+                            onClick={() => handleOpenOtherResident(resident)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                            disabled={isSaving}
+                            onClick={() => handleDeleteResident(resident.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -503,11 +591,31 @@ export function HouseholdDetails({
             </div>
           ) : (
             <div className="text-center py-8 text-slate-500 border border-dashed border-slate-300 rounded-xl dark:text-zinc-500 dark:border-zinc-600">
-              No other residents listed.
+              No other residents listed. Add tenants, relatives, or others who
+              live here but haven&apos;t attended yet.
             </div>
           )}
         </CardContent>
       </Card>
+
+      <EditHouseholdDialog
+        open={isEditHouseholdOpen}
+        onOpenChange={setIsEditHouseholdOpen}
+        household={household}
+        members={members}
+        currentHead={householdHead}
+      />
+
+      <OtherResidentDialog
+        open={isOtherResidentOpen}
+        onOpenChange={open => {
+          setIsOtherResidentOpen(open);
+          if (!open) setEditingResident(null);
+        }}
+        householdId={household.id}
+        householdName={household.name}
+        resident={editingResident}
+      />
 
       <AddHouseholdMemberDialog
         open={isAddMemberOpen}

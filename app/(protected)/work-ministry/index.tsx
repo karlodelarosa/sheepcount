@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-// 🔑 Import useRouter
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -12,32 +11,30 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
-import {
-  mockMinistries,
-  mockMinistryAssignments,
-  mockPeople,
-} from "@/components/mock-data";
-import { ManageMinistryMembersDialog } from "./_components/manage-ministry-members-dialog";
+import { usePeople } from "@/lib/people";
+import { useGroupsMinistry } from "@/lib/groups-ministry";
 
 export function MinistriesView() {
-  const [selectedMinistry, setSelectedMinistry] = useState<string | null>(null);
-  const [isManageDialogOpen, setIsManageDialogOpen] = useState(false);
-  // 🔑 Initialize the router
   const router = useRouter();
+  const { people } = usePeople();
+  const { workMinistries, workMinistryMembers, hydrated } = useGroupsMinistry();
 
   const getMinistryMembers = (ministryId: string) => {
-    const assignments = mockMinistryAssignments.filter(
+    const assignments = workMinistryMembers.filter(
       a => a.ministryId === ministryId,
     );
     return assignments.map(assignment => ({
       ...assignment,
-      person: mockPeople.find(p => p.id === assignment.personId),
+      person: people.find(p => p.id === assignment.personId),
     }));
   };
 
-  // Dual-mode Colors for Ministry Icons/Avatars
+  const ministries = useMemo(
+    () => workMinistries,
+    [workMinistries],
+  );
+
   const colorClasses = {
-    // Light -> Dark
     purple:
       "from-purple-500 to-purple-700 dark:from-violet-600 dark:to-fuchsia-800",
     blue: "from-blue-500 to-blue-700 dark:from-sky-600 dark:to-cyan-800",
@@ -48,17 +45,20 @@ export function MinistriesView() {
     red: "from-red-500 to-red-700 dark:from-rose-600 dark:to-red-800",
   };
 
-  // Dual-Mode Neutral Avatar Color (Used for member icons)
   const DualModeMemberAvatarClass =
     "from-slate-900 to-slate-700 dark:from-zinc-700 dark:to-zinc-500";
-
-  // Dual-Mode Secondary Badge Class
   const DualModeSecondaryBadgeClass =
     "rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
-
-  // Dual-Mode Outline Badge Class
   const DualModeOutlineBadgeClass =
     "rounded-lg border-slate-300 text-slate-600 dark:border-zinc-700 dark:text-zinc-400";
+
+  if (!hydrated) {
+    return (
+      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
+        Loading work ministries...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -78,26 +78,20 @@ export function MinistriesView() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {mockMinistries.map(ministry => {
+            {ministries.map(ministry => {
               const members = getMinistryMembers(ministry.id);
               const colorClass =
                 colorClasses[ministry.color as keyof typeof colorClasses] ||
                 colorClasses.purple;
 
               return (
-                // Individual Ministry Card (Dual Mode)
                 <Card
                   key={ministry.id}
                   className="border-slate-200/60 bg-white hover:shadow-lg transition-all duration-200 cursor-pointer dark:border-zinc-700/60 dark:bg-zinc-800/70 dark:text-white"
-                  // 🔑 Updated onClick to redirect to the child page using router.push()
-                  onClick={() => {
-                    // Assuming the current route is /ministries, the path is /ministries/[id]
-                    router.push(`./work-ministry/${ministry.id}`);
-                  }}
+                  onClick={() => router.push(`/work-ministry/${ministry.id}`)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
-                      {/* Ministry Icon (Dual Mode Gradient) */}
                       <div
                         className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClass} flex items-center justify-center shadow-sm`}
                       >
@@ -139,7 +133,6 @@ export function MinistriesView() {
                               className="flex items-center justify-between text-slate-900 dark:text-white"
                             >
                               <div className="flex items-center gap-2">
-                                {/* Member Avatar (Dual Mode Gradient) */}
                                 <div
                                   className={`w-8 h-8 rounded-lg bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center shadow-sm`}
                                 >
@@ -176,15 +169,6 @@ export function MinistriesView() {
           </div>
         </CardContent>
       </Card>
-
-      {/* The ManageMinistryMembersDialog and its related state are no longer necessary for the page redirect, 
-          but are kept here to prevent runtime errors if they are used elsewhere. The Card's onClick 
-          now bypasses the dialog opening state. You might consider removing them if they are unused. */}
-      <ManageMinistryMembersDialog
-        open={isManageDialogOpen}
-        onOpenChange={setIsManageDialogOpen}
-        ministryId={selectedMinistry}
-      />
     </div>
   );
 }
