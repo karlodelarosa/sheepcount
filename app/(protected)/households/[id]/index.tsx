@@ -27,17 +27,16 @@ import {
   ArrowLeft,
   BookOpen,
   UserPlus,
-  Check,
   Edit2,
   Loader2,
   Pencil,
   Trash2,
   Crown,
 } from "lucide-react";
-import {
-  mockBibleStudyMembers,
-  mockBibleStudyGroups,
-} from "@/components/mock-data";
+import { usePeople, type HouseholdOtherResident, type Person } from "@/lib/people";
+import { useBibleStudy } from "@/lib/bible-study";
+import { AddBibleStudyGroupDialog } from "@/app/(protected)/bible-study/_components/add-bible-group-dialog";
+import type { BibleStudyStatus } from "@/lib/supabase/bible-study";
 import { AddHouseholdMemberDialog } from "../_components/add-household-member-dialog";
 import { EditHouseholdDialog } from "../_components/edit-household-dialog";
 import { OtherResidentDialog } from "../_components/other-resident-dialog";
@@ -57,7 +56,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { usePeople, type HouseholdOtherResident, type Person } from "@/lib/people";
 
 interface HouseholdDetailsProps {
   householdId: string;
@@ -168,6 +166,7 @@ export function HouseholdDetails({
     people,
     isSaving,
   } = usePeople();
+  const { groups, getGroupMembers, getHouseholdBibleStudy } = useBibleStudy();
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [isEditHouseholdOpen, setIsEditHouseholdOpen] = useState(false);
   const [isOtherResidentOpen, setIsOtherResidentOpen] = useState(false);
@@ -216,32 +215,36 @@ export function HouseholdDetails({
     );
   }
 
-  // --- Bible Study Group Logic (Unchanged) ---
-  const memberIds = members.map(m => m.id);
-  const householdGroups = mockBibleStudyMembers
-    .filter(bsm => memberIds.includes(bsm.personId))
-    .reduce((acc, bsm) => {
-      if (!acc.has(bsm.bibleStudyId)) {
-        const group = mockBibleStudyGroups.find(g => g.id === bsm.bibleStudyId);
-        if (group) {
-          acc.set(bsm.bibleStudyId, {
-            name: group.householdName,
-            membersCount: 0,
-            memberNames: [] as string[],
-          });
-        }
-      }
-      if (acc.has(bsm.bibleStudyId)) {
-        acc.get(bsm.bibleStudyId)!.membersCount++;
-        const personName =
-          people.find(p => p.id === bsm.personId)?.name || "Unknown";
-        acc.get(bsm.bibleStudyId)!.memberNames.push(personName);
-      }
-      return acc;
-    }, new Map<string, { name: string; membersCount: number; memberNames: string[] }>());
+  // --- Bible Study (host household) ---
+  const hostedBibleStudy =
+    getHouseholdBibleStudy(householdId) ??
+    groups
+      .filter(g => g.householdId === householdId)
+      .sort((a, b) => b.startDate.localeCompare(a.startDate))[0];
 
-  const bibleStudyGroups = Array.from(householdGroups.values());
-  // -------------------------------
+  const bibleStudyMemberRows = hostedBibleStudy
+    ? getGroupMembers(hostedBibleStudy.id)
+        .map(m => people.find(p => p.id === m.personId))
+        .filter((p): p is Person => Boolean(p))
+    : [];
+
+  const bibleStudyStatusLabels: Record<BibleStudyStatus, string> = {
+    active: "Active",
+    completed: "Completed",
+    paused: "Paused",
+    cancelled: "Cancelled",
+  };
+
+  const bibleStudyStatusClass: Record<BibleStudyStatus, string> = {
+    active:
+      "p-4 bg-green-100/50 rounded-xl border border-green-300 dark:bg-emerald-900/40 dark:border-emerald-700/60",
+    completed:
+      "p-4 bg-slate-100/50 rounded-xl border border-slate-300 dark:bg-zinc-800/40 dark:border-zinc-600/60",
+    paused:
+      "p-4 bg-amber-100/50 rounded-xl border border-amber-300 dark:bg-amber-900/40 dark:border-amber-700/60",
+    cancelled:
+      "p-4 bg-red-100/50 rounded-xl border border-red-300 dark:bg-red-900/40 dark:border-red-700/60",
+  };
 
   const handleOpenRoleDialog = (person: Person) => {
     setPersonToSetRole(person);
@@ -298,46 +301,43 @@ export function HouseholdDetails({
             </div>
           </CardHeader>
           <CardContent>
-            {bibleStudyGroups.length > 0 ? (
-              <div className="space-y-3">
-                {bibleStudyGroups.map((group, index) => (
-                  <div
-                    key={index}
-                    // Dual mode green accent background/border
-                    className="p-4 bg-green-100/50 rounded-xl border border-green-300 dark:bg-emerald-900/40 dark:border-emerald-700/60"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="text-green-700 font-medium dark:text-emerald-300">
-                        Group:{" "}
-                        <span className="text-green-800 dark:text-emerald-400">
-                          {group.name}
-                        </span>
-                      </p>
-                      <Badge className="bg-green-700 text-white dark:bg-emerald-800 dark:text-emerald-300 rounded-lg">
-                        <Check className="w-4 h-4 mr-1" /> Active
-                      </Badge>
-                    </div>
-                    <p className="text-green-600 text-sm mt-1 dark:text-emerald-500">
-                      {group.membersCount} household member(s) belong to this
-                      group: {group.memberNames.join(", ")}
+            {hostedBibleStudy ? (
+              <div className={bibleStudyStatusClass[hostedBibleStudy.status]}>
+                <div className="flex items-center justify-between">
+                  <p className="text-slate-900 font-medium dark:text-white">
+                    {hostedBibleStudy.meetingDay} at {hostedBibleStudy.meetingTime}
+                  </p>
+                  <Badge className="rounded-lg">
+                    {bibleStudyStatusLabels[hostedBibleStudy.status]}
+                  </Badge>
+                </div>
+                <p className="text-slate-600 text-sm mt-1 dark:text-zinc-400">
+                  {bibleStudyMemberRows.length} participant
+                  {bibleStudyMemberRows.length !== 1 ? "s" : ""}:{" "}
+                  {bibleStudyMemberRows.map(p => p.name).join(", ") || "None yet"}
+                </p>
+                {hostedBibleStudy.statusNotes &&
+                  (hostedBibleStudy.status === "paused" ||
+                    hostedBibleStudy.status === "cancelled") && (
+                    <p className="text-sm mt-2 text-slate-600 dark:text-zinc-400">
+                      {hostedBibleStudy.statusNotes}
                     </p>
-                  </div>
-                ))}
+                  )}
               </div>
             ) : (
-              // Dual mode yellow accent (for unassigned status)
               <div className="p-4 bg-amber-100/50 rounded-xl border border-amber-300 flex items-center justify-between dark:bg-amber-900/40 dark:border-amber-700/60">
                 <p className="text-slate-900 font-medium dark:text-white">
-                  Not yet assigned to a Bible Study group.
+                  This household is not hosting a Bible study yet.
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  // Button accent for unassigned status
-                  className="rounded-lg border-amber-400 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/60"
-                >
-                  Assign Group
-                </Button>
+                <AddBibleStudyGroupDialog defaultHouseholdId={householdId}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-lg border-amber-400 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-300 dark:hover:bg-amber-900/60"
+                  >
+                    Start Bible Study
+                  </Button>
+                </AddBibleStudyGroupDialog>
               </div>
             )}
           </CardContent>

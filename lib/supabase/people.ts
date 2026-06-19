@@ -23,7 +23,7 @@ type DbHousehold = {
 type DbPersonRow = {
   id: string;
   organization_id: string;
-  household_id: string;
+  household_id: string | null;
   first_name: string;
   middle_name: string | null;
   last_name: string;
@@ -152,11 +152,6 @@ export async function fetchPeople(
   };
 }
 
-function soloHouseholdName(lastName: string): string {
-  const trimmed = lastName.trim();
-  return trimmed ? `${trimmed} Household` : "Household";
-}
-
 function buildNameFields(input: {
   firstName: string;
   middleName?: string;
@@ -222,17 +217,6 @@ export async function createPerson(
 ): Promise<Person> {
   const { firstName, middleName, lastName } = buildNameFields(input);
 
-  const { data: household, error: householdError } = await supabase
-    .from("households")
-    .insert({
-      organization_id: organizationId,
-      name: soloHouseholdName(lastName),
-    })
-    .select()
-    .single();
-
-  if (householdError) throw householdError;
-
   const membershipType = input.membershipType;
   const isProspect = membershipType === "Prospect";
   const evangelismStage = isMembershipPathType(membershipType)
@@ -245,7 +229,7 @@ export async function createPerson(
     .from("people")
     .insert({
       organization_id: organizationId,
-      household_id: household.id,
+      household_id: null,
       first_name: firstName,
       middle_name: middleName || null,
       last_name: lastName,
@@ -336,13 +320,6 @@ export async function deletePerson(
 
   if (fetchError) throw fetchError;
 
-  const { count, error: countError } = await supabase
-    .from("people")
-    .select("id", { count: "exact", head: true })
-    .eq("household_id", person.household_id);
-
-  if (countError) throw countError;
-
   const { error: deleteError } = await supabase
     .from("people")
     .delete()
@@ -351,7 +328,16 @@ export async function deletePerson(
 
   if (deleteError) throw deleteError;
 
-  if (count === 1) {
+  if (!person.household_id) return;
+
+  const { count, error: countError } = await supabase
+    .from("people")
+    .select("id", { count: "exact", head: true })
+    .eq("household_id", person.household_id);
+
+  if (countError) throw countError;
+
+  if (count === 0) {
     const { error: householdError } = await supabase
       .from("households")
       .delete()

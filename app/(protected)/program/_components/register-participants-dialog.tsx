@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,131 +11,177 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { UserPlus, UserX, Check, Search } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { mockPeople } from "@/components/mock-data";
-
-// Type definitions (assuming your types)
-type Program = any;
-type Person = typeof mockPeople[0];
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { usePeople } from "@/lib/people";
+import { useEvents } from "@/lib/events";
+import type { ChurchEvent } from "@/lib/supabase/events";
+import type { EventRole } from "@/lib/supabase/events";
 
 interface RegisterParticipantDialogProps {
-  program: Program; // The specific program being managed
-  currentParticipantIds: string[]; // IDs of people currently in the program
-  onUpdateParticipants: (programId: string, newParticipantIds: string[]) => void; // Handler to update members
+  event: ChurchEvent;
   children: React.ReactNode;
 }
 
-const DualModeMemberAvatarClass = "from-slate-900 to-slate-700 dark:from-purple-700 dark:to-purple-500";
-
-export function RegisterParticipantDialog({ program, currentParticipantIds, onUpdateParticipants, children }: RegisterParticipantDialogProps) {
+export function RegisterParticipantDialog({
+  event,
+  children,
+}: RegisterParticipantDialogProps) {
+  const { people } = usePeople();
+  const { registerPersonForEvent, getEventRegistrations } = useEvents();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<string[]>(currentParticipantIds);
-  const [searchTerm, setSearchTerm] = useState("");
-  
-  // All people available to be participants
-  const availablePeople = mockPeople; 
+  const [personId, setPersonId] = useState("");
+  const [parentPersonId, setParentPersonId] = useState("");
+  const [roleInEvent, setRoleInEvent] = useState<EventRole>("Attendee");
+  const [medicalNotes, setMedicalNotes] = useState("");
+  const [dietaryRestrictions, setDietaryRestrictions] = useState("");
 
-  const isParticipant = (personId: string) => selectedIds.includes(personId);
+  const existingRegistrations = getEventRegistrations(event.id);
+  const registeredPersonIds = new Set(existingRegistrations.map(r => r.personId));
 
-  const toggleParticipant = (personId: string) => {
-    setSelectedIds(prev =>
-      isParticipant(personId)
-        ? prev.filter(id => id !== personId)
-        : [...prev, personId]
-    );
+  const selectedPerson = people.find(p => p.id === personId);
+  const isChildRegistration = selectedPerson?.role === "Child";
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPersonId("");
+      setParentPersonId("");
+      setRoleInEvent("Attendee");
+      setMedicalNotes("");
+      setDietaryRestrictions("");
+    }
+  }, [isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!personId) return;
+    if (isChildRegistration && !parentPersonId) return;
+
+    const result = await registerPersonForEvent({
+      eventId: event.id,
+      personId,
+      parentPersonId: isChildRegistration ? parentPersonId : undefined,
+      roleInEvent,
+      medicalNotes: isChildRegistration ? medicalNotes : undefined,
+      dietaryRestrictions: isChildRegistration ? dietaryRestrictions : undefined,
+    });
+
+    if (result) {
+      setIsOpen(false);
+    }
   };
 
-  const handleSave = () => {
-    onUpdateParticipants(program.id, selectedIds);
-    setIsOpen(false);
-  };
-
-  const filteredPeople = availablePeople.filter(person =>
-    person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    person.householdName.toLowerCase().includes(searchTerm.toLowerCase())
+  const availablePeople = people.filter(p => !registeredPersonIds.has(p.id));
+  const parentCandidates = people.filter(
+    p => p.role === "Head" || p.role === "Spouse" || p.role === "Single",
   );
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-xl">
+      <DialogContent className="sm:max-w-md md:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Manage Participants for {program.name}</DialogTitle>
+          <DialogTitle>Register for {event.title}</DialogTitle>
           <DialogDescription>
-            Add or remove people from this {program.type} program.
+            Register a person or child for this {event.type} event.
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="py-4">
-            <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                    placeholder="Search people..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+
+        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label>Participant</Label>
+            <Select value={personId} onValueChange={setPersonId} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Select person" />
+              </SelectTrigger>
+              <SelectContent>
+                {availablePeople.map(person => (
+                  <SelectItem key={person.id} value={person.id}>
+                    {person.name}
+                    {person.role === "Child" ? " (Child)" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {isChildRegistration && (
+            <>
+              <div className="space-y-2">
+                <Label>Parent / Guardian</Label>
+                <Select
+                  value={parentPersonId}
+                  onValueChange={setParentPersonId}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select parent profile" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {parentCandidates.map(person => (
+                      <SelectItem key={person.id} value={person.id}>
+                        {person.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="medical">Medical Notes</Label>
+                <Textarea
+                  id="medical"
+                  value={medicalNotes}
+                  onChange={e => setMedicalNotes(e.target.value)}
+                  placeholder="Allergies, medications, etc."
+                  rows={2}
                 />
-            </div>
+              </div>
 
-          <Separator className="mb-4" />
+              <div className="space-y-2">
+                <Label htmlFor="dietary">Dietary Restrictions</Label>
+                <Input
+                  id="dietary"
+                  value={dietaryRestrictions}
+                  onChange={e => setDietaryRestrictions(e.target.value)}
+                  placeholder="e.g., nut allergy, vegetarian"
+                />
+              </div>
+            </>
+          )}
 
-          <p className="text-sm font-semibold mb-2">People List ({filteredPeople.length} results):</p>
-          <ScrollArea className="h-72 w-full pr-4">
-            <div className="space-y-3">
-              {filteredPeople.map((person) => {
-                const isCurrentlyParticipant = isParticipant(person.id);
-                
-                return (
-                  <div
-                    key={person.id}
-                    className="flex items-center justify-between p-3 rounded-xl border border-slate-200/60 bg-white/50 dark:border-zinc-700/60 dark:bg-zinc-800/70 hover:bg-slate-50 dark:hover:bg-zinc-700/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center shadow-sm`}>
-                        <span className="text-white text-sm">{person.name.charAt(0)}</span>
-                      </div>
-                      <div>
-                        <p className="text-slate-900 dark:text-white font-medium">{person.name}</p>
-                        <p className="text-slate-500 dark:text-zinc-400 text-sm">{person.householdName}</p>
-                      </div>
-                    </div>
-                    <Button
-                      variant={isCurrentlyParticipant ? "destructive" : "default"}
-                      size="sm"
-                      onClick={() => toggleParticipant(person.id)}
-                      className="gap-1 rounded-lg"
-                    >
-                      {isCurrentlyParticipant ? (
-                        <>
-                          <UserX className="w-4 h-4" />
-                          Remove
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="w-4 h-4" />
-                          Add
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        </div>
+          <div className="space-y-2">
+            <Label>Role in Event</Label>
+            <Select
+              value={roleInEvent}
+              onValueChange={value => setRoleInEvent(value as EventRole)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Attendee">Attendee</SelectItem>
+                <SelectItem value="Volunteer">Volunteer</SelectItem>
+                <SelectItem value="Core_Leader">Core Leader</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} className="gap-2">
-            <Check className="w-4 h-4" />
-            Save Changes
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">Register</Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

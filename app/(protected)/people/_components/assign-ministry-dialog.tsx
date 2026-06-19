@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -18,20 +19,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Award } from "lucide-react";
+import type {
+  WorkMinistry,
+  WorkMinistryTeam,
+  WorkMinistryTeamRole,
+} from "@/lib/supabase/work-ministries";
 
-interface Ministry {
-  id: string;
-  name: string;
-  description: string;
-}
+const LEADERSHIP_ROLES = [
+  "Team Lead",
+  "Coordinator",
+  "Member",
+  "Assistant",
+] as const;
 
 interface AssignMinistryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   personName: string;
-  ministries: Ministry[];
+  ministries: WorkMinistry[];
+  teams: WorkMinistryTeam[];
+  teamRoles: WorkMinistryTeamRole[];
   assignedMinistryIds: string[];
-  onAssign: (ministryId: string, role: string) => void;
+  onAssign: (
+    ministryId: string,
+    role: string,
+    options?: { teamId?: string | null; serviceRole?: string },
+  ) => void;
 }
 
 export function AssignMinistryDialog({
@@ -39,21 +52,47 @@ export function AssignMinistryDialog({
   onOpenChange,
   personName,
   ministries,
+  teams,
+  teamRoles,
   assignedMinistryIds,
   onAssign,
 }: AssignMinistryDialogProps) {
   const [ministryId, setMinistryId] = useState("");
+  const [teamId, setTeamId] = useState("");
+  const [serviceRole, setServiceRole] = useState("");
   const [role, setRole] = useState("");
 
   const availableMinistries = ministries.filter(
     m => !assignedMinistryIds.includes(m.id),
   );
 
+  const ministryTeams = useMemo(
+    () => teams.filter(team => team.ministryId === ministryId),
+    [teams, ministryId],
+  );
+
+  const hasTeams = ministryTeams.length > 0;
+
+  const roleOptions = useMemo(
+    () => teamRoles.filter(r => r.teamId === teamId),
+    [teamRoles, teamId],
+  );
+
+  const canSubmit =
+    ministryId &&
+    role &&
+    (!hasTeams || (teamId && serviceRole));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ministryId || !role) return;
-    onAssign(ministryId, role);
+    if (!canSubmit) return;
+    onAssign(ministryId, role, {
+      teamId: hasTeams ? teamId : null,
+      serviceRole: hasTeams ? serviceRole : "",
+    });
     setMinistryId("");
+    setTeamId("");
+    setServiceRole("");
     setRole("");
     onOpenChange(false);
   };
@@ -74,7 +113,15 @@ export function AssignMinistryDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-2">
             <Label>Ministry</Label>
-            <Select value={ministryId} onValueChange={setMinistryId} required>
+            <Select
+              value={ministryId}
+              onValueChange={value => {
+                setMinistryId(value);
+                setTeamId("");
+                setServiceRole("");
+              }}
+              required
+            >
               <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Select ministry" />
               </SelectTrigger>
@@ -94,17 +141,76 @@ export function AssignMinistryDialog({
             </Select>
           </div>
 
+          {hasTeams && (
+            <>
+              <div className="grid gap-2">
+                <Label>Team</Label>
+                <Select
+                  value={teamId}
+                  onValueChange={value => {
+                    setTeamId(value);
+                    setServiceRole("");
+                  }}
+                  required
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Select team" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ministryTeams.map(team => (
+                      <SelectItem key={team.id} value={team.id}>
+                        {team.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Service Role</Label>
+                {roleOptions.length > 0 ? (
+                  <Select
+                    value={serviceRole}
+                    onValueChange={setServiceRole}
+                    required
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Select service role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleOptions.map(option => (
+                        <SelectItem key={option.id} value={option.name}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    placeholder="e.g. Musician"
+                    value={serviceRole}
+                    onChange={e => setServiceRole(e.target.value)}
+                    className="rounded-xl"
+                    required
+                    disabled={!teamId}
+                  />
+                )}
+              </div>
+            </>
+          )}
+
           <div className="grid gap-2">
-            <Label>Role</Label>
+            <Label>Leadership Role</Label>
             <Select value={role} onValueChange={setRole} required>
               <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Select role" />
+                <SelectValue placeholder="Select leadership role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Team Lead">Team Lead</SelectItem>
-                <SelectItem value="Coordinator">Coordinator</SelectItem>
-                <SelectItem value="Member">Member</SelectItem>
-                <SelectItem value="Assistant">Assistant</SelectItem>
+                {LEADERSHIP_ROLES.map(leadershipRole => (
+                  <SelectItem key={leadershipRole} value={leadershipRole}>
+                    {leadershipRole}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -120,7 +226,7 @@ export function AssignMinistryDialog({
             </Button>
             <Button
               type="submit"
-              disabled={!ministryId || !role}
+              disabled={!canSubmit}
               className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
             >
               Assign

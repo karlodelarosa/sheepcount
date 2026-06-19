@@ -20,9 +20,9 @@ import {
 } from "@/components/ui/table";
 import { Plus, Shield } from "lucide-react";
 import { mockAdminPositions, mockPeople } from "@/components/mock-data";
-import { AssignAdminPositionDialog } from "./_compontents/assign-admin-position-dialog";
+import { AssignAdminPositionDialog } from "./assign-admin-position-dialog";
 
-export function AdminPositionsView() {
+export function AdminPositionsTab() {
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
   const positionsWithPeople = mockAdminPositions.map(position => ({
@@ -41,10 +41,8 @@ export function AdminPositionsView() {
     {} as Record<string, typeof positionsWithPeople>,
   );
 
-  // Dual-mode Colors for Position Avatars/Icons
   const getPositionColor = (title: string) => {
     const colors: Record<string, string> = {
-      // Light Mode -> Dark Mode
       Secretary:
         "from-blue-500 to-blue-700 dark:from-blue-600 dark:to-blue-800",
       Treasurer:
@@ -58,19 +56,14 @@ export function AdminPositionsView() {
     );
   };
 
-  // Dual-Mode Button Style (Light: Slate, Dark: Purple)
   const DualModeButtonClass =
     "rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 dark:bg-purple-600 dark:hover:bg-purple-700 dark:shadow-purple-900/40";
 
-  // Dual-Mode Badge Styles
   const getBadgeClass = (type: "active" | "term") => {
     if (type === "active") {
-      // Active Badge (Green)
       return "rounded-lg bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300";
-    } else {
-      // Secondary/Term Badge (Neutral)
-      return "rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600";
     }
+    return "rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600";
   };
 
   return (
@@ -99,7 +92,6 @@ export function AdminPositionsView() {
           {Object.entries(groupedPositions).map(([title, positions]) => (
             <div key={title}>
               <div className="flex items-center gap-3 mb-4">
-                {/* Position Title Icon (Dual Mode Gradient) */}
                 <div
                   className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getPositionColor(title)} flex items-center justify-center shadow-sm`}
                 >
@@ -116,11 +108,9 @@ export function AdminPositionsView() {
                 </div>
               </div>
 
-              {/* Table Container (Dual Mode) */}
               <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60">
                 <Table>
                   <TableHeader>
-                    {/* Table Header Row (Dual Mode) */}
                     <TableRow className="bg-slate-50/50 hover:bg-slate-100 dark:bg-zinc-700/50 dark:hover:bg-zinc-700/60">
                       <TableHead className="text-slate-600 dark:text-zinc-300">
                         Name
@@ -147,7 +137,6 @@ export function AdminPositionsView() {
                       >
                         <TableCell className="font-medium text-slate-900 dark:text-white">
                           <div className="flex items-center gap-3">
-                            {/* Avatar color (Dual Mode Gradient) */}
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-700 to-indigo-500 dark:from-purple-700 dark:to-purple-500 flex items-center justify-center shadow-sm">
                               <span className="text-white">
                                 {position.person?.name.charAt(0)}
@@ -165,13 +154,11 @@ export function AdminPositionsView() {
                           ).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          {/* Secondary badge for term (Dual Mode) */}
                           <Badge className={getBadgeClass("term")}>
                             {position.term}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {/* Active badge (Dual Mode) */}
                           <Badge className={getBadgeClass("active")}>
                             Active
                           </Badge>

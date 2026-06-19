@@ -1,5 +1,5 @@
-import { AdminPositionsView } from ".";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <AdminPositionsView />;
+  redirect("/leadership?tab=positions");
 }

@@ -34,7 +34,6 @@ import {
   Church,
   TrendingUp,
   Book,
-  Network,
   Lightbulb,
   Tent,
   HeartHandshake,
@@ -55,7 +54,7 @@ type ViewRoute =
   | "life-groups"
   | "cell-groups"
   | "work-ministry"
-  | "admin-position"
+  | "leadership"
   | "training"
   | "properties"
   | "financial"
@@ -68,7 +67,6 @@ type ViewRoute =
   | "event-attendance"
   | "evangelism"
   | "bible-study"
-  | "org-chart"
   | "church-goals";
 
 export function Sidebar() {
@@ -129,21 +127,6 @@ export function Sidebar() {
       ],
     },
     {
-      title: "Leadership",
-      items: [
-        {
-          title: "Admin Positions",
-          icon: Shield,
-          value: "admin-position" as const,
-        },
-        {
-          title: "Organization Chart",
-          icon: Network,
-          value: "org-chart" as const,
-        },
-      ],
-    },
-    {
       title: "Development",
       items: [
         { title: "Training", icon: GraduationCap, value: "training" as const },
@@ -154,6 +137,16 @@ export function Sidebar() {
         },
         { title: "Bible Studies", icon: Book, value: "bible-study" as const },
         { title: "Programs", icon: CalendarDays, value: "program" as const },
+      ],
+    },
+    {
+      title: "Leadership",
+      items: [
+        {
+          title: "Leadership",
+          icon: Shield,
+          value: "leadership" as const,
+        },
       ],
     },
     {

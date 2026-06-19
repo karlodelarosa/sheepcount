@@ -34,17 +34,30 @@ import {
 } from "@/lib/supabase/life-groups";
 import {
   addWorkMinistryMember,
+  addWorkMinistryTeamRole,
+  createWorkMinistryTeam,
+  deleteWorkMinistryTeam,
   fetchWorkMinistries,
   fetchWorkMinistryMembers,
+  fetchWorkMinistryTeamRoles,
+  fetchWorkMinistryTeams,
   removeWorkMinistryMember,
+  removeWorkMinistryTeamRole,
+  updateWorkMinistryMember,
+  updateWorkMinistryTeam,
+  type CreateWorkMinistryTeamInput,
   type WorkMinistry,
   type WorkMinistryMember,
+  type WorkMinistryTeam,
+  type WorkMinistryTeamRole,
 } from "@/lib/supabase/work-ministries";
 
 type GroupsMinistryContextValue = {
   lifeGroups: LifeGroup[];
   lifeGroupMembers: LifeGroupMember[];
   workMinistries: WorkMinistry[];
+  workMinistryTeams: WorkMinistryTeam[];
+  workMinistryTeamRoles: WorkMinistryTeamRole[];
   workMinistryMembers: WorkMinistryMember[];
   cellGroups: CellGroup[];
   cellGroupMembers: CellGroupMember[];
@@ -61,8 +74,33 @@ type GroupsMinistryContextValue = {
     ministryId: string,
     personId: string,
     role: string,
+    options?: { teamId?: string | null; serviceRole?: string },
+  ) => Promise<WorkMinistryMember | null>;
+  updateWorkMinistryMemberById: (
+    membershipId: string,
+    updates: {
+      role?: string;
+      teamId?: string | null;
+      serviceRole?: string;
+    },
   ) => Promise<WorkMinistryMember | null>;
   removeWorkMinistryMemberById: (membershipId: string) => Promise<boolean>;
+  addWorkMinistryTeam: (
+    ministryId: string,
+    input: CreateWorkMinistryTeamInput,
+  ) => Promise<WorkMinistryTeam | null>;
+  updateWorkMinistryTeamById: (
+    teamId: string,
+    input: Partial<CreateWorkMinistryTeamInput>,
+  ) => Promise<WorkMinistryTeam | null>;
+  removeWorkMinistryTeamById: (teamId: string) => Promise<boolean>;
+  addTeamRoleOption: (
+    teamId: string,
+    name: string,
+  ) => Promise<WorkMinistryTeamRole | null>;
+  removeTeamRoleOption: (roleId: string) => Promise<boolean>;
+  getMinistryTeams: (ministryId: string) => WorkMinistryTeam[];
+  getTeamRoleOptions: (teamId: string) => WorkMinistryTeamRole[];
   addCellGroup: (input: CreateCellGroupInput) => Promise<CellGroup | null>;
   assignCellGroupMember: (
     cellGroupId: string,
@@ -72,7 +110,10 @@ type GroupsMinistryContextValue = {
   removeCellGroupMemberById: (membershipId: string) => Promise<boolean>;
   getPersonMinistries: (
     personId: string,
-  ) => (WorkMinistryMember & { ministry?: WorkMinistry })[];
+  ) => (WorkMinistryMember & {
+    ministry?: WorkMinistry;
+    team?: WorkMinistryTeam;
+  })[];
   getPersonLifeGroups: (
     personId: string,
   ) => (LifeGroupMember & { group?: LifeGroup })[];
@@ -107,6 +148,12 @@ export function GroupsMinistryProvider({
     [],
   );
   const [workMinistries, setWorkMinistries] = useState<WorkMinistry[]>([]);
+  const [workMinistryTeams, setWorkMinistryTeams] = useState<WorkMinistryTeam[]>(
+    [],
+  );
+  const [workMinistryTeamRoles, setWorkMinistryTeamRoles] = useState<
+    WorkMinistryTeamRole[]
+  >([]);
   const [workMinistryMembers, setWorkMinistryMembers] = useState<
     WorkMinistryMember[]
   >([]);
@@ -122,6 +169,8 @@ export function GroupsMinistryProvider({
       setLifeGroups([]);
       setLifeGroupMembers([]);
       setWorkMinistries([]);
+      setWorkMinistryTeams([]);
+      setWorkMinistryTeamRoles([]);
       setWorkMinistryMembers([]);
       setCellGroups([]);
       setCellGroupMembers([]);
@@ -130,19 +179,31 @@ export function GroupsMinistryProvider({
     }
 
     try {
-      const [groups, groupMembers, ministries, ministryMembers, cells, cellMembers] =
-        await Promise.all([
-          fetchLifeGroups(supabase, organizationId),
-          fetchLifeGroupMembers(supabase, organizationId),
-          fetchWorkMinistries(supabase, organizationId),
-          fetchWorkMinistryMembers(supabase, organizationId),
-          fetchCellGroups(supabase, organizationId),
-          fetchCellGroupMembers(supabase, organizationId),
-        ]);
+      const [
+        groups,
+        groupMembers,
+        ministries,
+        ministryTeams,
+        ministryTeamRoles,
+        ministryMembers,
+        cells,
+        cellMembers,
+      ] = await Promise.all([
+        fetchLifeGroups(supabase, organizationId),
+        fetchLifeGroupMembers(supabase, organizationId),
+        fetchWorkMinistries(supabase, organizationId),
+        fetchWorkMinistryTeams(supabase, organizationId),
+        fetchWorkMinistryTeamRoles(supabase, organizationId),
+        fetchWorkMinistryMembers(supabase, organizationId),
+        fetchCellGroups(supabase, organizationId),
+        fetchCellGroupMembers(supabase, organizationId),
+      ]);
 
       setLifeGroups(groups);
       setLifeGroupMembers(groupMembers);
       setWorkMinistries(ministries);
+      setWorkMinistryTeams(ministryTeams);
+      setWorkMinistryTeamRoles(ministryTeamRoles);
       setWorkMinistryMembers(ministryMembers);
       setCellGroups(cells);
       setCellGroupMembers(cellMembers);
@@ -235,6 +296,7 @@ export function GroupsMinistryProvider({
       ministryId: string,
       personId: string,
       role: string,
+      options?: { teamId?: string | null; serviceRole?: string },
     ): Promise<WorkMinistryMember | null> => {
       setIsSaving(true);
       try {
@@ -243,6 +305,7 @@ export function GroupsMinistryProvider({
           ministryId,
           personId,
           role,
+          options,
         );
         await refreshGroupsMinistry();
         toast.success("Assigned to ministry");
@@ -257,6 +320,153 @@ export function GroupsMinistryProvider({
       }
     },
     [refreshGroupsMinistry, supabase],
+  );
+
+  const updateWorkMinistryMemberById = useCallback(
+    async (
+      membershipId: string,
+      updates: {
+        role?: string;
+        teamId?: string | null;
+        serviceRole?: string;
+      },
+    ): Promise<WorkMinistryMember | null> => {
+      setIsSaving(true);
+      try {
+        const member = await updateWorkMinistryMember(
+          supabase,
+          membershipId,
+          updates,
+        );
+        await refreshGroupsMinistry();
+        toast.success("Assignment updated");
+        return member;
+      } catch (error) {
+        toast.error("Failed to update assignment", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshGroupsMinistry, supabase],
+  );
+
+  const addWorkMinistryTeam = useCallback(
+    async (
+      ministryId: string,
+      input: CreateWorkMinistryTeamInput,
+    ): Promise<WorkMinistryTeam | null> => {
+      setIsSaving(true);
+      try {
+        const team = await createWorkMinistryTeam(supabase, ministryId, input);
+        await refreshGroupsMinistry();
+        toast.success("Team created", { description: team.name });
+        return team;
+      } catch (error) {
+        toast.error("Failed to create team", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshGroupsMinistry, supabase],
+  );
+
+  const updateWorkMinistryTeamById = useCallback(
+    async (
+      teamId: string,
+      input: Partial<CreateWorkMinistryTeamInput>,
+    ): Promise<WorkMinistryTeam | null> => {
+      setIsSaving(true);
+      try {
+        const team = await updateWorkMinistryTeam(supabase, teamId, input);
+        await refreshGroupsMinistry();
+        toast.success("Team updated");
+        return team;
+      } catch (error) {
+        toast.error("Failed to update team", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshGroupsMinistry, supabase],
+  );
+
+  const removeWorkMinistryTeamById = useCallback(
+    async (teamId: string): Promise<boolean> => {
+      setIsSaving(true);
+      try {
+        await deleteWorkMinistryTeam(supabase, teamId);
+        await refreshGroupsMinistry();
+        toast.success("Team removed");
+        return true;
+      } catch (error) {
+        toast.error("Failed to remove team", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshGroupsMinistry, supabase],
+  );
+
+  const addTeamRoleOption = useCallback(
+    async (teamId: string, name: string): Promise<WorkMinistryTeamRole | null> => {
+      setIsSaving(true);
+      try {
+        const role = await addWorkMinistryTeamRole(supabase, teamId, name);
+        await refreshGroupsMinistry();
+        return role;
+      } catch (error) {
+        toast.error("Failed to add role option", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshGroupsMinistry, supabase],
+  );
+
+  const removeTeamRoleOption = useCallback(
+    async (roleId: string): Promise<boolean> => {
+      setIsSaving(true);
+      try {
+        await removeWorkMinistryTeamRole(supabase, roleId);
+        await refreshGroupsMinistry();
+        return true;
+      } catch (error) {
+        toast.error("Failed to remove role option", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshGroupsMinistry, supabase],
+  );
+
+  const getMinistryTeams = useCallback(
+    (ministryId: string) =>
+      workMinistryTeams.filter(team => team.ministryId === ministryId),
+    [workMinistryTeams],
+  );
+
+  const getTeamRoleOptions = useCallback(
+    (teamId: string) =>
+      workMinistryTeamRoles.filter(role => role.teamId === teamId),
+    [workMinistryTeamRoles],
   );
 
   const removeWorkMinistryMemberById = useCallback(
@@ -319,6 +529,7 @@ export function GroupsMinistryProvider({
           cellGroupId,
           personId,
           role,
+          organizationId ?? undefined,
         );
         await refreshGroupsMinistry();
         toast.success("Member added to cell group");
@@ -332,7 +543,7 @@ export function GroupsMinistryProvider({
         setIsSaving(false);
       }
     },
-    [refreshGroupsMinistry, supabase],
+    [organizationId, refreshGroupsMinistry, supabase],
   );
 
   const removeCellGroupMemberById = useCallback(
@@ -362,8 +573,9 @@ export function GroupsMinistryProvider({
         .map(a => ({
           ...a,
           ministry: workMinistries.find(m => m.id === a.ministryId),
+          team: workMinistryTeams.find(t => t.id === a.teamId),
         })),
-    [workMinistryMembers, workMinistries],
+    [workMinistryMembers, workMinistries, workMinistryTeams],
   );
 
   const getPersonLifeGroups = useCallback(
@@ -395,6 +607,8 @@ export function GroupsMinistryProvider({
         lifeGroups,
         lifeGroupMembers,
         workMinistries,
+        workMinistryTeams,
+        workMinistryTeamRoles,
         workMinistryMembers,
         cellGroups,
         cellGroupMembers,
@@ -405,7 +619,15 @@ export function GroupsMinistryProvider({
         assignLifeGroupMember,
         removeLifeGroupMemberById,
         assignWorkMinistryMember,
+        updateWorkMinistryMemberById,
         removeWorkMinistryMemberById,
+        addWorkMinistryTeam,
+        updateWorkMinistryTeamById,
+        removeWorkMinistryTeamById,
+        addTeamRoleOption,
+        removeTeamRoleOption,
+        getMinistryTeams,
+        getTeamRoleOptions,
         addCellGroup,
         assignCellGroupMember,
         removeCellGroupMemberById,

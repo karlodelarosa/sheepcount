@@ -13,11 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
 import { usePeople } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { formatMinistryAssignmentLabel } from "@/lib/work-ministry-labels";
 
 export function MinistriesView() {
   const router = useRouter();
   const { people } = usePeople();
-  const { workMinistries, workMinistryMembers, hydrated } = useGroupsMinistry();
+  const { workMinistries, workMinistryMembers, workMinistryTeams, hydrated } =
+    useGroupsMinistry();
 
   const getMinistryMembers = (ministryId: string) => {
     const assignments = workMinistryMembers.filter(
@@ -26,6 +28,7 @@ export function MinistriesView() {
     return assignments.map(assignment => ({
       ...assignment,
       person: people.find(p => p.id === assignment.personId),
+      team: workMinistryTeams.find(t => t.id === assignment.teamId),
     }));
   };
 
@@ -146,7 +149,7 @@ export function MinistriesView() {
                                 variant="outline"
                                 className={DualModeOutlineBadgeClass}
                               >
-                                {member.role}
+                                {formatMinistryAssignmentLabel(member)}
                               </Badge>
                             </div>
                           ))}

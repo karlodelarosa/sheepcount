@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, UserPlus, Search, ArrowLeft } from "lucide-react";
+import { X, UserPlus, Search, ArrowLeft, Settings2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -23,10 +23,19 @@ import {
 } from "@/components/ui/card";
 import { usePeople } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { formatMinistryAssignmentLabel } from "@/lib/work-ministry-labels";
+import { ManageMinistryTeamsDialog } from "../_components/manage-ministry-teams-dialog";
 
 interface MinistryDetailPageProps {
   ministryId: string;
 }
+
+const LEADERSHIP_ROLES = [
+  "Team Lead",
+  "Coordinator",
+  "Member",
+  "Assistant",
+] as const;
 
 export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
   const router = useRouter();
@@ -34,6 +43,8 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
   const {
     workMinistries,
     workMinistryMembers,
+    getMinistryTeams,
+    getTeamRoleOptions,
     hydrated,
     isSaving,
     assignWorkMinistryMember,
@@ -41,9 +52,15 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
   } = useGroupsMinistry();
   const [searchTerm, setSearchTerm] = useState("");
   const [newPersonId, setNewPersonId] = useState("");
+  const [newTeamId, setNewTeamId] = useState("");
+  const [newServiceRole, setNewServiceRole] = useState("");
   const [newRole, setNewRole] = useState("");
+  const [teamsDialogOpen, setTeamsDialogOpen] = useState(false);
 
   const ministry = workMinistries.find(m => m.id === ministryId);
+  const teams = getMinistryTeams(ministryId);
+  const hasTeams = teams.length > 0;
+  const teamRoleOptions = newTeamId ? getTeamRoleOptions(newTeamId) : [];
 
   const assignments = useMemo(
     () => workMinistryMembers.filter(a => a.ministryId === ministryId),
@@ -55,8 +72,9 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
       assignments.map(a => ({
         ...a,
         person: people.find(p => p.id === a.personId),
+        team: teams.find(t => t.id === a.teamId),
       })),
-    [assignments, people],
+    [assignments, people, teams],
   );
 
   const availablePeople = useMemo(
@@ -71,15 +89,54 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
     member.person?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  const membersByTeam = useMemo(() => {
+    const grouped = new Map<string | null, typeof filteredMembers>();
+    for (const member of filteredMembers) {
+      const key = member.teamId;
+      const list = grouped.get(key) ?? [];
+      list.push(member);
+      grouped.set(key, list);
+    }
+    return grouped;
+  }, [filteredMembers]);
+
+  const teamSections = useMemo(() => {
+    const sections = teams.map(team => ({
+      id: team.id,
+      name: team.name,
+      members: membersByTeam.get(team.id) ?? [],
+    }));
+    const unassigned = membersByTeam.get(null) ?? [];
+    if (unassigned.length > 0 || !hasTeams) {
+      sections.push({
+        id: "unassigned",
+        name: hasTeams ? "Unassigned to team" : "All members",
+        members: unassigned.length > 0 ? unassigned : filteredMembers,
+      });
+    }
+    return sections.filter(section => section.members.length > 0 || section.id !== "unassigned");
+  }, [teams, membersByTeam, hasTeams, filteredMembers]);
+
+  const canAddMember =
+    newPersonId &&
+    newRole &&
+    (!hasTeams || (newTeamId && newServiceRole));
+
   const handleAddMember = async () => {
-    if (!newPersonId || !newRole) return;
+    if (!canAddMember) return;
     const result = await assignWorkMinistryMember(
       ministryId,
       newPersonId,
       newRole,
+      {
+        teamId: hasTeams ? newTeamId : null,
+        serviceRole: hasTeams ? newServiceRole : "",
+      },
     );
     if (result) {
       setNewPersonId("");
+      setNewTeamId("");
+      setNewServiceRole("");
       setNewRole("");
     }
   };
@@ -140,7 +197,57 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
             </p>
           </div>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => setTeamsDialogOpen(true)}
+          className="rounded-xl border-slate-200 dark:border-zinc-700"
+        >
+          <Settings2 className="w-4 h-4 mr-2" />
+          Manage Teams
+        </Button>
       </div>
+
+      {hasTeams && (
+        <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base text-slate-900 dark:text-white">
+              Teams ({teams.length})
+            </CardTitle>
+            <CardDescription className="text-slate-600 dark:text-zinc-400">
+              Sub-teams within this ministry. Assign members to a team and
+              service role when adding them.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {teams.map(team => {
+                const count = members.filter(m => m.teamId === team.id).length;
+                const roles = getTeamRoleOptions(team.id);
+                return (
+                  <div
+                    key={team.id}
+                    className="rounded-xl border border-slate-200/60 px-3 py-2 dark:border-zinc-700/60"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-slate-900 dark:text-white text-sm">
+                        {team.name}
+                      </span>
+                      <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
+                        {count}
+                      </Badge>
+                    </div>
+                    {roles.length > 0 && (
+                      <p className="text-xs text-slate-500 dark:text-zinc-500 mt-1">
+                        {roles.map(r => r.name).join(", ")}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-1 border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 h-fit">
@@ -149,7 +256,9 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
               Add New Member
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-zinc-400">
-              Assign a new person and role to this ministry.
+              {hasTeams
+                ? "Assign a person to a team and their service role."
+                : "Set up teams first, or assign with a leadership role only."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -171,23 +280,91 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
               </Select>
             </div>
 
+            {hasTeams && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-slate-700 dark:text-zinc-300">Team</Label>
+                  <Select
+                    value={newTeamId}
+                    onValueChange={value => {
+                      setNewTeamId(value);
+                      setNewServiceRole("");
+                    }}
+                  >
+                    <SelectTrigger className={DualModeInputClass}>
+                      <SelectValue placeholder="Select team" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teams.map(team => (
+                        <SelectItem key={team.id} value={team.id}>
+                          {team.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-slate-700 dark:text-zinc-300">
+                    Service Role
+                  </Label>
+                  {teamRoleOptions.length > 0 ? (
+                    <Select
+                      value={newServiceRole}
+                      onValueChange={setNewServiceRole}
+                    >
+                      <SelectTrigger className={DualModeInputClass}>
+                        <SelectValue placeholder="Select service role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teamRoleOptions.map(role => (
+                          <SelectItem key={role.id} value={role.name}>
+                            {role.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      placeholder="e.g. Musician"
+                      value={newServiceRole}
+                      onChange={e => setNewServiceRole(e.target.value)}
+                      className={DualModeInputClass}
+                      disabled={!newTeamId}
+                    />
+                  )}
+                </div>
+              </>
+            )}
+
             <div className="space-y-2">
-              <Label className="text-slate-700 dark:text-zinc-300">Role</Label>
+              <Label className="text-slate-700 dark:text-zinc-300">
+                Leadership Role
+              </Label>
               <Select value={newRole} onValueChange={setNewRole}>
                 <SelectTrigger className={DualModeInputClass}>
-                  <SelectValue placeholder="Select role" />
+                  <SelectValue placeholder="Select leadership role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Team Lead">Team Lead</SelectItem>
-                  <SelectItem value="Coordinator">Coordinator</SelectItem>
-                  <SelectItem value="Member">Member</SelectItem>
-                  <SelectItem value="Assistant">Assistant</SelectItem>
+                  {LEADERSHIP_ROLES.map(role => (
+                    <SelectItem key={role} value={role}>
+                      {role}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+
+            {!hasTeams && (
+              <p className="text-xs text-slate-500 dark:text-zinc-500">
+                Use &quot;Manage Teams&quot; to create sub-teams like Production
+                Team or Digital Ministry, then assign specific service roles.
+              </p>
+            )}
+
             <Button
               onClick={() => void handleAddMember()}
-              disabled={!newPersonId || !newRole || isSaving}
+              disabled={!canAddMember || isSaving}
               className={`w-full ${DualModePrimaryButtonClass}`}
             >
               <UserPlus className="w-4 h-4 mr-2" />
@@ -223,45 +400,58 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
                     : "No members have been assigned yet."}
                 </div>
               ) : (
-                <div className="divide-y divide-slate-200/60 dark:divide-zinc-700/60 max-h-[60vh] overflow-y-auto">
-                  {filteredMembers.map(member => (
-                    <div
-                      key={member.id}
-                      className="p-4 flex items-center justify-between transition-colors hover:bg-slate-50 dark:hover:bg-zinc-700/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-10 h-10 rounded-xl bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center shadow-sm`}
-                        >
-                          <span className="text-white">
-                            {member.person?.name?.charAt(0)}
+                <div className="max-h-[60vh] overflow-y-auto">
+                  {teamSections.map(section => (
+                    <div key={section.id}>
+                      {hasTeams && (
+                        <div className="px-4 py-2 bg-slate-50 border-b border-slate-200/60 dark:bg-zinc-900/40 dark:border-zinc-700/60">
+                          <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
+                            {section.name} ({section.members.length})
                           </span>
                         </div>
-                        <div>
-                          <p className="text-slate-900 dark:text-white">
-                            {member.person?.name}
-                          </p>
-                          <p className="text-slate-600 dark:text-zinc-400">
-                            {member.person?.householdName}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant="secondary"
-                          className={DualModeSecondaryBadgeClass}
-                        >
-                          {member.role}
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => void handleRemoveMember(member.id)}
-                          disabled={isSaving}
-                          className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/50"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
+                      )}
+                      <div className="divide-y divide-slate-200/60 dark:divide-zinc-700/60">
+                        {section.members.map(member => (
+                          <div
+                            key={member.id}
+                            className="p-4 flex items-center justify-between transition-colors hover:bg-slate-50 dark:hover:bg-zinc-700/50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-10 h-10 rounded-xl bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center shadow-sm`}
+                              >
+                                <span className="text-white">
+                                  {member.person?.name?.charAt(0)}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-slate-900 dark:text-white">
+                                  {member.person?.name}
+                                </p>
+                                <p className="text-slate-600 dark:text-zinc-400">
+                                  {member.person?.householdName}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant="secondary"
+                                className={DualModeSecondaryBadgeClass}
+                              >
+                                {formatMinistryAssignmentLabel(member)}
+                              </Badge>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => void handleRemoveMember(member.id)}
+                                disabled={isSaving}
+                                className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/50"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
@@ -271,6 +461,13 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
           </CardContent>
         </Card>
       </div>
+
+      <ManageMinistryTeamsDialog
+        open={teamsDialogOpen}
+        onOpenChange={setTeamsDialogOpen}
+        ministryId={ministryId}
+        ministryName={ministry.name}
+      />
     </div>
   );
 }

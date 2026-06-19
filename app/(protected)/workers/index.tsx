@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { usePeople, type Person } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { formatMinistryAssignmentLabel } from "@/lib/work-ministry-labels";
 import {
   getMembershipDisplayColor,
   getMembershipDisplayLabel,
@@ -115,10 +116,13 @@ function MinistryInvolvement({ personId }: { personId: string }) {
           key={a.id}
           variant="secondary"
           className="rounded-md text-xs font-normal bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300"
-          title={a.role}
+          title={formatMinistryAssignmentLabel(a)}
         >
           {a.ministry?.name ?? "Ministry"}
-          {a.role ? ` · ${a.role}` : ""}
+          {(() => {
+            const detail = formatMinistryAssignmentLabel(a);
+            return detail && detail !== "Member" ? ` · ${detail}` : "";
+          })()}
         </Badge>
       ))}
     </div>

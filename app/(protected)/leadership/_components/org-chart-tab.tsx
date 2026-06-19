@@ -11,16 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Users, ChevronRight } from "lucide-react";
 import { mockOrgChart, mockPeople } from "@/components/mock-data";
 
-export function OrgChartView() {
+export function OrgChartTab() {
   const { admin } = mockOrgChart;
   const headPastor = mockPeople.find(p => p.id === admin.head);
 
-  const getPersonName = (personId: string) => {
-    const person = mockPeople.find(p => p.id === personId);
-    return person ? person.name : "Unknown";
-  };
-
-  // Dual-mode class definitions
   const CardBgClass =
     "border-slate-200/60 bg-white/50 dark:border-zinc-700/60 dark:bg-zinc-800/50";
   const TextForegroundClass = "text-slate-900 dark:text-white";
@@ -29,28 +23,15 @@ export function OrgChartView() {
     "from-indigo-500 to-indigo-700 dark:from-purple-600 dark:to-purple-800";
   const DepartmentIconBg =
     "from-blue-500 to-blue-700 dark:from-sky-600 dark:to-cyan-800";
-
-  // Dual-Mode Neutral Avatar Color (Used for all member icons)
   const MemberAvatarClass =
     "from-slate-900 to-slate-700 dark:from-zinc-700 dark:to-zinc-500";
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className={`text-2xl font-bold ${TextForegroundClass}`}>
-          Organization Chart
-        </h1>
-        <p className={TextMutedClass}>
-          Visual representation of church leadership and ministry structure
-        </p>
-      </div>
-
-      {/* Head Pastor */}
       <Card className={`backdrop-blur-sm ${CardBgClass}`}>
         <CardHeader>
           <div className="flex items-center justify-center">
             <div className="text-center">
-              {/* Head Pastor Avatar (Dual Mode Gradient) */}
               <div
                 className={`w-24 h-24 rounded-full bg-gradient-to-br ${HeadPastorBg} flex items-center justify-center mx-auto mb-4 shadow-lg`}
               >
@@ -64,7 +45,6 @@ export function OrgChartView() {
               <CardTitle className={`mb-2 ${TextForegroundClass}`}>
                 {headPastor?.name}
               </CardTitle>
-              {/* Badge (Thematically Colored) */}
               <Badge className="bg-indigo-500 hover:bg-indigo-600 text-white dark:bg-purple-600 dark:hover:bg-purple-700">
                 Head Pastor
               </Badge>
@@ -73,7 +53,6 @@ export function OrgChartView() {
         </CardHeader>
       </Card>
 
-      {/* Main Departments */}
       <div className="grid gap-6 lg:grid-cols-2">
         {admin.departments.map(department => {
           const deptHead = mockPeople.find(p => p.id === department.head);
@@ -85,7 +64,6 @@ export function OrgChartView() {
             >
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  {/* Department Icon (Dual Mode Gradient) */}
                   <div
                     className={`w-16 h-16 rounded-xl bg-gradient-to-br ${DepartmentIconBg} flex items-center justify-center shadow-sm`}
                   >
@@ -104,13 +82,9 @@ export function OrgChartView() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Department Head Card (Dual Mode) */}
                 {deptHead && (
-                  <div
-                    className={`p-3 rounded-xl border border-slate-200/60 bg-slate-50 dark:border-zinc-700/60 dark:bg-zinc-900/40`}
-                  >
+                  <div className="p-3 rounded-xl border border-slate-200/60 bg-slate-50 dark:border-zinc-700/60 dark:bg-zinc-900/40">
                     <div className="flex items-center gap-3">
-                      {/* Department Head Avatar (Dual Mode Gradient) */}
                       <div
                         className={`w-10 h-10 rounded-lg bg-gradient-to-br ${MemberAvatarClass} flex items-center justify-center shadow-sm`}
                       >
@@ -132,14 +106,13 @@ export function OrgChartView() {
                   </div>
                 )}
 
-                {/* Sub-departments */}
                 {department.subDepartments.length > 0 && (
                   <div className="space-y-3 pt-2 border-t border-slate-200/60 dark:border-zinc-700/60">
                     <p className={TextMutedClass}>Sub-departments</p>
                     {department.subDepartments.map(subDept => (
                       <Card
                         key={subDept.id}
-                        className={`border-slate-200/60 bg-white/30 dark:border-zinc-700/60 dark:bg-zinc-900/40`}
+                        className="border-slate-200/60 bg-white/30 dark:border-zinc-700/60 dark:bg-zinc-900/40"
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
@@ -169,7 +142,6 @@ export function OrgChartView() {
                                 key={memberId}
                                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50/50 transition-colors dark:hover:bg-zinc-700/50"
                               >
-                                {/* Member Avatar (Dual Mode Gradient) */}
                                 <div
                                   className={`w-8 h-8 rounded-lg bg-gradient-to-br ${MemberAvatarClass} flex items-center justify-center`}
                                 >
@@ -192,7 +164,6 @@ export function OrgChartView() {
                   </div>
                 )}
 
-                {/* Outreach has no sub-departments */}
                 {department.id === "outreach" &&
                   department.subDepartments.length === 0 && (
                     <div className="p-6 text-center border border-dashed border-slate-300/60 rounded-xl dark:border-zinc-700/60">
@@ -207,7 +178,6 @@ export function OrgChartView() {
         })}
       </div>
 
-      {/* Organization Summary */}
       <Card className={`backdrop-blur-sm ${CardBgClass}`}>
         <CardHeader>
           <CardTitle className={TextForegroundClass}>
@@ -219,16 +189,11 @@ export function OrgChartView() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
-            {/* Summary Boxes (Dual Mode) */}
-            <div
-              className={`p-4 rounded-xl border border-slate-200/60 bg-slate-50 dark:border-zinc-700/60 dark:bg-zinc-900/40`}
-            >
+            <div className="p-4 rounded-xl border border-slate-200/60 bg-slate-50 dark:border-zinc-700/60 dark:bg-zinc-900/40">
               <p className={TextMutedClass}>Main Departments</p>
               <p className={TextForegroundClass}>{admin.departments.length}</p>
             </div>
-            <div
-              className={`p-4 rounded-xl border border-slate-200/60 bg-slate-50 dark:border-zinc-700/60 dark:bg-zinc-900/40`}
-            >
+            <div className="p-4 rounded-xl border border-slate-200/60 bg-slate-50 dark:border-zinc-700/60 dark:bg-zinc-900/40">
               <p className={TextMutedClass}>Sub-departments</p>
               <p className={TextForegroundClass}>
                 {admin.departments.reduce(
@@ -237,9 +202,7 @@ export function OrgChartView() {
                 )}
               </p>
             </div>
-            <div
-              className={`p-4 rounded-xl border border-slate-200/60 bg-slate-50 dark:border-zinc-700/60 dark:bg-zinc-900/40`}
-            >
+            <div className="p-4 rounded-xl border border-slate-200/60 bg-slate-50 dark:border-zinc-700/60 dark:bg-zinc-900/40">
               <p className={TextMutedClass}>Total Members</p>
               <p className={TextForegroundClass}>
                 {admin.departments.reduce(
@@ -253,9 +216,7 @@ export function OrgChartView() {
                 )}
               </p>
             </div>
-            <div
-              className={`p-4 rounded-xl border border-slate-200/60 bg-slate-50 dark:border-zinc-700/60 dark:bg-zinc-900/40`}
-            >
+            <div className="p-4 rounded-xl border border-slate-200/60 bg-slate-50 dark:border-zinc-700/60 dark:bg-zinc-900/40">
               <p className={TextMutedClass}>Department Heads</p>
               <p className={TextForegroundClass}>{admin.departments.length}</p>
             </div>

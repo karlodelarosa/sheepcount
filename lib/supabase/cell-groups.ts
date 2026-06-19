@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { assertCellLeaderTrainingComplete } from "@/lib/supabase/training";
 
 export type CellGroupStatus = "active" | "graduated" | "multiplied";
 
@@ -117,7 +118,22 @@ export async function addCellGroupMember(
   cellGroupId: string,
   personId: string,
   role: "Leader" | "Member" = "Member",
+  organizationId?: string,
 ): Promise<CellGroupMember> {
+  if (role === "Leader") {
+    let orgId = organizationId;
+    if (!orgId) {
+      const { data: group, error: groupError } = await supabase
+        .from("cell_groups")
+        .select("organization_id")
+        .eq("id", cellGroupId)
+        .single();
+      if (groupError) throw groupError;
+      orgId = group.organization_id as string;
+    }
+    await assertCellLeaderTrainingComplete(supabase, orgId, personId);
+  }
+
   const { data, error } = await supabase
     .from("cell_group_members")
     .insert({

@@ -1,8 +1,6 @@
-// components/add-bible-study-group-dialog.tsx
-
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,63 +14,90 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { mockHouseholds, mockPeople } from "@/components/mock-data";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { usePeople } from "@/lib/people";
+import { useBibleStudy } from "@/lib/bible-study";
 
-// Assuming a structure for the props, e.g., to handle the form submission
 interface AddBibleStudyGroupDialogProps {
   children: React.ReactNode;
-  onAddGroup: (newGroupData: any) => void; // Replace 'any' with your actual group data type
+  defaultHouseholdId?: string;
 }
 
-export function AddBibleStudyGroupDialog({ children, onAddGroup }: AddBibleStudyGroupDialogProps) {
+export function AddBibleStudyGroupDialog({
+  children,
+  defaultHouseholdId,
+}: AddBibleStudyGroupDialogProps) {
+  const { people, households } = usePeople();
+  const { addGroup, getActiveHouseholdIds, isSaving } = useBibleStudy();
   const [isOpen, setIsOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    householdId: "",
-    leaderId: "",
-    meetingDay: "",
-    meetingTime: "",
-  });
+  const [householdId, setHouseholdId] = useState(defaultHouseholdId ?? "");
+  const [leaderPersonId, setLeaderPersonId] = useState("");
+  const [meetingDay, setMeetingDay] = useState("");
+  const [meetingTime, setMeetingTime] = useState("");
 
-  const availableHouseholds = mockHouseholds.filter(h => h.id); // Simple filter, refine as needed
-  const availableLeaders = mockPeople.filter(p => p.role === "Leader"); // Example filter for leaders
+  const activeHouseholdIds = getActiveHouseholdIds();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
-  };
+  const availableHouseholds = useMemo(
+    () => households.filter(h => !activeHouseholdIds.has(h.id)),
+    [households, activeHouseholdIds],
+  );
 
-  const handleSelectChange = (id: string, value: string) => {
-    setFormData(prev => ({ ...prev, [id]: value }));
-  };
+  const householdMembers = useMemo(
+    () => people.filter(p => p.householdId === householdId),
+    [people, householdId],
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const leaderOptions = useMemo(
+    () =>
+      [...people].sort((a, b) => {
+        const aInHousehold = a.householdId === householdId ? 0 : 1;
+        const bInHousehold = b.householdId === householdId ? 0 : 1;
+        if (aInHousehold !== bInHousehold) return aInHousehold - bInHousehold;
+        return a.name.localeCompare(b.name);
+      }),
+    [people, householdId],
+  );
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setHouseholdId(defaultHouseholdId ?? "");
+    setLeaderPersonId("");
+    setMeetingDay("");
+    setMeetingTime("");
+  }, [isOpen, defaultHouseholdId]);
+
+  useEffect(() => {
+    if (!householdId) {
+      setLeaderPersonId("");
+      return;
+    }
+    const head = householdMembers.find(p => p.role === "Head");
+    if (head && !leaderPersonId) {
+      setLeaderPersonId(head.id);
+    }
+  }, [householdId, householdMembers, leaderPersonId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real application, you'd perform validation here
+    if (!householdId || !leaderPersonId || !meetingDay.trim() || !meetingTime.trim()) {
+      return;
+    }
 
-    const selectedHousehold = availableHouseholds.find(h => h.id === formData.householdId);
-    const selectedLeader = mockPeople.find(p => p.id === formData.leaderId);
+    const result = await addGroup({
+      householdId,
+      leaderPersonId,
+      meetingDay: meetingDay.trim(),
+      meetingTime: meetingTime.trim(),
+    });
 
-    if (selectedHousehold && selectedLeader) {
-      const newGroupData = {
-        id: Date.now().toString(), // Mock ID generation
-        householdId: formData.householdId,
-        householdName: selectedHousehold.name,
-        leaderId: formData.leaderId,
-        leaderName: selectedLeader.name,
-        location: selectedHousehold.address,
-        meetingDay: formData.meetingDay,
-        meetingTime: formData.meetingTime,
-        startDate: new Date().toISOString(),
-        status: "Active",
-      };
-      
-      onAddGroup(newGroupData);
-      setFormData({ householdId: "", leaderId: "", meetingDay: "", meetingTime: "" }); // Reset form
+    if (result) {
       setIsOpen(false);
-    } else {
-        // Handle error/validation feedback
-        console.error("Missing household or leader selection.");
     }
   };
 
@@ -83,21 +108,27 @@ export function AddBibleStudyGroupDialog({ children, onAddGroup }: AddBibleStudy
         <DialogHeader>
           <DialogTitle>Add New Bible Study Group</DialogTitle>
           <DialogDescription>
-            Enter the details for the new household-based Bible study group.
+            Start a household-based Bible study. The host household provides the
+            meeting location. The leader can be anyone in your church, not only
+            household members.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          
           <div className="grid gap-2">
             <Label htmlFor="householdId">Host Household</Label>
-            <Select onValueChange={(value) => handleSelectChange("householdId", value)} value={formData.householdId}>
+            <Select
+              value={householdId}
+              onValueChange={setHouseholdId}
+              disabled={Boolean(defaultHouseholdId)}
+            >
               <SelectTrigger id="householdId">
                 <SelectValue placeholder="Select a household" />
               </SelectTrigger>
               <SelectContent>
                 {availableHouseholds.map(household => (
                   <SelectItem key={household.id} value={household.id}>
-                    {household.name} - {household.address.split(',')[0]}
+                    {household.name}
+                    {household.address ? ` — ${household.address.split(",")[0]}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -105,46 +136,58 @@ export function AddBibleStudyGroupDialog({ children, onAddGroup }: AddBibleStudy
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="leaderId">Group Leader</Label>
-            <Select onValueChange={(value) => handleSelectChange("leaderId", value)} value={formData.leaderId}>
-              <SelectTrigger id="leaderId">
+            <Label htmlFor="leaderPersonId">Group Leader</Label>
+            <Select
+              value={leaderPersonId}
+              onValueChange={setLeaderPersonId}
+              disabled={!householdId}
+            >
+              <SelectTrigger id="leaderPersonId">
                 <SelectValue placeholder="Select a leader" />
               </SelectTrigger>
               <SelectContent>
-                {availableLeaders.map(person => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {person.name} ({person.role})
-                  </SelectItem>
-                ))}
+                {leaderOptions.map(person => {
+                  const isFromHostHousehold = person.householdId === householdId;
+                  return (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.name}
+                      {isFromHostHousehold
+                        ? ` (${person.role})`
+                        : ` — ${person.householdName}`}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="meetingDay">Meeting Day</Label>
-              <Input 
-                id="meetingDay" 
-                placeholder="e.g., Monday" 
-                value={formData.meetingDay} 
-                onChange={handleChange}
+              <Input
+                id="meetingDay"
+                placeholder="e.g., Wednesday"
+                value={meetingDay}
+                onChange={e => setMeetingDay(e.target.value)}
                 required
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="meetingTime">Meeting Time</Label>
-              <Input 
-                id="meetingTime" 
-                placeholder="e.g., 7:00 PM" 
-                value={formData.meetingTime} 
-                onChange={handleChange}
+              <Input
+                id="meetingTime"
+                placeholder="e.g., 7:00 PM"
+                value={meetingTime}
+                onChange={e => setMeetingTime(e.target.value)}
                 required
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button type="submit">Create Group</Button>
+            <Button type="submit" disabled={isSaving}>
+              Create Group
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

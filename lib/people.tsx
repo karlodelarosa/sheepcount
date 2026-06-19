@@ -72,7 +72,7 @@ export interface Person {
   birthdate: string;
   isProspect: boolean;
   role: string;
-  householdId: string;
+  householdId: string | null;
   householdName: string;
   email: string;
   age: number;
@@ -652,41 +652,17 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
-      if (!organizationId) {
-        toast.error("No organization found");
+      if (!person.householdId) {
+        toast.error("Person is not in a household");
         return null;
       }
 
-      const lastName = person.lastName.trim() || person.name.trim();
-
-      setIsSaving(true);
-      try {
-        const { data: household, error: householdError } = await supabase
-          .from("households")
-          .insert({
-            organization_id: organizationId,
-            name: `${lastName} Household`,
-          })
-          .select()
-          .single();
-
-        if (householdError) throw householdError;
-
-        return updatePerson(personId, {
-          householdId: household.id,
-          householdName: household.name,
-          role: "Single",
-        });
-      } catch (error) {
-        toast.error("Failed to remove from household", {
-          description: getErrorMessage(error),
-        });
-        return null;
-      } finally {
-        setIsSaving(false);
-      }
+      return updatePerson(personId, {
+        householdId: null,
+        role: "Single",
+      });
     },
-    [organizationId, people, supabase, updatePerson],
+    [people, updatePerson],
   );
 
   const getPerson = useCallback(
@@ -700,10 +676,12 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
   );
 
   const getHouseholdMembers = useCallback(
-    (householdId: string, excludePersonId?: string) =>
-      people.filter(
+    (householdId: string, excludePersonId?: string) => {
+      if (!householdId) return [];
+      return people.filter(
         p => p.householdId === householdId && p.id !== excludePersonId,
-      ),
+      );
+    },
     [people],
   );
 
@@ -720,10 +698,12 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
   );
 
   const isInFamilyHousehold = useCallback(
-    (person: Person) =>
-      people.some(
+    (person: Person) => {
+      if (!person.householdId) return false;
+      return people.some(
         p => p.householdId === person.householdId && p.id !== person.id,
-      ),
+      );
+    },
     [people],
   );
 

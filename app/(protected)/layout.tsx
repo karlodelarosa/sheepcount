@@ -4,6 +4,10 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { Sidebar } from "./_components/sidebar";
 import { Toaster } from "@/components/ui/toast";
 import { GroupsMinistryProvider } from "@/lib/groups-ministry";
+import { DiscipleshipProvider } from "@/lib/discipleship";
+import { TrainingProvider } from "@/lib/training";
+import { EventsProvider } from "@/lib/events";
+import { BibleStudyProvider } from "@/lib/bible-study";
 import { PeopleProvider } from "@/lib/people";
 import { ServiceAttendanceProvider } from "@/lib/service-attendance";
 
@@ -25,7 +29,15 @@ export default function ProtectedLayout({
               <div className="max-w-[1600px] mx-auto">
                 <PeopleProvider>
                   <GroupsMinistryProvider>
-                    <ServiceAttendanceProvider>{children}</ServiceAttendanceProvider>
+                    <DiscipleshipProvider>
+                      <TrainingProvider>
+                        <EventsProvider>
+                          <BibleStudyProvider>
+                            <ServiceAttendanceProvider>{children}</ServiceAttendanceProvider>
+                          </BibleStudyProvider>
+                        </EventsProvider>
+                      </TrainingProvider>
+                    </DiscipleshipProvider>
                   </GroupsMinistryProvider>
                 </PeopleProvider>
               </div>

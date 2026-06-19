@@ -32,6 +32,9 @@ import {
   Trash2,
   MoreHorizontal,
   UserX,
+  BookOpen,
+  GraduationCap,
+  CalendarDays,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,6 +47,10 @@ import { useRouter } from "next/navigation";
 import { mockAttendance } from "@/components/mock-data";
 import { usePeople, type UpdatePersonInput } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { useDiscipleship } from "@/lib/discipleship";
+import { useTraining } from "@/lib/training";
+import { useEvents } from "@/lib/events";
+import { buildPersonProfileDetails } from "@/lib/supabase/person-profile";
 import {
   getMembershipDisplayColor,
   getMembershipDisplayLabel,
@@ -52,6 +59,7 @@ import {
 } from "@/lib/membership-path";
 import { PromoteMemberDialog } from "../_components/promote-member-dialog";
 import { AssignMinistryDialog } from "../_components/assign-ministry-dialog";
+import { formatMinistryAssignmentLabel } from "@/lib/work-ministry-labels";
 import { AssignHouseholdDialog } from "../_components/assign-household-dialog";
 import { ConfirmPersonDialog } from "../_components/confirm-person-dialog";
 import { BirthdateField } from "@/components/birthdate-field";
@@ -86,13 +94,34 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
     removeFromHousehold,
     isSaving,
     households,
+    people,
   } = usePeople();
   const {
     getPersonMinistries,
     getPersonLifeGroups,
+    getPersonCellGroup,
     workMinistries,
+    workMinistryTeams,
+    workMinistryTeamRoles,
     assignWorkMinistryMember,
+    cellGroups,
+    cellGroupMembers,
   } = useGroupsMinistry();
+  const {
+    getPersonBadges,
+    getPersonDiscipleshipRoles,
+    tracks,
+    enrollments,
+  } = useDiscipleship();
+  const {
+    courses,
+    modules,
+    progress,
+    getPersonTrainingBadges,
+    getPersonActiveCourses,
+    getPersonCompletedCourses,
+  } = useTraining();
+  const { events, registrations, getPersonEvents } = useEvents();
 
   const [isEditing, setIsEditing] = useState(false);
   const [promoteOpen, setPromoteOpen] = useState(false);
@@ -111,14 +140,45 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
 
   const person = getPerson(personId);
   const ministriesList = getPersonMinistries(personId);
-  const household = person ? getHousehold(person.householdId) : undefined;
-  const householdMembers = person
+  const household = person?.householdId
+    ? getHousehold(person.householdId)
+    : undefined;
+  const householdMembers = person?.householdId
     ? getHouseholdMembers(person.householdId, personId)
     : [];
   const inFamilyHousehold = person ? isInFamilyHousehold(person) : false;
   const hasHousehold = !!(person?.householdId && household);
 
   const lifeGroups = getPersonLifeGroups(personId);
+  const cellGroup = getPersonCellGroup(personId);
+  const discipleshipBadges = getPersonBadges(personId);
+  const discipleshipRole = getPersonDiscipleshipRoles(personId);
+  const trainingBadges = getPersonTrainingBadges(personId);
+  const activeTraining = getPersonActiveCourses(personId);
+  const completedTraining = getPersonCompletedCourses(personId);
+  const personEvents = getPersonEvents(personId);
+
+  const profileDetails = buildPersonProfileDetails({
+    personId,
+    people,
+    cellGroups,
+    cellGroupMembers,
+    discipleshipTracks: tracks,
+    discipleshipEnrollments: enrollments,
+    trainingCourses: courses,
+    courseModules: modules,
+    courseProgress: progress,
+    churchEvents: events,
+    eventRegistrations: registrations,
+  });
+
+  const trackBadgeColors: Record<string, string> = {
+    blue: "from-blue-500 to-blue-700 dark:from-sky-600 dark:to-cyan-800",
+    green: "from-green-500 to-green-700 dark:from-emerald-600 dark:to-green-800",
+    purple: "from-purple-500 to-purple-700 dark:from-violet-600 dark:to-fuchsia-800",
+    pink: "from-pink-500 to-pink-700 dark:from-rose-600 dark:to-pink-800",
+    indigo: "from-indigo-500 to-indigo-700 dark:from-indigo-600 dark:to-indigo-800",
+  };
 
   const attendanceRecords = mockAttendance.filter(r => r.personId === personId);
   const totalAttended = attendanceRecords.length;
@@ -374,13 +434,22 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                     Prospect
                   </Badge>
                 )}
+                {discipleshipBadges.map(badge => (
+                  <Badge
+                    key={badge.enrollmentId}
+                    className={`rounded-lg border-0 bg-gradient-to-r ${trackBadgeColors[badge.color] ?? trackBadgeColors.blue} text-white`}
+                  >
+                    <Award className="w-3 h-3 mr-1 inline" />
+                    {badge.trackName}
+                  </Badge>
+                ))}
               </div>
             </div>
             {!isEditing && (
               <div className="grid grid-cols-2 gap-2 sm:w-48 shrink-0">
                 <StatTile label="Ministries" value={ministriesList.length} />
                 <StatTile label="Life groups" value={lifeGroups.length} />
-                <StatTile label="Attendance" value={`${attendanceRate}%`} />
+                <StatTile label="Badges" value={discipleshipBadges.length + trainingBadges.length} />
                 <StatTile label="Services" value={totalAttended} />
               </div>
             )}
@@ -618,7 +687,7 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                         )}
                       </div>
                       <Badge variant="secondary" className="rounded-lg shrink-0">
-                        {assignment.role}
+                        {formatMinistryAssignmentLabel(assignment)}
                       </Badge>
                     </div>
                   ))}
@@ -667,6 +736,264 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                         </p>
                       )}
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className={cn(panelCard, "p-5")}>
+            <SectionHeader
+              icon={Users}
+              title="Cell Group"
+              description={
+                cellGroup
+                  ? `${cellGroup.group?.name} · ${cellGroup.role === "Leader" ? "Cell Leader" : "Member"}`
+                  : "Not assigned to a cell group"
+              }
+            />
+            <div className="mt-4">
+              {!cellGroup ? (
+                <EmptyState
+                  icon={Users}
+                  title="No cell group"
+                  description="This person is not assigned to a cell group yet."
+                />
+              ) : (
+                <div className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/40 dark:border-zinc-700/70 dark:bg-zinc-800/30">
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    {cellGroup.group?.name}
+                  </p>
+                  <Badge variant="secondary" className="rounded-lg mt-2">
+                    {cellGroup.role === "Leader" ? "Cell Leader" : "Member"}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className={cn(panelCard, "p-5")}>
+            <SectionHeader
+              icon={BookOpen}
+              title="Discipleship Connections"
+              description={
+                discipleshipRole
+                  ? `Active as ${discipleshipRole}`
+                  : "No active discipleship enrollments"
+              }
+            />
+            <div className="mt-4">
+              {profileDetails.discipleship.activeEnrollments.length === 0 ? (
+                <EmptyState
+                  icon={BookOpen}
+                  title="No active enrollments"
+                  description="Enroll this person in a discipleship track to track mentor connections."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {profileDetails.discipleship.activeEnrollments.map((entry, i) => (
+                    <div
+                      key={`${entry.trackName}-${i}`}
+                      className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/40 dark:border-zinc-700/70 dark:bg-zinc-800/30"
+                    >
+                      <p className="font-medium text-slate-900 dark:text-white">
+                        {entry.trackName}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
+                        {entry.role}
+                        {entry.mentorName ? ` · Mentor: ${entry.mentorName}` : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className={cn(panelCard, "p-5")}>
+            <SectionHeader
+              icon={GraduationCap}
+              title="Training"
+              description={`${activeTraining.length} in progress · ${completedTraining.length} completed`}
+            />
+            <div className="mt-4 space-y-4">
+              {activeTraining.length === 0 && completedTraining.length === 0 ? (
+                <EmptyState
+                  icon={GraduationCap}
+                  title="No training history"
+                  description="Enroll this person in a training course to track progress."
+                />
+              ) : (
+                <>
+                  {activeTraining.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 uppercase tracking-wide">
+                        In progress
+                      </p>
+                      {activeTraining.map(({ course, progressPercent, progress: p }) => (
+                        <div
+                          key={p.id}
+                          className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/40 dark:border-zinc-700/70 dark:bg-zinc-800/30"
+                        >
+                          <p className="font-medium text-slate-900 dark:text-white">
+                            {course?.name}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
+                            {progressPercent}% complete
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {trainingBadges.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-slate-500 dark:text-zinc-500 uppercase tracking-wide">
+                        Completed
+                      </p>
+                      {trainingBadges.map(badge => (
+                        <div
+                          key={badge.progressId}
+                          className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/40 dark:border-zinc-700/70 dark:bg-zinc-800/30"
+                        >
+                          <Award className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-900 dark:text-white truncate">
+                              {badge.courseName}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-zinc-500">
+                              {badge.category} ·{" "}
+                              {new Date(badge.earnedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className={cn(panelCard, "p-5")}>
+            <SectionHeader
+              icon={CalendarDays}
+              title="Programs & Events"
+              description={`${personEvents.length} registration${personEvents.length !== 1 ? "s" : ""}`}
+            />
+            <div className="mt-4">
+              {personEvents.length === 0 ? (
+                <EmptyState
+                  icon={CalendarDays}
+                  title="No event history"
+                  description="Register this person for church events like VBS, camps, or retreats."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {personEvents.map(({ registration, event }) => (
+                    <div
+                      key={registration.id}
+                      className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/40 dark:border-zinc-700/70 dark:bg-zinc-800/30"
+                    >
+                      <p className="font-medium text-slate-900 dark:text-white">
+                        {event?.title ?? "Event"}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
+                        {event?.type} · {registration.roleInEvent}
+                        {event?.startDate
+                          ? ` · ${new Date(event.startDate).toLocaleDateString()}`
+                          : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className={cn(panelCard, "p-5")}>
+            <SectionHeader
+              icon={CalendarDays}
+              title="Spiritual Footprint Timeline"
+              description="Chronological history across cell, discipleship, training, and events"
+            />
+            <div className="mt-4">
+              {profileDetails.timeline.length === 0 ? (
+                <EmptyState
+                  icon={CalendarDays}
+                  title="No history yet"
+                  description="Activity will appear here as this person participates in church life."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {profileDetails.timeline.map((entry, i) => (
+                    <div
+                      key={`${entry.kind}-${entry.date}-${i}`}
+                      className="flex gap-3 p-3 rounded-xl border border-slate-200/70 bg-slate-50/40 dark:border-zinc-700/70 dark:bg-zinc-800/30"
+                    >
+                      <div className="text-xs text-slate-500 dark:text-zinc-500 shrink-0 w-20 pt-0.5">
+                        {new Date(entry.date).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                          {entry.label}
+                        </p>
+                        {entry.detail && (
+                          <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
+                            {entry.detail}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className={cn(panelCard, "p-5")}>
+            <SectionHeader
+              icon={BookOpen}
+              title="Discipleship Badges"
+              description={`${discipleshipBadges.length} track${discipleshipBadges.length !== 1 ? "s" : ""} completed`}
+            />
+            <div className="mt-4">
+              {discipleshipBadges.length === 0 ? (
+                <EmptyState
+                  icon={Award}
+                  title="No badges earned yet"
+                  description="Complete all milestones in a discipleship track to earn a badge."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {discipleshipBadges.map(badge => (
+                    <button
+                      key={badge.enrollmentId}
+                      type="button"
+                      onClick={() => router.push(`/discipleship/${badge.trackId}`)}
+                      className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/40 hover:bg-slate-100/60 dark:border-zinc-700/70 dark:bg-zinc-800/30 dark:hover:bg-zinc-800/50 transition-colors text-left"
+                    >
+                      <div
+                        className={`shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${trackBadgeColors[badge.color] ?? trackBadgeColors.blue} flex items-center justify-center shadow-sm`}
+                      >
+                        <Award className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-slate-900 dark:text-white truncate">
+                          {badge.trackName}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
+                          {badge.category} · Earned{" "}
+                          {new Date(badge.earnedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="rounded-lg shrink-0">
+                        Completed
+                      </Badge>
+                    </button>
                   ))}
                 </div>
               )}
@@ -733,9 +1060,11 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         onOpenChange={setAssignOpen}
         personName={person.name}
         ministries={workMinistries}
+        teams={workMinistryTeams}
+        teamRoles={workMinistryTeamRoles}
         assignedMinistryIds={ministriesList.map(a => a.ministryId)}
-        onAssign={(ministryId, role) =>
-          void assignWorkMinistryMember(personId, ministryId, role)
+        onAssign={(ministryId, role, options) =>
+          void assignWorkMinistryMember(personId, ministryId, role, options)
         }
       />
 
@@ -748,8 +1077,8 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
             h.id !== person.householdId ||
             inFamilyHousehold,
         )}
-        currentHouseholdId={hasHousehold ? person.householdId : undefined}
-        canRemoveFromHousehold={inFamilyHousehold}
+        currentHouseholdId={person.householdId ?? undefined}
+        canRemoveFromHousehold={hasHousehold}
         onAssign={async (householdId, role) => {
           await assignToHousehold(personId, householdId, role);
         }}

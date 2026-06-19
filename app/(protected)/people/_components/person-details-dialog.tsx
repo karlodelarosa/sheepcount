@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Dialog,
   DialogContent,
@@ -20,14 +22,13 @@ import {
 import {
   mockAttendance,
   mockPeople,
-  mockTrainingCompletions,
-  mockTrainingEvents,
   mockMinistryAssignments,
   mockMinistries,
   mockAdminPositions,
   mockLifeGroupMembers,
   mockLifeGroups,
 } from "@/components/mock-data";
+import { useTraining } from "@/lib/training";
 
 interface PersonDetailsDialogProps {
   person: any;
@@ -38,6 +39,8 @@ export function PersonDetailsDialog({
   person,
   onClose,
 }: PersonDetailsDialogProps) {
+  const { getPersonCompletedCourses } = useTraining();
+
   if (!person) return null;
 
   // Get household members
@@ -51,13 +54,7 @@ export function PersonDetailsDialog({
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 10);
 
-  // Get training completions
-  const trainingCompletions = mockTrainingCompletions
-    .filter(tc => tc.personId === person.id)
-    .map(tc => ({
-      ...tc,
-      training: mockTrainingEvents.find(t => t.id === tc.trainingId),
-    }));
+  const trainingCompletions = getPersonCompletedCourses(person.id);
 
   // Get ministry assignments
   const ministryAssignments = mockMinistryAssignments
@@ -241,31 +238,27 @@ export function PersonDetailsDialog({
                   Training Completions
                 </h3>
                 <div className="space-y-2">
-                  {trainingCompletions.map(completion => (
+                  {trainingCompletions.map(({ progress, course }) => (
                     <div
-                      key={completion.id}
+                      key={progress.id}
                       className="p-3 border border-slate-200/60 rounded-xl hover:bg-slate-50 transition-colors"
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-slate-900">
-                          {completion.training?.name}
+                          {course?.name ?? "Unknown Course"}
                         </span>
-                        {completion.certified && (
-                          <Badge className="rounded-lg bg-green-500">
-                            Certified
-                          </Badge>
-                        )}
+                        <Badge className="rounded-lg bg-green-500">
+                          Completed
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-4 text-slate-600">
                         <span>
                           Completed:{" "}
-                          {new Date(
-                            completion.completedDate,
-                          ).toLocaleDateString()}
+                          {progress.completedAt
+                            ? new Date(progress.completedAt).toLocaleDateString()
+                            : "—"}
                         </span>
-                        {completion.score && (
-                          <span>Score: {completion.score}</span>
-                        )}
+                        {course?.category && <span>{course.category}</span>}
                       </div>
                     </div>
                   ))}

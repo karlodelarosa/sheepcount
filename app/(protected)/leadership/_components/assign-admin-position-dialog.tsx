@@ -43,21 +43,17 @@ export function AssignAdminPositionDialog({
     setFormData({ personId: "", title: "", term: "" });
   };
 
-  // Dual-Mode Primary Button Class
   const DualModePrimaryButtonClass =
     "rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700";
 
-  // Dual-Mode Outline Button Class
   const DualModeOutlineButtonClass =
     "rounded-lg border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:text-white dark:hover:bg-zinc-700";
 
-  // Dual-Mode Input/Select Class
   const DualModeInputClass =
     "rounded-lg bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* DialogContent: Dual Mode Styling */}
       <DialogContent className="sm:max-w-[500px] bg-white border-slate-200/60 dark:bg-zinc-800 dark:border-zinc-700/60 dark:text-white">
         <DialogHeader>
           <DialogTitle className="text-slate-900 dark:text-white">
@@ -85,7 +81,6 @@ export function AssignAdminPositionDialog({
                 <SelectTrigger className={`rounded-lg ${DualModeInputClass}`}>
                   <SelectValue placeholder="Select position" />
                 </SelectTrigger>
-                {/* SelectContent component relies on global styling, ensure it supports dark mode */}
                 <SelectContent>
                   <SelectItem value="Secretary">Secretary</SelectItem>
                   <SelectItem value="Treasurer">Treasurer</SelectItem>
@@ -112,7 +107,6 @@ export function AssignAdminPositionDialog({
                 <SelectTrigger className={`rounded-lg ${DualModeInputClass}`}>
                   <SelectValue placeholder="Choose a person" />
                 </SelectTrigger>
-                {/* SelectContent component relies on global styling, ensure it supports dark mode */}
                 <SelectContent>
                   {mockPeople.map(person => (
                     <SelectItem key={person.id} value={person.id}>
