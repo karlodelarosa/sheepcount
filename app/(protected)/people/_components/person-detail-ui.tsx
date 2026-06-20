@@ -114,17 +114,18 @@ export function PersonAvatar({
   size = "md",
 }: {
   name: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "profile" | "lg";
 }) {
   const sizes = {
     sm: "w-8 h-8 rounded-lg text-sm",
     md: "w-10 h-10 rounded-xl text-sm",
+    profile: "w-12 h-12 rounded-xl text-lg",
     lg: "w-20 h-20 rounded-2xl text-3xl",
   };
   return (
     <div
       className={cn(
-        "bg-gradient-to-br from-slate-800 to-slate-600 dark:from-purple-700 dark:to-purple-500 flex items-center justify-center shadow-md shrink-0 font-semibold text-white",
+        "bg-gradient-to-br from-slate-800 to-slate-600 dark:from-purple-700 dark:to-purple-500 flex items-center justify-center shrink-0 font-semibold text-white",
         sizes[size],
       )}
     >

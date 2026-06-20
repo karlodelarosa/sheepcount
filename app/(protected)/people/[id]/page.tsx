@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { PersonDetails } from "../[id]/index";
 import { useParams, useRouter } from "next/navigation";
 
-export default function PersonDetailsPage() {
+function PersonDetailsPageContent() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string | undefined;
@@ -21,4 +22,12 @@ export default function PersonDetailsPage() {
   }
 
   return <PersonDetails personId={id} onBack={handleBack} />;
+}
+
+export default function PersonDetailsPage() {
+  return (
+    <Suspense fallback={null}>
+      <PersonDetailsPageContent />
+    </Suspense>
+  );
 }

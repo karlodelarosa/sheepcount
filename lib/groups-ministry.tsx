@@ -36,7 +36,9 @@ import {
 import {
   addWorkMinistryMember,
   addWorkMinistryTeamRole,
+  createWorkMinistry,
   createWorkMinistryTeam,
+  deleteWorkMinistry,
   deleteWorkMinistryTeam,
   fetchWorkMinistries,
   fetchWorkMinistryMembers,
@@ -46,6 +48,7 @@ import {
   removeWorkMinistryTeamRole,
   updateWorkMinistryMember,
   updateWorkMinistryTeam,
+  type CreateWorkMinistryInput,
   type CreateWorkMinistryTeamInput,
   type WorkMinistry,
   type WorkMinistryMember,
@@ -86,6 +89,8 @@ type GroupsMinistryContextValue = {
     },
   ) => Promise<WorkMinistryMember | null>;
   removeWorkMinistryMemberById: (membershipId: string) => Promise<boolean>;
+  addWorkMinistry: (input: CreateWorkMinistryInput) => Promise<WorkMinistry | null>;
+  removeWorkMinistryById: (ministryId: string) => Promise<boolean>;
   addWorkMinistryTeam: (
     ministryId: string,
     input: CreateWorkMinistryTeamInput,
@@ -351,6 +356,51 @@ export function GroupsMinistryProvider({
           description: getErrorMessage(error),
         });
         return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshGroupsMinistry, supabase],
+  );
+
+  const addWorkMinistry = useCallback(
+    async (input: CreateWorkMinistryInput): Promise<WorkMinistry | null> => {
+      if (!organizationId) return null;
+      setIsSaving(true);
+      try {
+        const ministry = await createWorkMinistry(
+          supabase,
+          organizationId,
+          input,
+        );
+        await refreshGroupsMinistry();
+        toast.success("Ministry created", { description: ministry.name });
+        return ministry;
+      } catch (error) {
+        toast.error("Failed to create ministry", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshGroupsMinistry, supabase],
+  );
+
+  const removeWorkMinistryById = useCallback(
+    async (ministryId: string): Promise<boolean> => {
+      setIsSaving(true);
+      try {
+        await deleteWorkMinistry(supabase, ministryId);
+        await refreshGroupsMinistry();
+        toast.success("Ministry removed");
+        return true;
+      } catch (error) {
+        toast.error("Failed to remove ministry", {
+          description: getErrorMessage(error),
+        });
+        return false;
       } finally {
         setIsSaving(false);
       }
@@ -656,6 +706,8 @@ export function GroupsMinistryProvider({
         assignWorkMinistryMember,
         updateWorkMinistryMemberById,
         removeWorkMinistryMemberById,
+        addWorkMinistry,
+        removeWorkMinistryById,
         addWorkMinistryTeam,
         updateWorkMinistryTeamById,
         removeWorkMinistryTeamById,

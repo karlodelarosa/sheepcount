@@ -206,7 +206,7 @@ function getInitialDateRange(records: GroupedAttendanceRecord[]): DateRangeValue
 
 export function ServiceAttendanceView() {
   const router = useRouter();
-  const { people, hydrated: peopleHydrated } = usePeople();
+  const { people, hydrated: peopleHydrated, addPerson } = usePeople();
   const {
     attendanceRows,
     sundayServiceTypes,
@@ -271,10 +271,44 @@ export function ServiceAttendanceView() {
   const loading = !hydrated || !peopleHydrated;
 
   const handleRecordAttendance = async (newRecord: NewAttendanceRecord) => {
+    const resolvedAttendees: {
+      personId: string;
+      timeOfArrival: string | null;
+    }[] = [];
+
+    for (const attendee of newRecord.attendees) {
+      if (attendee.status === "new" && attendee.guestName) {
+        const person = await addPerson(
+          {
+            firstName: attendee.guestName.firstName,
+            lastName: attendee.guestName.lastName,
+            membershipType: "Prospect",
+          },
+          { quiet: true },
+        );
+        if (!person) return false;
+
+        resolvedAttendees.push({
+          personId: person.id,
+          timeOfArrival: attendee.timeOfArrival,
+        });
+        continue;
+      }
+
+      if (attendee.personId) {
+        resolvedAttendees.push({
+          personId: attendee.personId,
+          timeOfArrival: attendee.timeOfArrival,
+        });
+      }
+    }
+
+    if (resolvedAttendees.length === 0) return false;
+
     const sessionId = await recordAttendance({
       serviceId: newRecord.serviceId,
       date: newRecord.date,
-      personIds: newRecord.personIds,
+      attendees: resolvedAttendees,
     });
 
     if (!sessionId) return false;

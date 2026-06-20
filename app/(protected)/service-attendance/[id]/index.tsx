@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, ArrowLeft, Users, Trash } from "lucide-react";
+import { Calendar, ArrowLeft, Users, Trash, Clock } from "lucide-react";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
@@ -27,6 +27,13 @@ import { getMembershipDisplayLabel } from "@/lib/membership-path";
 
 interface Props {
   attendanceId: string;
+}
+
+function formatArrivalTime(time: string): string {
+  const [hours, minutes] = time.split(":");
+  const date = new Date();
+  date.setHours(Number(hours), Number(minutes), 0, 0);
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
 export function AttendanceDetailsView({ attendanceId }: Props) {
@@ -208,6 +215,13 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
                     <p className="truncate">{person.name}</p>
                     <p className="text-[10px] text-muted-foreground truncate">
                       {person.householdName}
+                      {person.timeOfArrival && (
+                        <>
+                          {" · "}
+                          <Clock className="inline w-2.5 h-2.5 mr-0.5" />
+                          {formatArrivalTime(person.timeOfArrival)}
+                        </>
+                      )}
                     </p>
                   </div>
                   <Badge variant="outline" className="text-[10px] shrink-0">

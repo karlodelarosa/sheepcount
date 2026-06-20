@@ -7,6 +7,7 @@ import type {
   Household,
   MembershipType,
   Person,
+  PersonGender,
   PersonStatus,
   UpdatePersonInput,
 } from "@/lib/people";
@@ -30,6 +31,7 @@ type DbPersonRow = {
   phone: string;
   email: string;
   birthdate: string | null;
+  gender: string | null;
   role: string;
   status: string;
   membership_type: string;
@@ -90,6 +92,7 @@ function toPerson(row: DbPersonRow): Person {
     phone: row.phone,
     email: row.email,
     birthdate: row.birthdate ?? "",
+    gender: (row.gender as PersonGender | null) ?? null,
     isProspect: row.is_prospect,
     role: row.role,
     householdId: row.household_id,
@@ -113,6 +116,7 @@ const personSelect = `
   phone,
   email,
   birthdate,
+  gender,
   role,
   status,
   membership_type,
@@ -196,6 +200,7 @@ export async function createPersonInHousehold(
       phone: input.phone?.trim() ?? "",
       email: input.email?.trim() ?? "",
       birthdate: input.birthdate?.trim() || null,
+      gender: input.gender ?? null,
       is_prospect: isProspect,
       role: input.role?.trim() || "Single",
       status: "Active",
@@ -235,6 +240,7 @@ export async function createPerson(
       last_name: lastName,
       phone: input.phone?.trim() ?? "",
       birthdate: input.birthdate?.trim() || null,
+      gender: input.gender ?? null,
       is_prospect: isProspect,
       role: "Single",
       status: "Active",
@@ -275,6 +281,7 @@ export async function updatePerson(
   if (input.phone !== undefined) updates.phone = input.phone.trim();
   if (input.email !== undefined) updates.email = input.email.trim();
   if (input.birthdate !== undefined) updates.birthdate = input.birthdate;
+  if (input.gender !== undefined) updates.gender = input.gender;
   if (input.role !== undefined) updates.role = input.role;
   if (input.status !== undefined) updates.status = input.status;
   if (input.isProspect !== undefined) updates.is_prospect = input.isProspect;

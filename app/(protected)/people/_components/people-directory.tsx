@@ -29,8 +29,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Baby } from "lucide-react";
 import { getMembershipDisplayColor, getMembershipDisplayLabel } from "@/lib/membership-path";
+import { isChildByAge } from "@/lib/person-age";
 import { usePeople, PEOPLE_PAGE_SIZE, type AddPersonInput } from "@/lib/people";
 import { AddPersonDialog } from "./add-person-dialog";
 
@@ -181,6 +182,15 @@ export function PeopleDirectory() {
                           </div>
                           <div className="flex items-center gap-2">
                             {person.name}
+                            {isChildByAge(person.age, person.birthdate) && (
+                              <Badge
+                                className="rounded-lg gap-1 bg-sky-100 text-sky-700 dark:bg-sky-900 dark:text-sky-300"
+                                title={`Age ${person.age}`}
+                              >
+                                <Baby className="w-3 h-3" />
+                                Child
+                              </Badge>
+                            )}
                             {person.isProspect && (
                               <Badge className="rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300">
                                 Prospect

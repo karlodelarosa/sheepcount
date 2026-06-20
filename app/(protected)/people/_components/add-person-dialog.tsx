@@ -13,6 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BirthdateField } from "@/components/birthdate-field";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChevronDown, Loader2, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -21,7 +28,7 @@ import {
   MEMBERSHIP_PATH_LABELS,
   type MembershipPathType,
 } from "@/lib/membership-path";
-import type { AddPersonInput } from "@/lib/people";
+import type { AddPersonInput, PersonGender } from "@/lib/people";
 
 interface AddPersonDialogProps {
   open: boolean;
@@ -43,6 +50,7 @@ export function AddPersonDialog({
   const formRef = useRef<HTMLFormElement>(null);
   const [membershipType, setMembershipType] =
     useState<MembershipPathType>("Member");
+  const [gender, setGender] = useState<PersonGender | "">("");
   const [showDetails, setShowDetails] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const [addedCount, setAddedCount] = useState(0);
@@ -60,6 +68,7 @@ export function AddPersonDialog({
 
   const resetForm = () => {
     formRef.current?.reset();
+    setGender("");
     setFormKey(k => k + 1);
     firstNameRef.current?.focus();
   };
@@ -74,6 +83,7 @@ export function AddPersonDialog({
       lastName: formData.get("lastName") as string,
       phone: phone || undefined,
       birthdate: birthdate || undefined,
+      gender: gender || null,
       membershipType,
     };
   };
@@ -203,7 +213,7 @@ export function AddPersonDialog({
             onClick={() => setShowDetails(v => !v)}
             className="flex w-full items-center justify-between rounded-xl border border-slate-200/60 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-slate-50 dark:border-zinc-700/60 dark:hover:bg-zinc-800/60"
           >
-            <span>More details (middle name, birthdate)</span>
+            <span>More details (middle name, birthdate, gender)</span>
             <ChevronDown
               className={cn(
                 "h-4 w-4 transition-transform",
@@ -225,6 +235,25 @@ export function AddPersonDialog({
                 />
               </div>
               <BirthdateField key={formKey} name="birthdate" />
+              <div className="grid gap-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select
+                  value={gender || "unset"}
+                  onValueChange={value =>
+                    setGender(value === "unset" ? "" : (value as PersonGender))
+                  }
+                  disabled={isSaving}
+                >
+                  <SelectTrigger id="gender" className="rounded-xl">
+                    <SelectValue placeholder="Not specified" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unset">Not specified</SelectItem>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 

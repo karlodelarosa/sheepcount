@@ -25,7 +25,10 @@ import {
 export type RecordAttendanceInput = {
   serviceId: string;
   date: string;
-  personIds: string[];
+  attendees: {
+    personId: string;
+    timeOfArrival?: string | null;
+  }[];
 };
 
 type ServiceAttendanceContextValue = {

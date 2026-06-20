@@ -40,6 +40,7 @@ export type SessionAttendee = {
   name: string;
   householdName: string;
   membershipType: MembershipType | string;
+  timeOfArrival: string | null;
 };
 
 export type SessionDetail = {
@@ -69,6 +70,7 @@ type DbSessionWithAttendees = {
   service_session_attendees: {
     id: string;
     person_id: string;
+    time_of_arrival: string | null;
   }[];
 };
 
@@ -145,7 +147,7 @@ export async function fetchAttendanceRows(
       id,
       session_date,
       service_types!inner ( id, name, category ),
-      service_session_attendees ( id, person_id )
+      service_session_attendees ( id, person_id, time_of_arrival )
     `,
     )
     .eq("organization_id", organizationId)
@@ -155,13 +157,18 @@ export async function fetchAttendanceRows(
   return flattenSessionRows((data ?? []) as unknown as DbSessionWithAttendees[]);
 }
 
+export type AttendanceEntry = {
+  personId: string;
+  timeOfArrival?: string | null;
+};
+
 export async function recordAttendance(
   supabase: SupabaseClient,
   organizationId: string,
   input: {
     serviceId: string;
     date: string;
-    personIds: string[];
+    attendees: AttendanceEntry[];
     serviceCategory: ServiceCategory;
   },
 ): Promise<{ sessionId: string }> {
@@ -181,26 +188,32 @@ export async function recordAttendance(
 
   if (sessionError) throw sessionError;
 
-  if (input.serviceCategory === "sunday" && input.personIds.length > 0) {
+  const personIds = input.attendees.map((attendee) => attendee.personId);
+
+  if (input.serviceCategory === "sunday" && personIds.length > 0) {
     await promoteFirstTimeSundayAttendees(
       supabase,
       organizationId,
-      input.personIds,
+      personIds,
     );
   }
 
-  const attendeeRows = input.personIds.map((personId) => ({
+  const attendeeRows = input.attendees.map((attendee) => ({
     session_id: session.id,
-    person_id: personId,
+    person_id: attendee.personId,
+    time_of_arrival: attendee.timeOfArrival ?? null,
   }));
 
   const { error: attendeeError } = await supabase
     .from("service_session_attendees")
-    .upsert(attendeeRows, { onConflict: "session_id,person_id" });
+    .upsert(attendeeRows, {
+      onConflict: "session_id,person_id",
+      ignoreDuplicates: false,
+    });
 
   if (attendeeError) throw attendeeError;
 
-  if (input.serviceCategory === "sunday" && input.personIds.length > 0) {
+  if (input.serviceCategory === "sunday" && personIds.length > 0) {
     const { error: peopleError } = await supabase
       .from("people")
       .update({
@@ -208,7 +221,7 @@ export async function recordAttendance(
         updated_at: new Date().toISOString(),
       })
       .eq("organization_id", organizationId)
-      .in("id", input.personIds);
+      .in("id", personIds);
 
     if (peopleError) throw peopleError;
   }
@@ -249,6 +262,7 @@ export async function fetchSessionDetail(
       `
       id,
       person_id,
+      time_of_arrival,
       people!inner (
         first_name,
         middle_name,
@@ -265,6 +279,7 @@ export async function fetchSessionDetail(
   type DbAttendee = {
     id: string;
     person_id: string;
+    time_of_arrival: string | null;
     people:
       | {
           first_name: string;
@@ -301,6 +316,7 @@ export async function fetchSessionDetail(
       name,
       householdName: household?.name ?? "",
       membershipType: person.membership_type,
+      timeOfArrival: row.time_of_arrival,
     };
   });
 

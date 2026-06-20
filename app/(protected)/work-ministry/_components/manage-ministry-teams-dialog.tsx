@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, X } from "lucide-react";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
 import type { WorkMinistryTeam } from "@/lib/supabase/work-ministries";
+import { ConfirmDeleteDialog } from "./confirm-delete-dialog";
 
 interface ManageMinistryTeamsDialogProps {
   open: boolean;
@@ -43,6 +44,7 @@ export function ManageMinistryTeamsDialog({
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamDescription, setNewTeamDescription] = useState("");
   const [roleInputs, setRoleInputs] = useState<Record<string, string>>({});
+  const [pendingTeam, setPendingTeam] = useState<WorkMinistryTeam | null>(null);
 
   const teamsWithRoles = useMemo(
     () =>
@@ -75,15 +77,10 @@ export function ManageMinistryTeamsDialog({
     }
   };
 
-  const handleRemoveTeam = async (team: WorkMinistryTeam) => {
-    if (
-      !window.confirm(
-        `Remove "${team.name}"? Members in this team will become unassigned to a team.`,
-      )
-    ) {
-      return;
-    }
-    await removeWorkMinistryTeamById(team.id);
+  const handleConfirmRemoveTeam = async () => {
+    if (!pendingTeam) return;
+    const success = await removeWorkMinistryTeamById(pendingTeam.id);
+    if (success) setPendingTeam(null);
   };
 
   const DualModeInputClass =
@@ -92,6 +89,7 @@ export function ManageMinistryTeamsDialog({
     "rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700";
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[640px] max-h-[85vh] overflow-y-auto bg-white border-slate-200/60 dark:bg-zinc-800 dark:border-zinc-700/60">
         <DialogHeader>
@@ -126,7 +124,7 @@ export function ManageMinistryTeamsDialog({
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => void handleRemoveTeam(team)}
+                      onClick={() => setPendingTeam(team)}
                       disabled={isSaving}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/50"
                     >
@@ -235,5 +233,22 @@ export function ManageMinistryTeamsDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    <ConfirmDeleteDialog
+      open={pendingTeam !== null}
+      onOpenChange={open => {
+        if (!open) setPendingTeam(null);
+      }}
+      title="Remove Team"
+      description={
+        pendingTeam
+          ? `Remove "${pendingTeam.name}"? Members in this team will become unassigned to a team.`
+          : ""
+      }
+      confirmLabel="Remove Team"
+      onConfirm={handleConfirmRemoveTeam}
+      isLoading={isSaving}
+    />
+    </>
   );
 }

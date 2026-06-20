@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -10,16 +10,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Plus, Settings2, Users } from "lucide-react";
 import { usePeople } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
 import { formatMinistryAssignmentLabel } from "@/lib/work-ministry-labels";
+import { AddWorkMinistryDialog } from "./_components/add-work-ministry-dialog";
+import { ManageMinistriesDialog } from "./_components/manage-ministries-dialog";
 
 export function MinistriesView() {
   const router = useRouter();
   const { people } = usePeople();
   const { workMinistries, workMinistryMembers, workMinistryTeams, hydrated } =
     useGroupsMinistry();
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [manageDialogOpen, setManageDialogOpen] = useState(false);
 
   const getMinistryMembers = (ministryId: string) => {
     const assignments = workMinistryMembers.filter(
@@ -54,6 +59,8 @@ export function MinistriesView() {
     "rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
   const DualModeOutlineBadgeClass =
     "rounded-lg border-slate-300 text-slate-600 dark:border-zinc-700 dark:text-zinc-400";
+  const DualModePrimaryButtonClass =
+    "rounded-xl text-white shadow-lg bg-slate-900 hover:bg-slate-800 shadow-slate-900/20 dark:bg-purple-600 dark:hover:bg-purple-700 dark:shadow-purple-900/40";
 
   if (!hydrated) {
     return (
@@ -67,19 +74,41 @@ export function MinistriesView() {
     <div className="space-y-6">
       <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
               <CardTitle className="text-slate-900 dark:text-white">
                 Work Ministry Assignments
               </CardTitle>
               <CardDescription className="text-slate-600 dark:text-zinc-400">
-                Manage ministry teams and member assignments (people can serve
-                in multiple ministries)
+                Manage ministries and member assignments (people can serve in
+                multiple ministries)
               </CardDescription>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                onClick={() => setManageDialogOpen(true)}
+                className="rounded-xl border-slate-200 dark:border-zinc-700"
+              >
+                <Settings2 className="w-4 h-4 mr-2" />
+                Manage
+              </Button>
+              <Button
+                onClick={() => setAddDialogOpen(true)}
+                className={DualModePrimaryButtonClass}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Ministry
+              </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {ministries.length === 0 ? (
+            <p className="text-center text-slate-500 dark:text-zinc-400 py-12">
+              No ministries yet. Add one to start organizing your serving teams.
+            </p>
+          ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {ministries.map(ministry => {
               const members = getMinistryMembers(ministry.id);
@@ -170,8 +199,18 @@ export function MinistriesView() {
               );
             })}
           </div>
+          )}
         </CardContent>
       </Card>
+
+      <AddWorkMinistryDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+      />
+      <ManageMinistriesDialog
+        open={manageDialogOpen}
+        onOpenChange={setManageDialogOpen}
+      />
     </div>
   );
 }

@@ -189,11 +189,51 @@ export async function fetchWorkMinistryMembers(
   return (data as DbWorkMinistryMember[]).map(toWorkMinistryMember);
 }
 
+export type CreateWorkMinistryInput = {
+  name: string;
+  description?: string;
+  color?: string;
+  sortOrder?: number;
+};
+
 export type CreateWorkMinistryTeamInput = {
   name: string;
   description?: string;
   sortOrder?: number;
 };
+
+export async function createWorkMinistry(
+  supabase: SupabaseClient,
+  organizationId: string,
+  input: CreateWorkMinistryInput,
+): Promise<WorkMinistry> {
+  const { data, error } = await supabase
+    .from("work_ministries")
+    .insert({
+      organization_id: organizationId,
+      name: input.name.trim(),
+      description: input.description?.trim() ?? "",
+      color: input.color ?? "purple",
+      sort_order: input.sortOrder ?? 0,
+    })
+    .select("id, name, description, color, sort_order, is_default, head_person_id")
+    .single();
+
+  if (error) throw error;
+  return toWorkMinistry(data as DbWorkMinistry);
+}
+
+export async function deleteWorkMinistry(
+  supabase: SupabaseClient,
+  ministryId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("work_ministries")
+    .delete()
+    .eq("id", ministryId);
+
+  if (error) throw error;
+}
 
 export async function createWorkMinistryTeam(
   supabase: SupabaseClient,

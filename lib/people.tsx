@@ -62,6 +62,8 @@ export type EvangelismStage =
   | "Discipleship"
   | "Worker";
 
+export type PersonGender = "Male" | "Female";
+
 export interface Person {
   id: string;
   firstName: string;
@@ -70,6 +72,7 @@ export interface Person {
   name: string;
   phone: string;
   birthdate: string;
+  gender: PersonGender | null;
   isProspect: boolean;
   role: string;
   householdId: string | null;
@@ -97,6 +100,7 @@ export type AddPersonInput = {
   lastName: string;
   phone?: string;
   birthdate?: string;
+  gender?: PersonGender | null;
   membershipType: MembershipType;
 };
 
@@ -108,6 +112,7 @@ export type UpdatePersonInput = Partial<
     | "lastName"
     | "phone"
     | "birthdate"
+    | "gender"
     | "isProspect"
     | "email"
     | "role"
