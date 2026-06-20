@@ -22,35 +22,35 @@ export default function ProtectedLayout({
     <ThemeProvider>
       <SidebarProvider>
         <PeopleProvider>
-          <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-            <Sidebar />
+          <GroupsMinistryProvider>
+            <DiscipleshipProvider>
+              <ServiceAttendanceProvider>
+                <GrowthTrackProvider>
+                  <EventsProvider>
+                    <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+                      <Sidebar />
 
-            <div className="flex-1 flex flex-col ml-52 min-w-0">
-              <TopBar />
+                      <div className="flex-1 flex flex-col ml-52 min-w-0">
+                        <TopBar />
 
-              <main className="flex-1 p-4">
-                <div className="max-w-[1600px] mx-auto">
-                  <GroupsMinistryProvider>
-                    <DiscipleshipProvider>
-                      <TrainingProvider>
-                        <EventsProvider>
-                          <BibleStudyProvider>
-                            <LeadershipProvider>
-                              <ServiceAttendanceProvider>
-                                <GrowthTrackProvider>
+                        <main className="flex-1 p-4">
+                          <div className="max-w-[1600px] mx-auto">
+                            <TrainingProvider>
+                              <BibleStudyProvider>
+                                <LeadershipProvider>
                                   {children}
-                                </GrowthTrackProvider>
-                              </ServiceAttendanceProvider>
-                            </LeadershipProvider>
-                          </BibleStudyProvider>
-                        </EventsProvider>
-                      </TrainingProvider>
-                    </DiscipleshipProvider>
-                  </GroupsMinistryProvider>
-                </div>
-              </main>
-            </div>
-          </div>
+                                </LeadershipProvider>
+                              </BibleStudyProvider>
+                            </TrainingProvider>
+                          </div>
+                        </main>
+                      </div>
+                    </div>
+                  </EventsProvider>
+                </GrowthTrackProvider>
+              </ServiceAttendanceProvider>
+            </DiscipleshipProvider>
+          </GroupsMinistryProvider>
         </PeopleProvider>
         <Toaster richColors position="top-right" />
       </SidebarProvider>
