@@ -1,5 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { MembershipType } from "@/lib/people";
+import {
+  promoteFirstTimeSundayAttendees,
+} from "@/lib/supabase/growth-track";
 
 export type ServiceCategory = "sunday" | "life_group";
 
@@ -177,6 +180,14 @@ export async function recordAttendance(
     .single();
 
   if (sessionError) throw sessionError;
+
+  if (input.serviceCategory === "sunday" && input.personIds.length > 0) {
+    await promoteFirstTimeSundayAttendees(
+      supabase,
+      organizationId,
+      input.personIds,
+    );
+  }
 
   const attendeeRows = input.personIds.map((personId) => ({
     session_id: session.id,

@@ -120,6 +120,46 @@ export async function addCellGroupMember(
   role: "Leader" | "Member" = "Member",
   organizationId?: string,
 ): Promise<CellGroupMember> {
+  const { data: existing, error: existingError } = await supabase
+    .from("cell_group_members")
+    .select("id, cell_group_id, person_id, role, joined_date")
+    .eq("cell_group_id", cellGroupId)
+    .eq("person_id", personId)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  if (existing) {
+    const row = existing as DbCellGroupMember;
+    if (row.role !== role) {
+      if (role === "Leader") {
+        let orgId = organizationId;
+        if (!orgId) {
+          const { data: group, error: groupError } = await supabase
+            .from("cell_groups")
+            .select("organization_id")
+            .eq("id", cellGroupId)
+            .single();
+          if (groupError) throw groupError;
+          orgId = group.organization_id as string;
+        }
+        await assertCellLeaderTrainingComplete(supabase, orgId, personId);
+      }
+
+      const { data, error } = await supabase
+        .from("cell_group_members")
+        .update({ role })
+        .eq("id", row.id)
+        .select("id, cell_group_id, person_id, role, joined_date")
+        .single();
+
+      if (error) throw error;
+      return toCellGroupMember(data as DbCellGroupMember);
+    }
+
+    return toCellGroupMember(row);
+  }
+
   if (role === "Leader") {
     let orgId = organizationId;
     if (!orgId) {
@@ -146,6 +186,43 @@ export async function addCellGroupMember(
 
   if (error) throw error;
   return toCellGroupMember(data as DbCellGroupMember);
+}
+
+export async function updateCellGroupLeader(
+  supabase: SupabaseClient,
+  organizationId: string,
+  cellGroupId: string,
+  leaderPersonId: string,
+): Promise<CellGroup> {
+  await assertCellLeaderTrainingComplete(
+    supabase,
+    organizationId,
+    leaderPersonId,
+  );
+
+  await addCellGroupMember(
+    supabase,
+    cellGroupId,
+    leaderPersonId,
+    "Leader",
+    organizationId,
+  );
+
+  const { data, error } = await supabase
+    .from("cell_groups")
+    .update({
+      leader_person_id: leaderPersonId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", cellGroupId)
+    .eq("organization_id", organizationId)
+    .select(
+      "id, name, description, leader_person_id, status, parent_cell_group_id",
+    )
+    .single();
+
+  if (error) throw error;
+  return toCellGroup(data as DbCellGroup);
 }
 
 export async function removeCellGroupMember(

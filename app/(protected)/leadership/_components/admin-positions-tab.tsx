@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -18,27 +18,39 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Shield } from "lucide-react";
-import { mockAdminPositions, mockPeople } from "@/components/mock-data";
+import { usePeople } from "@/lib/people";
+import { useLeadership } from "@/lib/leadership";
 import { AssignAdminPositionDialog } from "./assign-admin-position-dialog";
 
 export function AdminPositionsTab() {
+  const { people } = usePeople();
+  const { adminPositions, hydrated, isSaving } = useLeadership();
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
-  const positionsWithPeople = mockAdminPositions.map(position => ({
-    ...position,
-    person: mockPeople.find(p => p.id === position.personId),
-  }));
+  const positionsWithPeople = useMemo(
+    () =>
+      adminPositions.map(position => ({
+        ...position,
+        person: people.find(person => person.id === position.personId),
+      })),
+    [adminPositions, people],
+  );
 
-  const groupedPositions = positionsWithPeople.reduce(
-    (acc, position) => {
-      if (!acc[position.title]) {
-        acc[position.title] = [];
-      }
-      acc[position.title].push(position);
-      return acc;
-    },
-    {} as Record<string, typeof positionsWithPeople>,
+  const groupedPositions = useMemo(
+    () =>
+      positionsWithPeople.reduce(
+        (acc, position) => {
+          if (!acc[position.title]) {
+            acc[position.title] = [];
+          }
+          acc[position.title].push(position);
+          return acc;
+        },
+        {} as Record<string, typeof positionsWithPeople>,
+      ),
+    [positionsWithPeople],
   );
 
   const getPositionColor = (title: string) => {
@@ -49,6 +61,8 @@ export function AdminPositionsTab() {
         "from-green-500 to-green-700 dark:from-green-600 dark:to-green-800",
       Deacon:
         "from-purple-500 to-purple-700 dark:from-purple-600 dark:to-purple-800",
+      "Head Pastor":
+        "from-indigo-500 to-indigo-700 dark:from-purple-600 dark:to-purple-800",
     };
     return (
       colors[title] ||
@@ -59,12 +73,30 @@ export function AdminPositionsTab() {
   const DualModeButtonClass =
     "rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 dark:bg-purple-600 dark:hover:bg-purple-700 dark:shadow-purple-900/40";
 
-  const getBadgeClass = (type: "active" | "term") => {
+  const getBadgeClass = (type: "active" | "term" | "inactive") => {
     if (type === "active") {
       return "rounded-lg bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300";
     }
+    if (type === "inactive") {
+      return "rounded-lg bg-slate-100 text-slate-600 dark:bg-zinc-700 dark:text-zinc-400";
+    }
     return "rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600";
   };
+
+  if (!hydrated) {
+    return (
+      <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50">
+        <CardHeader>
+          <Skeleton className="h-6 w-56" />
+          <Skeleton className="h-4 w-80 mt-2" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -82,6 +114,7 @@ export function AdminPositionsTab() {
             <Button
               onClick={() => setIsAssignDialogOpen(true)}
               className={DualModeButtonClass}
+              disabled={isSaving}
             >
               <Plus className="w-4 h-4 mr-2" />
               Assign Position
@@ -139,14 +172,14 @@ export function AdminPositionsTab() {
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-700 to-indigo-500 dark:from-purple-700 dark:to-purple-500 flex items-center justify-center shadow-sm">
                               <span className="text-white">
-                                {position.person?.name.charAt(0)}
+                                {position.person?.name.charAt(0) ?? "?"}
                               </span>
                             </div>
-                            {position.person?.name}
+                            {position.person?.name ?? "Unknown person"}
                           </div>
                         </TableCell>
                         <TableCell className="text-slate-600 dark:text-zinc-400">
-                          {position.person?.householdName}
+                          {position.person?.householdName || "—"}
                         </TableCell>
                         <TableCell className="text-slate-600 dark:text-zinc-400">
                           {new Date(
@@ -155,12 +188,20 @@ export function AdminPositionsTab() {
                         </TableCell>
                         <TableCell>
                           <Badge className={getBadgeClass("term")}>
-                            {position.term}
+                            {position.term || "—"}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge className={getBadgeClass("active")}>
-                            Active
+                          <Badge
+                            className={getBadgeClass(
+                              position.status === "active"
+                                ? "active"
+                                : "inactive",
+                            )}
+                          >
+                            {position.status === "active"
+                              ? "Active"
+                              : "Inactive"}
                           </Badge>
                         </TableCell>
                       </TableRow>

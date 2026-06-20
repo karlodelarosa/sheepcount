@@ -18,6 +18,7 @@ import {
   fetchCellGroupMembers,
   fetchCellGroups,
   removeCellGroupMember,
+  updateCellGroupLeader,
   type CellGroup,
   type CellGroupMember,
   type CreateCellGroupInput,
@@ -107,6 +108,10 @@ type GroupsMinistryContextValue = {
     personId: string,
     role?: "Leader" | "Member",
   ) => Promise<CellGroupMember | null>;
+  assignCellGroupLeader: (
+    cellGroupId: string,
+    leaderPersonId: string,
+  ) => Promise<CellGroup | null>;
   removeCellGroupMemberById: (membershipId: string) => Promise<boolean>;
   getPersonMinistries: (
     personId: string,
@@ -546,6 +551,36 @@ export function GroupsMinistryProvider({
     [organizationId, refreshGroupsMinistry, supabase],
   );
 
+  const assignCellGroupLeader = useCallback(
+    async (
+      cellGroupId: string,
+      leaderPersonId: string,
+    ): Promise<CellGroup | null> => {
+      if (!organizationId) return null;
+
+      setIsSaving(true);
+      try {
+        const group = await updateCellGroupLeader(
+          supabase,
+          organizationId,
+          cellGroupId,
+          leaderPersonId,
+        );
+        await refreshGroupsMinistry();
+        toast.success("Cell group leader assigned");
+        return group;
+      } catch (error) {
+        toast.error("Failed to assign leader", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshGroupsMinistry, supabase],
+  );
+
   const removeCellGroupMemberById = useCallback(
     async (membershipId: string): Promise<boolean> => {
       setIsSaving(true);
@@ -630,6 +665,7 @@ export function GroupsMinistryProvider({
         getTeamRoleOptions,
         addCellGroup,
         assignCellGroupMember,
+        assignCellGroupLeader,
         removeCellGroupMemberById,
         getPersonMinistries,
         getPersonLifeGroups,

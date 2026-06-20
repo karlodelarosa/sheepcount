@@ -1,5 +1,5 @@
-import { EvangelismFlowView } from ".";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <EvangelismFlowView />;
+  redirect("/growth-track");
 }

@@ -4,16 +4,10 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { useTheme } from "@/context/theme-context";
-import {
-  mockPeople,
-  mockHouseholds,
-  mockServiceAttendance,
-  mockServiceTypes,
-  mockFinancialIncome,
-  mockFinancialExpenses,
-  mockLifeGroups,
-  mockLifeGroupMembers,
-} from "@/components/mock-data";
+import { usePeople } from "@/lib/people";
+import { useGrowthTrack } from "@/lib/growth-track";
+import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { GROWTH_TRACK_STAGES } from "@/lib/growth-track/stage-config";
 import {
   Card,
   CardContent,
@@ -36,6 +30,8 @@ import {
   Settings,
   ArrowRight,
   CalendarDays,
+  GitBranch,
+  Loader2,
 } from "lucide-react";
 import {
   BarChart,
@@ -97,8 +93,8 @@ const shortcuts = [
     iconBg: "bg-purple-500 text-white dark:bg-purple-600",
   },
   {
-    href: "/evangelism",
-    label: "Evangelism",
+    href: "/growth-track",
+    label: "Growth Track",
     icon: TrendingUp,
     description: "Pipeline",
     color: "border-rose-200/80 bg-rose-50/80 hover:bg-rose-100/80 text-rose-700 dark:border-rose-800/60 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:text-rose-300",
@@ -108,8 +104,9 @@ const shortcuts = [
     href: "/financial",
     label: "Financial",
     icon: DollarSign,
-    description: "Giving",
-    color: "border-amber-200/80 bg-amber-50/80 hover:bg-amber-100/80 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 dark:text-amber-300",
+    description: "Coming soon",
+    disabled: true,
+    color: "border-amber-200/80 bg-amber-50/80 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 opacity-50 cursor-not-allowed",
     iconBg: "bg-amber-500 text-white dark:bg-amber-600",
   },
   {
@@ -161,19 +158,6 @@ const kpiColors = [
   },
 ];
 
-const evangelismStageColors: Record<string, string> = {
-  "First-time Attendee":
-    "bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300",
-  "Follow-up":
-    "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300",
-  "Small Group":
-    "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300",
-  Discipleship:
-    "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300",
-  Worker:
-    "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300",
-};
-
 const lifeGroupBarColors = [
   "bg-violet-500",
   "bg-blue-500",
@@ -194,99 +178,90 @@ const avatarGradients = [
 export default function DashboardPage() {
   const { tenant } = useTenant();
   const { settings } = useTheme();
+  const { people, households, hydrated: peopleHydrated } = usePeople();
+  const { overview, hydrated: growthHydrated } = useGrowthTrack();
+  const { lifeGroups, lifeGroupMembers, hydrated: groupsHydrated } =
+    useGroupsMinistry();
+
+  const loading = !peopleHydrated || !growthHydrated || !groupsHydrated;
 
   const stats = useMemo(() => {
-    const activeMembers = mockPeople.filter(p => p.status === "Active").length;
-    const workers = mockPeople.filter(p => p.membershipType === "Worker").length;
-    const visitors = mockPeople.filter(
+    const activeMembers = people.filter(p => p.status === "Active").length;
+    const workers = people.filter(
+      p =>
+        p.membershipType === "Worker" ||
+        p.membershipType === "Volunteer Worker",
+    ).length;
+    const visitors = people.filter(
       p => p.membershipType === "For Evangelism",
     ).length;
 
-    const sundayService = mockServiceTypes.find(s => s.id === "st1");
-    const sundayRecords = mockServiceAttendance.filter(
-      r => r.serviceId === sundayService?.id,
-    );
+    const sundayTrend = overview.sundayTrend.slice(-6).map(point => ({
+      date: new Date(point.rawDate).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      count: point.count,
+    }));
 
-    const datesByCount = sundayRecords.reduce(
-      (acc, r) => {
-        acc[r.date] = (acc[r.date] ?? 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
+    const lastSundayRawDate = overview.sundayTrend.at(-1)?.rawDate ?? null;
 
-    const sortedDates = Object.keys(datesByCount).sort().reverse();
-    const lastSundayDate = sortedDates[0];
-    const lastSundayCount = lastSundayDate
-      ? datesByCount[lastSundayDate]
-      : 0;
+    const evangelismStages = GROWTH_TRACK_STAGES.map(stage => ({
+      stage: stage.key,
+      count: overview.stageCounts[stage.key],
+    })).filter(entry => entry.count > 0);
 
-    const attendanceTrend = sortedDates
-      .slice(0, 6)
-      .reverse()
-      .map(date => ({
-        date: new Date(date).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-        count: datesByCount[date],
-      }));
-
-    const totalIncome = mockFinancialIncome.reduce((s, r) => s + r.amount, 0);
-    const totalExpenses = mockFinancialExpenses.reduce(
-      (s, r) => s + r.amount,
-      0,
-    );
-
-    const evangelismStages = mockPeople.reduce(
-      (acc, p) => {
-        acc[p.evangelismStage] = (acc[p.evangelismStage] ?? 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
-
-    const recentPeople = [...mockPeople]
+    const recentPeople = [...people]
       .sort(
         (a, b) =>
           new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime(),
       )
       .slice(0, 5);
 
-    const lifeGroupCounts = mockLifeGroups.map(g => ({
-      name: g.name,
-      count: mockLifeGroupMembers.filter(m => m.lifeGroupId === g.id).length,
-    }));
+    const lifeGroupCounts = lifeGroups
+      .map(group => ({
+        name: group.name,
+        count: lifeGroupMembers.filter(m => m.lifeGroupId === group.id).length,
+      }))
+      .sort((a, b) => b.count - a.count);
 
     return {
       activeMembers,
       workers,
       visitors,
-      households: mockHouseholds.length,
-      lastSundayCount,
-      lastSundayDate,
-      attendanceTrend,
-      totalIncome,
-      netBalance: totalIncome - totalExpenses,
+      households: households.length,
+      lastSundayCount: overview.lastSundayCount,
+      lastSundayDate: lastSundayRawDate,
+      attendanceTrend: sundayTrend,
+      pipelineCount: overview.totalInPipeline,
       evangelismStages,
       recentPeople,
       lifeGroupCounts,
     };
-  }, []);
+  }, [people, households, overview, lifeGroups, lifeGroupMembers]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-muted-foreground">
+        <Loader2 className="w-5 h-5 animate-spin mr-2" />
+        Loading dashboard...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       {/* Shortcut buttons */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-2">
-        {shortcuts.map(item => (
-          <Button
-            key={item.href}
-            variant="outline"
-            size="sm"
-            className={`h-auto flex-col gap-1.5 py-2.5 px-2 rounded-xl border transition-colors ${item.color}`}
-            asChild
-          >
-            <Link href={item.href}>
+        {shortcuts.map(item =>
+          item.disabled ? (
+            <Button
+              key={item.href}
+              variant="outline"
+              size="sm"
+              disabled
+              className={`h-auto flex-col gap-1.5 py-2.5 px-2 rounded-xl border transition-colors ${item.color}`}
+            >
               <span
                 className={`flex items-center justify-center w-7 h-7 rounded-lg ${item.iconBg}`}
               >
@@ -294,9 +269,27 @@ export default function DashboardPage() {
               </span>
               <span className="text-xs font-medium">{item.label}</span>
               <span className="text-[10px] opacity-70">{item.description}</span>
-            </Link>
-          </Button>
-        ))}
+            </Button>
+          ) : (
+            <Button
+              key={item.href}
+              variant="outline"
+              size="sm"
+              className={`h-auto flex-col gap-1.5 py-2.5 px-2 rounded-xl border transition-colors ${item.color}`}
+              asChild
+            >
+              <Link href={item.href}>
+                <span
+                  className={`flex items-center justify-center w-7 h-7 rounded-lg ${item.iconBg}`}
+                >
+                  <item.icon className="w-3.5 h-3.5" />
+                </span>
+                <span className="text-xs font-medium">{item.label}</span>
+                <span className="text-[10px] opacity-70">{item.description}</span>
+              </Link>
+            </Button>
+          ),
+        )}
       </div>
 
       {/* KPI row */}
@@ -312,9 +305,9 @@ export default function DashboardPage() {
           { label: "Visitors", value: stats.visitors, icon: TrendingUp },
           { label: "Households", value: stats.households, icon: Home },
           {
-            label: "Net Balance",
-            value: `$${(stats.netBalance / 1000).toFixed(1)}k`,
-            icon: DollarSign,
+            label: "In Pipeline",
+            value: stats.pipelineCount,
+            icon: GitBranch,
           },
         ].map((stat, i) => {
           const colors = kpiColors[i % kpiColors.length];
@@ -398,42 +391,53 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Evangelism pipeline */}
+        {/* Growth Track pipeline */}
         <Card className="border-rose-200/60 dark:border-rose-800/40 bg-gradient-to-br from-rose-50/30 to-transparent dark:from-rose-950/20">
           <CardHeader className="py-3 px-4">
             <CardTitle className="text-sm flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-rose-500" />
-              Evangelism Pipeline
+              Growth Track Pipeline
             </CardTitle>
             <CardDescription className="text-xs">
               People by journey stage
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 pb-3 space-y-1.5">
-            {Object.entries(stats.evangelismStages).map(([stage, count]) => (
-              <div
-                key={stage}
-                className={`flex items-center justify-between text-xs py-1.5 px-2 rounded-lg ${
-                  evangelismStageColors[stage] ??
-                  "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300"
-                }`}
-              >
-                <span className="truncate font-medium">{stage}</span>
-                <Badge
-                  variant="secondary"
-                  className="text-xs h-5 bg-white/60 dark:bg-black/20"
-                >
-                  {count}
-                </Badge>
-              </div>
-            ))}
+            {stats.evangelismStages.length > 0 ? (
+              stats.evangelismStages.map(({ stage, count }) => {
+                const stageConfig = GROWTH_TRACK_STAGES.find(
+                  s => s.key === stage,
+                );
+                return (
+                  <div
+                    key={stage}
+                    className={`flex items-center justify-between text-xs py-1.5 px-2 rounded-lg ${
+                      stageConfig?.headerBg ??
+                      "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300"
+                    }`}
+                  >
+                    <span className="truncate font-medium">{stage}</span>
+                    <Badge
+                      variant="secondary"
+                      className="text-xs h-5 bg-white/60 dark:bg-black/20"
+                    >
+                      {count}
+                    </Badge>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No people in the pipeline yet.
+              </p>
+            )}
             <Button
               variant="ghost"
               size="sm"
               className="w-full h-7 text-xs mt-1"
               asChild
             >
-              <Link href="/evangelism">
+              <Link href="/growth-track">
                 View pipeline
                 <ArrowRight className="w-3 h-3 ml-1" />
               </Link>
@@ -465,33 +469,47 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="px-4 pb-3 space-y-1">
-            {stats.recentPeople.map((person, i) => (
-              <Link
-                key={person.id}
-                href={`/people/${person.id}`}
-                className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors text-xs"
-              >
-                <div
-                  className={`w-7 h-7 rounded-lg bg-gradient-to-br ${avatarGradients[i % avatarGradients.length]} flex items-center justify-center shrink-0`}
+            {stats.recentPeople.length > 0 ? (
+              stats.recentPeople.map((person, i) => (
+                <Link
+                  key={person.id}
+                  href={`/people/${person.id}`}
+                  className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors text-xs"
                 >
-                  <span className="text-white text-[10px] font-semibold">
-                    {person.name.charAt(0)}
+                  <div
+                    className={`w-7 h-7 rounded-lg bg-gradient-to-br ${avatarGradients[i % avatarGradients.length]} flex items-center justify-center shrink-0`}
+                  >
+                    <span className="text-white text-[10px] font-semibold">
+                      {person.name.charAt(0)}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">{person.name}</p>
+                    <p className="text-muted-foreground truncate">
+                      {person.membershipType}
+                      {person.householdName
+                        ? ` · ${person.householdName}`
+                        : ""}
+                    </p>
+                  </div>
+                  <span className="text-muted-foreground shrink-0">
+                    {person.joinDate
+                      ? new Date(person.joinDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "—"}
                   </span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{person.name}</p>
-                  <p className="text-muted-foreground truncate">
-                    {person.membershipType} · {person.householdName}
-                  </p>
-                </div>
-                <span className="text-muted-foreground shrink-0">
-                  {new Date(person.joinDate).toLocaleDateString("en-US", {
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </span>
-              </Link>
-            ))}
+                </Link>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No people yet.{" "}
+                <Link href="/people" className="underline text-foreground">
+                  Add someone
+                </Link>
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -507,35 +525,41 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="px-4 pb-3 space-y-1">
-            {stats.lifeGroupCounts.slice(0, 5).map((group, i) => {
-              const maxCount = Math.max(
-                ...stats.lifeGroupCounts.map(g => g.count),
-                1,
-              );
-              const width = `${Math.round((group.count / maxCount) * 100)}%`;
-              const barColor =
-                lifeGroupBarColors[i % lifeGroupBarColors.length];
+            {stats.lifeGroupCounts.length > 0 ? (
+              stats.lifeGroupCounts.slice(0, 5).map((group, i) => {
+                const maxCount = Math.max(
+                  ...stats.lifeGroupCounts.map(g => g.count),
+                  1,
+                );
+                const width = `${Math.round((group.count / maxCount) * 100)}%`;
+                const barColor =
+                  lifeGroupBarColors[i % lifeGroupBarColors.length];
 
-              return (
-                <div key={group.name} className="py-1.5 px-2 text-xs">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="truncate font-medium">{group.name}</span>
-                    <Badge
-                      variant="outline"
-                      className="text-xs h-5 border-cyan-200 text-cyan-700 dark:border-cyan-800 dark:text-cyan-300"
-                    >
-                      {group.count}
-                    </Badge>
+                return (
+                  <div key={group.name} className="py-1.5 px-2 text-xs">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="truncate font-medium">{group.name}</span>
+                      <Badge
+                        variant="outline"
+                        className="text-xs h-5 border-cyan-200 text-cyan-700 dark:border-cyan-800 dark:text-cyan-300"
+                      >
+                        {group.count}
+                      </Badge>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-muted/60 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${barColor} transition-all`}
+                        style={{ width }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-1.5 rounded-full bg-muted/60 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${barColor} transition-all`}
-                      style={{ width }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No life group members yet.
+              </p>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -567,9 +591,9 @@ export default function DashboardPage() {
           </span>
           <span className="text-border">·</span>
           <span>
-            Total income:{" "}
+            Total people:{" "}
             <span className="text-emerald-700 dark:text-emerald-300 font-semibold">
-              ${stats.totalIncome.toLocaleString()}
+              {people.length}
             </span>
           </span>
         </CardContent>

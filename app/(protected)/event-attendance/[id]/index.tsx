@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEventAttendance } from "@/lib/event-attendance";
-import { mockPeople } from "@/components/mock-data";
+import { useEvents } from "@/lib/events";
+import { usePeople } from "@/lib/people";
 import {
   Card,
   CardContent,
@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   CalendarDays,
-  MapPin,
   Users,
   ClipboardList,
   Plus,
@@ -28,22 +27,41 @@ interface EventDetailViewProps {
   eventId: string;
 }
 
+const timingLabels = {
+  upcoming: "Upcoming",
+  ongoing: "Ongoing",
+  completed: "Completed",
+} as const;
+
 export function EventDetailView({ eventId }: EventDetailViewProps) {
   const router = useRouter();
+  const { people } = usePeople();
   const {
     events,
     hydrated,
-    recordAttendance,
+    isSaving,
+    recordEventAttendance,
     getEventSessions,
-    getUniqueAttendees,
-  } = useEventAttendance();
+    getUniqueAttendeeIds,
+    getEventTiming,
+  } = useEvents();
 
   const [recordOpen, setRecordOpen] = useState(false);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
 
-  if (!hydrated) return null;
-
   const event = events.find(e => e.id === eventId);
+  const sessions = getEventSessions(eventId);
+  const uniqueAttendeeIds = getUniqueAttendeeIds(eventId);
+
+  const uniqueAttendees = useMemo(
+    () =>
+      uniqueAttendeeIds
+        .map(id => people.find(p => p.id === id))
+        .filter((p): p is NonNullable<typeof p> => Boolean(p)),
+    [uniqueAttendeeIds, people],
+  );
+
+  if (!hydrated) return null;
 
   if (!event) {
     return (
@@ -66,8 +84,7 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
     );
   }
 
-  const sessions = getEventSessions(eventId);
-  const uniqueAttendees = getUniqueAttendees(eventId);
+  const timing = getEventTiming(event);
 
   return (
     <div className="space-y-4">
@@ -95,7 +112,7 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
         <CardHeader className="py-3 px-4">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <CardTitle className="text-base">{event.name}</CardTitle>
+              <CardTitle className="text-base">{event.title}</CardTitle>
               <CardDescription className="text-xs mt-0.5">
                 {event.description}
               </CardDescription>
@@ -105,7 +122,7 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
                 {event.type}
               </Badge>
               <Badge variant="secondary" className="text-[10px] h-5">
-                {event.category}
+                {event.status}
               </Badge>
             </div>
           </div>
@@ -126,13 +143,7 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
                   year: "numeric",
                 })}`}
             </span>
-            {event.location && (
-              <span className="flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {event.location}
-              </span>
-            )}
-            <Badge className="text-[10px] h-5">{event.status}</Badge>
+            <Badge className="text-[10px] h-5">{timingLabels[timing]}</Badge>
           </div>
         </CardContent>
       </Card>
@@ -182,9 +193,9 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
               sessions.map(session => {
                 const key = `${session.date}---${session.sessionLabel}`;
                 const isExpanded = expandedSession === key;
-                const people = session.personIds
-                  .map(id => mockPeople.find(p => p.id === id))
-                  .filter(Boolean);
+                const sessionPeople = session.personIds
+                  .map(id => people.find(p => p.id === id))
+                  .filter((p): p is NonNullable<typeof p> => Boolean(p));
 
                 return (
                   <div key={key} className="border rounded-lg overflow-hidden">
@@ -210,15 +221,15 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
                     </button>
                     {isExpanded && (
                       <div className="border-t px-2.5 py-2 space-y-1 bg-muted/20">
-                        {people.map(person => (
+                        {sessionPeople.map(person => (
                           <Link
-                            key={person!.id}
-                            href={`/people/${person!.id}`}
+                            key={person.id}
+                            href={`/people/${person.id}`}
                             className="flex items-center justify-between py-1 px-1.5 rounded hover:bg-muted/60 text-xs"
                           >
-                            <span>{person!.name}</span>
+                            <span>{person.name}</span>
                             <span className="text-muted-foreground">
-                              {person!.householdName}
+                              {person.householdName}
                             </span>
                           </Link>
                         ))}
@@ -272,9 +283,18 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
       <RecordEventAttendanceDialog
         open={recordOpen}
         onOpenChange={setRecordOpen}
-        events={events}
+        events={[event]}
+        people={people}
         defaultEventId={eventId}
-        onRecord={recordAttendance}
+        isSaving={isSaving}
+        onRecord={async (id, date, sessionLabel, personIds) => {
+          await recordEventAttendance({
+            eventId: id,
+            date,
+            sessionLabel,
+            personIds,
+          });
+        }}
       />
     </div>
   );

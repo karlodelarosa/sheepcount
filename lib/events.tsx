@@ -14,15 +14,23 @@ import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
 import {
   createChurchEvent,
+  deriveEventTiming,
   fetchChurchEvents,
+  fetchEventAttendanceRecords,
   fetchEventRegistrations,
+  getUniqueAttendeeIds,
+  groupAttendanceIntoSessions,
   registerForEvent,
+  recordEventSessionAttendance,
   removeEventRegistration,
   updateChurchEvent,
   updateEventRegistration,
   type ChurchEvent,
   type ChurchEventRegistration,
   type CreateChurchEventInput,
+  type EventAttendanceRecord,
+  type EventSessionSummary,
+  type EventTiming,
   type RegisterForEventInput,
   type UpdateChurchEventInput,
   type UpdateEventRegistrationInput,
@@ -31,6 +39,7 @@ import {
 type EventsContextValue = {
   events: ChurchEvent[];
   registrations: ChurchEventRegistration[];
+  attendanceRecords: EventAttendanceRecord[];
   hydrated: boolean;
   isSaving: boolean;
   refreshEvents: () => Promise<void>;
@@ -43,7 +52,16 @@ type EventsContextValue = {
     input: UpdateEventRegistrationInput,
   ) => Promise<ChurchEventRegistration | null>;
   removeRegistration: (registrationId: string) => Promise<boolean>;
+  recordEventAttendance: (input: {
+    eventId: string;
+    date: string;
+    sessionLabel: string;
+    personIds: string[];
+  }) => Promise<boolean>;
   getEventRegistrations: (eventId: string) => ChurchEventRegistration[];
+  getEventSessions: (eventId: string) => EventSessionSummary[];
+  getUniqueAttendeeIds: (eventId: string) => string[];
+  getEventTiming: (event: ChurchEvent) => EventTiming;
   getPersonEvents: (personId: string) => Array<{
     registration: ChurchEventRegistration;
     event: ChurchEvent | undefined;
@@ -68,6 +86,9 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
 
   const [events, setEvents] = useState<ChurchEvent[]>([]);
   const [registrations, setRegistrations] = useState<ChurchEventRegistration[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<EventAttendanceRecord[]>(
+    [],
+  );
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -75,18 +96,21 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
     if (!organizationId) {
       setEvents([]);
       setRegistrations([]);
+      setAttendanceRecords([]);
       setHydrated(!tenantLoading);
       return;
     }
 
     try {
-      const [eventData, registrationData] = await Promise.all([
+      const [eventData, registrationData, attendanceData] = await Promise.all([
         fetchChurchEvents(supabase, organizationId),
         fetchEventRegistrations(supabase, organizationId),
+        fetchEventAttendanceRecords(supabase, organizationId),
       ]);
 
       setEvents(eventData);
       setRegistrations(registrationData);
+      setAttendanceRecords(attendanceData);
     } catch (error) {
       toast.error("Failed to load events data", {
         description: getErrorMessage(error),
@@ -234,11 +258,52 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
     [registrations],
   );
 
+  const recordEventAttendance = useCallback(
+    async (input: {
+      eventId: string;
+      date: string;
+      sessionLabel: string;
+      personIds: string[];
+    }): Promise<boolean> => {
+      setIsSaving(true);
+      try {
+        await recordEventSessionAttendance(supabase, input);
+        await refreshEvents();
+        toast.success("Event attendance recorded");
+        return true;
+      } catch (error) {
+        toast.error("Failed to record event attendance", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshEvents, supabase],
+  );
+
+  const getEventSessions = useCallback(
+    (eventId: string) => groupAttendanceIntoSessions(attendanceRecords, eventId),
+    [attendanceRecords],
+  );
+
+  const getUniqueAttendeeIdsForEvent = useCallback(
+    (eventId: string) => getUniqueAttendeeIds(attendanceRecords, eventId),
+    [attendanceRecords],
+  );
+
+  const getEventTiming = useCallback(
+    (event: ChurchEvent) => deriveEventTiming(event),
+    [],
+  );
+
   return (
     <EventsContext.Provider
       value={{
         events,
         registrations,
+        attendanceRecords,
         hydrated,
         isSaving,
         refreshEvents,
@@ -247,7 +312,11 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
         registerPersonForEvent,
         updateRegistration,
         removeRegistration,
+        recordEventAttendance,
         getEventRegistrations,
+        getEventSessions,
+        getUniqueAttendeeIds: getUniqueAttendeeIdsForEvent,
+        getEventTiming,
         getPersonEvents,
         getEventRegistrationCount,
       }}
@@ -265,4 +334,4 @@ export function useEvents() {
   return ctx;
 }
 
-export type { ChurchEvent, ChurchEventRegistration };
+export type { ChurchEvent, ChurchEventRegistration, EventAttendanceRecord };

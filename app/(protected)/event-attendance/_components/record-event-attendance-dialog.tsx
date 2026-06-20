@@ -21,8 +21,8 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckSquare, Search } from "lucide-react";
-import { mockPeople } from "@/components/mock-data";
-import type { ChurchEvent } from "@/lib/event-attendance";
+import type { ChurchEvent } from "@/lib/events";
+import type { Person } from "@/lib/people";
 
 const sessionPresets = [
   "Check-in",
@@ -41,20 +41,24 @@ interface RecordEventAttendanceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   events: ChurchEvent[];
+  people: Person[];
   defaultEventId?: string;
+  isSaving?: boolean;
   onRecord: (
     eventId: string,
     date: string,
     sessionLabel: string,
     personIds: string[],
-  ) => void;
+  ) => void | Promise<void>;
 }
 
 export function RecordEventAttendanceDialog({
   open,
   onOpenChange,
   events,
+  people,
   defaultEventId,
+  isSaving = false,
   onRecord,
 }: RecordEventAttendanceDialogProps) {
   const [eventId, setEventId] = useState(defaultEventId ?? "");
@@ -64,7 +68,8 @@ export function RecordEventAttendanceDialog({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [search, setSearch] = useState("");
 
-  const selectedEvent = events.find(e => e.id === eventId);
+  const activeEvents = events.filter(e => e.status !== "cancelled");
+  const selectedEvent = activeEvents.find(e => e.id === eventId);
 
   useEffect(() => {
     if (defaultEventId) setEventId(defaultEventId);
@@ -76,24 +81,32 @@ export function RecordEventAttendanceDialog({
     }
   }, [selectedEvent, date]);
 
+  useEffect(() => {
+    if (!open) {
+      setSelectedIds([]);
+      setSearch("");
+      setCustomSession("");
+    }
+  }, [open]);
+
   const togglePerson = (id: string) => {
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id],
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const label = customSession.trim() || sessionLabel;
     if (!eventId || !date || !label || selectedIds.length === 0) return;
 
-    onRecord(eventId, date, label, selectedIds);
+    await onRecord(eventId, date, label, selectedIds);
     setSelectedIds([]);
     setSearch("");
     onOpenChange(false);
   };
 
-  const filtered = mockPeople.filter(
+  const filtered = people.filter(
     p =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.householdName.toLowerCase().includes(search.toLowerCase()),
@@ -117,9 +130,9 @@ export function RecordEventAttendanceDialog({
                 <SelectValue placeholder="Select event" />
               </SelectTrigger>
               <SelectContent>
-                {events.map(ev => (
+                {activeEvents.map(ev => (
                   <SelectItem key={ev.id} value={ev.id}>
-                    {ev.name}
+                    {ev.title}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -193,30 +206,36 @@ export function RecordEventAttendanceDialog({
               />
             </div>
             <ScrollArea className="h-48 border rounded-lg p-2">
-              {filtered.map(person => {
-                const selected = selectedIds.includes(person.id);
-                return (
-                  <div
-                    key={person.id}
-                    onClick={() => togglePerson(person.id)}
-                    className={`flex items-center justify-between p-1.5 rounded-md cursor-pointer text-sm ${
-                      selected ? "bg-primary/10" : "hover:bg-muted/60"
-                    }`}
-                  >
-                    <div>
-                      <p className="font-medium text-xs">{person.name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {person.householdName}
-                      </p>
+              {filtered.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">
+                  No people found
+                </p>
+              ) : (
+                filtered.map(person => {
+                  const selected = selectedIds.includes(person.id);
+                  return (
+                    <div
+                      key={person.id}
+                      onClick={() => togglePerson(person.id)}
+                      className={`flex items-center justify-between p-1.5 rounded-md cursor-pointer text-sm ${
+                        selected ? "bg-primary/10" : "hover:bg-muted/60"
+                      }`}
+                    >
+                      <div>
+                        <p className="font-medium text-xs">{person.name}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {person.householdName}
+                        </p>
+                      </div>
+                      {selected ? (
+                        <CheckSquare className="w-4 h-4" />
+                      ) : (
+                        <div className="w-4 h-4 border rounded" />
+                      )}
                     </div>
-                    {selected ? (
-                      <CheckSquare className="w-4 h-4" />
-                    ) : (
-                      <div className="w-4 h-4 border rounded" />
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </ScrollArea>
           </div>
 
@@ -232,9 +251,9 @@ export function RecordEventAttendanceDialog({
             <Button
               type="submit"
               size="sm"
-              disabled={!eventId || selectedIds.length === 0}
+              disabled={!eventId || selectedIds.length === 0 || isSaving}
             >
-              Save Attendance
+              {isSaving ? "Saving..." : "Save Attendance"}
             </Button>
           </DialogFooter>
         </form>

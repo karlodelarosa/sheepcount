@@ -7,6 +7,7 @@ export type WorkMinistry = {
   color: string;
   sortOrder: number;
   isDefault: boolean;
+  headPersonId: string | null;
 };
 
 export type WorkMinistryTeam = {
@@ -41,6 +42,7 @@ type DbWorkMinistry = {
   color: string;
   sort_order: number;
   is_default: boolean;
+  head_person_id: string | null;
 };
 
 type DbWorkMinistryTeam = {
@@ -76,6 +78,7 @@ function toWorkMinistry(row: DbWorkMinistry): WorkMinistry {
     color: row.color,
     sortOrder: row.sort_order,
     isDefault: row.is_default,
+    headPersonId: row.head_person_id,
   };
 }
 
@@ -128,7 +131,7 @@ export async function fetchWorkMinistries(
 
   const { data, error } = await supabase
     .from("work_ministries")
-    .select("id, name, description, color, sort_order, is_default")
+    .select("id, name, description, color, sort_order, is_default, head_person_id")
     .eq("organization_id", organizationId)
     .order("sort_order")
     .order("name");

@@ -16,7 +16,6 @@ import {
 import {
   LayoutDashboard,
   Users,
-  Calendar,
   Building2,
   Eye,
   Home,
@@ -32,11 +31,11 @@ import {
   ChevronDown,
   Settings,
   Church,
-  TrendingUp,
   Book,
   Lightbulb,
   Tent,
   HeartHandshake,
+  GitBranch,
 } from "lucide-react";
 import {
   Collapsible,
@@ -44,12 +43,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible/index";
 import { useTheme } from "@/context/theme-context";
+import { usePeople } from "@/lib/people";
 import { APP_NAME } from "@/lib/branding";
 
 type ViewRoute =
   | "dashboard"
   | "people"
-  | "general-attendance"
   | "households"
   | "life-groups"
   | "cell-groups"
@@ -65,14 +64,17 @@ type ViewRoute =
   | "settings"
   | "service-attendance"
   | "event-attendance"
-  | "evangelism"
+  | "growth-track"
   | "bible-study"
   | "church-goals";
 
 export function Sidebar() {
   const { settings } = useTheme();
+  const { people, hydrated } = usePeople();
   const router = useRouter();
   const pathname = usePathname();
+
+  const activeMemberCount = people.filter(p => p.status === "Active").length;
 
   const getPath = (view: ViewRoute) => {
     if (view === "dashboard") {
@@ -97,7 +99,16 @@ export function Sidebar() {
     router.push(getPath(view));
   };
 
-  const menuGroups = [
+  const menuGroups: {
+    title: string;
+    defaultOpen?: boolean;
+    items: {
+      title: string;
+      icon: React.ComponentType<{ className?: string }>;
+      value: ViewRoute;
+      disabled?: boolean;
+    }[];
+  }[] = [
     {
       title: "People & Membership",
       items: [
@@ -150,13 +161,18 @@ export function Sidebar() {
       ],
     },
     {
-      title: "Evangelism & Attendance",
+      title: "Growth Track",
       items: [
         {
-          title: "Evangelism Flow",
-          icon: TrendingUp,
-          value: "evangelism" as const,
+          title: "Growth Track",
+          icon: GitBranch,
+          value: "growth-track" as const,
         },
+      ],
+    },
+    {
+      title: "Attendance",
+      items: [
         {
           title: "Service Attendance",
           icon: Church,
@@ -167,32 +183,41 @@ export function Sidebar() {
           icon: Tent,
           value: "event-attendance" as const,
         },
-        {
-          title: "General Attendance",
-          icon: Calendar,
-          value: "general-attendance" as const,
-        },
       ],
     },
     {
       title: "Operations",
+      defaultOpen: false,
       items: [
-        { title: "Properties", icon: Building2, value: "properties" as const },
+        {
+          title: "Properties",
+          icon: Building2,
+          value: "properties" as const,
+          disabled: true,
+        },
       ],
     },
     {
       title: "Finance & Projects",
+      defaultOpen: false,
       items: [
-        { title: "Financial", icon: DollarSign, value: "financial" as const },
+        {
+          title: "Financial",
+          icon: DollarSign,
+          value: "financial" as const,
+          disabled: true,
+        },
         {
           title: "Goal Projects",
           icon: Target,
           value: "goal-projects" as const,
+          disabled: true,
         },
         {
           title: "Church Goals",
           icon: Lightbulb,
           value: "church-goals" as const,
+          disabled: true,
         },
       ],
     },
@@ -241,7 +266,7 @@ export function Sidebar() {
           {menuGroups.map((group, groupIndex) => (
             <Collapsible
               key={groupIndex}
-              defaultOpen={false}
+              defaultOpen={group.defaultOpen ?? true}
               className="group/collapsible"
             >
               <SidebarGroup>
@@ -257,14 +282,24 @@ export function Sidebar() {
                       {group.items.map(item => (
                         <SidebarMenuItem key={item.value}>
                           <SidebarMenuButton
-                            onClick={() => navigateTo(item.value)}
-                            isActive={isActive(item.value)}
+                            disabled={item.disabled}
+                            onClick={
+                              item.disabled
+                                ? undefined
+                                : () => navigateTo(item.value)
+                            }
+                            isActive={!item.disabled && isActive(item.value)}
+                            tooltip={
+                              item.disabled ? "Coming soon" : undefined
+                            }
                             className={`
                               w-full px-2.5 py-1.5 rounded-lg transition-all duration-200 text-sm
                               ${
-                                isActive(item.value)
-                                  ? "bg-foreground text-background"
-                                  : "hover:bg-muted text-foreground"
+                                item.disabled
+                                  ? "opacity-50 cursor-not-allowed text-muted-foreground"
+                                  : isActive(item.value)
+                                    ? "bg-foreground text-background"
+                                    : "hover:bg-muted text-foreground"
                               }
                             `}
                           >
@@ -304,7 +339,9 @@ export function Sidebar() {
       <SidebarFooter className="p-2 border-t border-border/60">
         <div className="px-2.5 py-1.5 rounded-lg bg-muted/50 border border-border/60 text-xs">
           <p className="text-foreground">Active Members</p>
-          <p className="text-muted-foreground">247 people</p>
+          <p className="text-muted-foreground">
+            {hydrated ? `${activeMemberCount} people` : "Loading..."}
+          </p>
         </div>
       </SidebarFooter>
     </SidebarComponent>

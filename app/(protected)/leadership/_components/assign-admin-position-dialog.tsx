@@ -19,7 +19,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { mockPeople } from "@/components/mock-data";
+import { usePeople } from "@/lib/people";
+import { useLeadership } from "@/lib/leadership";
+
+const POSITION_OPTIONS = [
+  "Head Pastor",
+  "Secretary",
+  "Treasurer",
+  "Deacon",
+  "Elder",
+  "Trustee",
+  "Worship Team Lead",
+  "Christian Education Head",
+  "Outreach Coordinator",
+];
 
 interface AssignAdminPositionDialogProps {
   open: boolean;
@@ -30,15 +43,25 @@ export function AssignAdminPositionDialog({
   open,
   onOpenChange,
 }: AssignAdminPositionDialogProps) {
+  const { people } = usePeople();
+  const { assignAdminPosition, isSaving } = useLeadership();
   const [formData, setFormData] = useState({
     personId: "",
     title: "",
     term: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Assigning admin position:", formData);
+
+    const result = await assignAdminPosition({
+      title: formData.title,
+      personId: formData.personId,
+      term: formData.term,
+    });
+
+    if (!result) return;
+
     onOpenChange(false);
     setFormData({ personId: "", title: "", term: "" });
   };
@@ -51,6 +74,8 @@ export function AssignAdminPositionDialog({
 
   const DualModeInputClass =
     "rounded-lg bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500";
+
+  const sortedPeople = [...people].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,16 +102,17 @@ export function AssignAdminPositionDialog({
                 onValueChange={value =>
                   setFormData({ ...formData, title: value })
                 }
+                required
               >
                 <SelectTrigger className={`rounded-lg ${DualModeInputClass}`}>
                   <SelectValue placeholder="Select position" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Secretary">Secretary</SelectItem>
-                  <SelectItem value="Treasurer">Treasurer</SelectItem>
-                  <SelectItem value="Deacon">Deacon</SelectItem>
-                  <SelectItem value="Elder">Elder</SelectItem>
-                  <SelectItem value="Trustee">Trustee</SelectItem>
+                  {POSITION_OPTIONS.map(title => (
+                    <SelectItem key={title} value={title}>
+                      {title}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -103,14 +129,16 @@ export function AssignAdminPositionDialog({
                 onValueChange={value =>
                   setFormData({ ...formData, personId: value })
                 }
+                required
               >
                 <SelectTrigger className={`rounded-lg ${DualModeInputClass}`}>
                   <SelectValue placeholder="Choose a person" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockPeople.map(person => (
+                  {sortedPeople.map(person => (
                     <SelectItem key={person.id} value={person.id}>
-                      {person.name} - {person.householdName}
+                      {person.name}
+                      {person.householdName ? ` - ${person.householdName}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -126,7 +154,7 @@ export function AssignAdminPositionDialog({
               </Label>
               <Input
                 id="term"
-                placeholder="2025-2027"
+                placeholder="2025-2027 or Permanent"
                 value={formData.term}
                 onChange={e =>
                   setFormData({ ...formData, term: e.target.value })
@@ -142,11 +170,21 @@ export function AssignAdminPositionDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               className={DualModeOutlineButtonClass}
+              disabled={isSaving}
             >
               Cancel
             </Button>
-            <Button type="submit" className={DualModePrimaryButtonClass}>
-              Assign Position
+            <Button
+              type="submit"
+              className={DualModePrimaryButtonClass}
+              disabled={
+                isSaving ||
+                !formData.title ||
+                !formData.personId ||
+                !formData.term
+              }
+            >
+              {isSaving ? "Assigning..." : "Assign Position"}
             </Button>
           </DialogFooter>
         </form>

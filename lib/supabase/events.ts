@@ -259,3 +259,172 @@ export async function removeEventRegistration(
 
   if (error) throw error;
 }
+
+export type EventAttendanceRecord = {
+  id: string;
+  eventId: string;
+  date: string;
+  sessionLabel: string;
+  personId: string;
+};
+
+export type EventSessionSummary = {
+  date: string;
+  sessionLabel: string;
+  personIds: string[];
+};
+
+type DbEventSessionWithAttendees = {
+  id: string;
+  event_id: string;
+  session_date: string;
+  session_label: string;
+  church_event_session_attendees: {
+    id: string;
+    person_id: string;
+  }[];
+};
+
+function flattenEventAttendanceRows(
+  sessions: DbEventSessionWithAttendees[],
+): EventAttendanceRecord[] {
+  const rows: EventAttendanceRecord[] = [];
+
+  for (const session of sessions) {
+    for (const attendee of session.church_event_session_attendees ?? []) {
+      rows.push({
+        id: attendee.id,
+        eventId: session.event_id,
+        date: session.session_date,
+        sessionLabel: session.session_label,
+        personId: attendee.person_id,
+      });
+    }
+  }
+
+  return rows;
+}
+
+export async function fetchEventAttendanceRecords(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<EventAttendanceRecord[]> {
+  const { data, error } = await supabase
+    .from("church_event_sessions")
+    .select(
+      `
+      id,
+      event_id,
+      session_date,
+      session_label,
+      church_events!inner(organization_id),
+      church_event_session_attendees(id, person_id)
+    `,
+    )
+    .eq("church_events.organization_id", organizationId);
+
+  if (error) throw error;
+  return flattenEventAttendanceRows(data as DbEventSessionWithAttendees[]);
+}
+
+export async function recordEventSessionAttendance(
+  supabase: SupabaseClient,
+  input: {
+    eventId: string;
+    date: string;
+    sessionLabel: string;
+    personIds: string[];
+  },
+): Promise<{ sessionId: string }> {
+  const label = input.sessionLabel.trim();
+  if (!label) {
+    throw new Error("Session label is required");
+  }
+
+  const { data: session, error: sessionError } = await supabase
+    .from("church_event_sessions")
+    .upsert(
+      {
+        event_id: input.eventId,
+        session_date: input.date,
+        session_label: label,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "event_id,session_date,session_label" },
+    )
+    .select("id")
+    .single();
+
+  if (sessionError) throw sessionError;
+
+  const { error: deleteError } = await supabase
+    .from("church_event_session_attendees")
+    .delete()
+    .eq("session_id", session.id);
+
+  if (deleteError) throw deleteError;
+
+  if (input.personIds.length > 0) {
+    const attendeeRows = input.personIds.map((personId) => ({
+      session_id: session.id,
+      person_id: personId,
+    }));
+
+    const { error: attendeeError } = await supabase
+      .from("church_event_session_attendees")
+      .insert(attendeeRows);
+
+    if (attendeeError) throw attendeeError;
+  }
+
+  return { sessionId: session.id };
+}
+
+export function groupAttendanceIntoSessions(
+  records: EventAttendanceRecord[],
+  eventId: string,
+): EventSessionSummary[] {
+  const sessions = records
+    .filter((record) => record.eventId === eventId)
+    .reduce(
+      (acc, record) => {
+        const key = `${record.date}---${record.sessionLabel}`;
+        if (!acc[key]) {
+          acc[key] = {
+            date: record.date,
+            sessionLabel: record.sessionLabel,
+            personIds: [],
+          };
+        }
+        acc[key].personIds.push(record.personId);
+        return acc;
+      },
+      {} as Record<string, EventSessionSummary>,
+    );
+
+  return Object.values(sessions).sort(
+    (a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime() ||
+      a.sessionLabel.localeCompare(b.sessionLabel),
+  );
+}
+
+export function getUniqueAttendeeIds(
+  records: EventAttendanceRecord[],
+  eventId: string,
+): string[] {
+  return [
+    ...new Set(
+      records.filter((record) => record.eventId === eventId).map((r) => r.personId),
+    ),
+  ];
+}
+
+export type EventTiming = "upcoming" | "ongoing" | "completed";
+
+export function deriveEventTiming(event: ChurchEvent): EventTiming {
+  const today = new Date().toISOString().split("T")[0];
+  if (today < event.startDate) return "upcoming";
+  if (today > event.endDate) return "completed";
+  return "ongoing";
+}

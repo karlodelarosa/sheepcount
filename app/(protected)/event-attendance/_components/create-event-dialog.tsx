@@ -20,66 +20,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { CreateEventInput, EventCategory, EventType } from "@/lib/event-attendance";
+import type { ChurchEventType, CreateChurchEventInput } from "@/lib/supabase/events";
 
-const eventTypes: EventType[] = [
-  "Retreat",
-  "Youth Camp",
-  "Conference",
-  "Outreach",
-  "Workshop",
-  "Other",
-];
-
-const eventCategories: EventCategory[] = [
-  "Youth",
-  "Children",
-  "Adults",
-  "All Ages",
-  "Outreach",
-];
+const eventTypes: ChurchEventType[] = ["VBS", "Camp", "Retreat", "Conference"];
 
 interface CreateEventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (input: CreateEventInput) => void;
+  onCreate: (input: CreateChurchEventInput) => void | Promise<void>;
+  isSaving?: boolean;
 }
 
 export function CreateEventDialog({
   open,
   onOpenChange,
   onCreate,
+  isSaving = false,
 }: CreateEventDialogProps) {
-  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState<EventType>("Retreat");
-  const [category, setCategory] = useState<EventCategory>("Youth");
+  const [type, setType] = useState<ChurchEventType>("Retreat");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [location, setLocation] = useState("");
 
   const reset = () => {
-    setName("");
+    setTitle("");
     setDescription("");
     setType("Retreat");
-    setCategory("Youth");
     setStartDate("");
     setEndDate("");
-    setLocation("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !startDate || !endDate) return;
+    if (!title || !startDate || !endDate) return;
 
-    onCreate({
-      name,
+    await onCreate({
+      title,
       description,
       type,
-      category,
       startDate,
       endDate: endDate || startDate,
-      location,
+      status: "published",
     });
     reset();
     onOpenChange(false);
@@ -91,16 +73,16 @@ export function CreateEventDialog({
         <DialogHeader>
           <DialogTitle className="text-base">Create Event</DialogTitle>
           <DialogDescription className="text-xs">
-            Set up a retreat, camp, conference, or any special gathering
+            Set up a VBS, camp, retreat, or conference to track session attendance
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-1.5">
-            <Label className="text-xs">Event Name</Label>
+            <Label className="text-xs">Event Title</Label>
             <Input
-              value={name}
-              onChange={e => setName(e.target.value)}
+              value={title}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Youth Summer Camp 2025"
               required
               className="h-8 text-sm"
@@ -118,40 +100,20 @@ export function CreateEventDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Type</Label>
-              <Select value={type} onValueChange={v => setType(v as EventType)}>
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {eventTypes.map(t => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Category</Label>
-              <Select
-                value={category}
-                onValueChange={v => setCategory(v as EventCategory)}
-              >
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {eventCategories.map(c => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Type</Label>
+            <Select value={type} onValueChange={v => setType(v as ChurchEventType)}>
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {eventTypes.map(t => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -178,16 +140,6 @@ export function CreateEventDialog({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">Location</Label>
-            <Input
-              value={location}
-              onChange={e => setLocation(e.target.value)}
-              placeholder="Camp Riverside, Fellowship Hall..."
-              className="h-8 text-sm"
-            />
-          </div>
-
           <DialogFooter>
             <Button
               type="button"
@@ -197,8 +149,8 @@ export function CreateEventDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm">
-              Create Event
+            <Button type="submit" size="sm" disabled={isSaving}>
+              {isSaving ? "Creating..." : "Create Event"}
             </Button>
           </DialogFooter>
         </form>
