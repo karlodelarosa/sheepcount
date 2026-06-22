@@ -10,6 +10,8 @@ import { EventsProvider } from "@/lib/events";
 import { BibleStudyProvider } from "@/lib/bible-study";
 import { LeadershipProvider } from "@/lib/leadership";
 import { GrowthTrackProvider } from "@/lib/growth-track";
+import { OrganizationSettingsProvider } from "@/lib/organization-settings";
+import { BaptismProvider } from "@/lib/baptism";
 import { PeopleProvider } from "@/lib/people";
 import { ServiceAttendanceProvider } from "@/lib/service-attendance";
 
@@ -21,37 +23,41 @@ export default function ProtectedLayout({
   return (
     <ThemeProvider>
       <SidebarProvider>
-        <PeopleProvider>
-          <GroupsMinistryProvider>
-            <DiscipleshipProvider>
-              <ServiceAttendanceProvider>
-                <GrowthTrackProvider>
-                  <EventsProvider>
-                    <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-                      <Sidebar />
+        <OrganizationSettingsProvider>
+          <PeopleProvider>
+            <BaptismProvider>
+              <GroupsMinistryProvider>
+                <DiscipleshipProvider>
+                  <ServiceAttendanceProvider>
+                    <GrowthTrackProvider>
+                      <EventsProvider>
+                        <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+                          <Sidebar />
 
-                      <div className="flex-1 flex flex-col ml-52 min-w-0">
-                        <TopBar />
+                          <div className="flex-1 flex flex-col ml-52 min-w-0">
+                            <TopBar />
 
-                        <main className="flex-1 p-4">
-                          <div className="max-w-[1600px] mx-auto">
-                            <TrainingProvider>
-                              <BibleStudyProvider>
-                                <LeadershipProvider>
-                                  {children}
-                                </LeadershipProvider>
-                              </BibleStudyProvider>
-                            </TrainingProvider>
+                            <main className="flex-1 p-4">
+                              <div className="max-w-[1600px] mx-auto">
+                                <TrainingProvider>
+                                  <BibleStudyProvider>
+                                    <LeadershipProvider>
+                                      {children}
+                                    </LeadershipProvider>
+                                  </BibleStudyProvider>
+                                </TrainingProvider>
+                              </div>
+                            </main>
                           </div>
-                        </main>
-                      </div>
-                    </div>
-                  </EventsProvider>
-                </GrowthTrackProvider>
-              </ServiceAttendanceProvider>
-            </DiscipleshipProvider>
-          </GroupsMinistryProvider>
-        </PeopleProvider>
+                        </div>
+                      </EventsProvider>
+                    </GrowthTrackProvider>
+                  </ServiceAttendanceProvider>
+                </DiscipleshipProvider>
+              </GroupsMinistryProvider>
+            </BaptismProvider>
+          </PeopleProvider>
+        </OrganizationSettingsProvider>
         <Toaster richColors position="top-right" />
       </SidebarProvider>
     </ThemeProvider>

@@ -224,6 +224,18 @@ export async function recordAttendance(
       .in("id", personIds);
 
     if (peopleError) throw peopleError;
+
+    const { error: firstAttendanceError } = await supabase
+      .from("people")
+      .update({
+        first_attendance: input.date,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("organization_id", organizationId)
+      .in("id", personIds)
+      .is("first_attendance", null);
+
+    if (firstAttendanceError) throw firstAttendanceError;
   }
 
   return { sessionId: session.id };

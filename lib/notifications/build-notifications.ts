@@ -4,7 +4,7 @@ import {
   type ActionHubSectionFilter,
 } from "@/app/(protected)/growth-track/_lib/action-sections";
 import type { GrowthTrackPerson } from "@/app/(protected)/growth-track/_lib/types";
-import { isAttenderNewComer } from "@/lib/membership-path";
+import { isAttenderNewComer, getPersonVisitDate } from "@/lib/membership-path";
 import type { Person } from "@/lib/people";
 import type { ChurchEvent } from "@/lib/supabase/events";
 import { deriveEventTiming } from "@/lib/supabase/events";
@@ -78,7 +78,7 @@ export function buildNewcomerNotifications(people: Person[]): AppNotification[] 
       person =>
         person.status === "Active" &&
         person.membershipType === "Attender" &&
-        isAttenderNewComer(person.joinDate),
+        isAttenderNewComer(getPersonVisitDate(person)),
     )
     .sort(
       (a, b) =>

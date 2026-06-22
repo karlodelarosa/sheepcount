@@ -38,6 +38,8 @@ type DbPersonRow = {
   evangelism_stage: string;
   is_prospect: boolean;
   join_date: string;
+  first_attendance: string | null;
+  member_since: string | null;
   last_attendance: string | null;
   created_at: string;
   updated_at: string;
@@ -99,6 +101,8 @@ function toPerson(row: DbPersonRow): Person {
     householdName: getHouseholdName(row.households),
     age: computeAge(row.birthdate),
     joinDate: row.join_date,
+    firstAttendance: row.first_attendance ?? "",
+    memberSince: row.member_since ?? "",
     status: row.status as PersonStatus,
     membershipType: row.membership_type as MembershipType,
     evangelismStage: row.evangelism_stage as EvangelismStage,
@@ -123,6 +127,8 @@ const personSelect = `
   evangelism_stage,
   is_prospect,
   join_date,
+  first_attendance,
+  member_since,
   last_attendance,
   created_at,
   updated_at,
@@ -188,6 +194,10 @@ export async function createPersonInHousehold(
     : isProspect
       ? "First-time Attendee"
       : "Follow-up";
+  const isMemberType =
+    membershipType === "Member" ||
+    membershipType === "Volunteer Worker" ||
+    membershipType === "Worker";
 
   const { data: person, error: personError } = await supabase
     .from("people")
@@ -206,6 +216,10 @@ export async function createPersonInHousehold(
       status: "Active",
       membership_type: membershipType,
       evangelism_stage: evangelismStage,
+      first_attendance: input.firstAttendance?.trim() || null,
+      member_since:
+        input.memberSince?.trim() ||
+        (isMemberType ? new Date().toISOString().split("T")[0] : null),
     })
     .select(personSelect)
     .single();
@@ -229,6 +243,10 @@ export async function createPerson(
     : isProspect
       ? "First-time Attendee"
       : "Follow-up";
+  const isMemberType =
+    membershipType === "Member" ||
+    membershipType === "Volunteer Worker" ||
+    membershipType === "Worker";
 
   const { data: person, error: personError } = await supabase
     .from("people")
@@ -246,6 +264,10 @@ export async function createPerson(
       status: "Active",
       membership_type: membershipType,
       evangelism_stage: evangelismStage,
+      first_attendance: input.firstAttendance?.trim() || null,
+      member_since:
+        input.memberSince?.trim() ||
+        (isMemberType ? new Date().toISOString().split("T")[0] : null),
     })
     .select(personSelect)
     .single();
@@ -282,6 +304,13 @@ export async function updatePerson(
   if (input.email !== undefined) updates.email = input.email.trim();
   if (input.birthdate !== undefined) updates.birthdate = input.birthdate;
   if (input.gender !== undefined) updates.gender = input.gender;
+  if (input.firstAttendance !== undefined) {
+    updates.first_attendance = input.firstAttendance.trim() || null;
+  }
+  if (input.memberSince !== undefined) {
+    updates.member_since = input.memberSince.trim() || null;
+  }
+  if (input.joinDate !== undefined) updates.join_date = input.joinDate;
   if (input.role !== undefined) updates.role = input.role;
   if (input.status !== undefined) updates.status = input.status;
   if (input.isProspect !== undefined) updates.is_prospect = input.isProspect;

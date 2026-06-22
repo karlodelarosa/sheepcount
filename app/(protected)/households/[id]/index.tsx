@@ -32,14 +32,18 @@ import {
   Pencil,
   Trash2,
   Crown,
+  GitBranch,
 } from "lucide-react";
 import { usePeople, type HouseholdOtherResident, type Person } from "@/lib/people";
 import { useBibleStudy } from "@/lib/bible-study";
 import { AddBibleStudyGroupDialog } from "@/app/(protected)/bible-study/_components/add-bible-group-dialog";
 import type { BibleStudyStatus } from "@/lib/supabase/bible-study";
 import { AddHouseholdMemberDialog } from "../_components/add-household-member-dialog";
+import { AddExistingHouseholdMemberDialog } from "../_components/add-existing-household-member-dialog";
+import { HouseholdFamilyTree } from "../_components/household-family-tree";
 import { EditHouseholdDialog } from "../_components/edit-household-dialog";
 import { OtherResidentDialog } from "../_components/other-resident-dialog";
+import { RemoveHouseholdMemberDialog } from "../_components/remove-household-member-dialog";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +52,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -162,18 +167,22 @@ export function HouseholdDetails({
     getHouseholdHead,
     getOtherResidents,
     updatePerson,
+    removeFromHousehold,
     deleteOtherResident,
     people,
     isSaving,
   } = usePeople();
   const { groups, getGroupMembers, getHouseholdBibleStudy } = useBibleStudy();
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isAddExistingOpen, setIsAddExistingOpen] = useState(false);
   const [isEditHouseholdOpen, setIsEditHouseholdOpen] = useState(false);
   const [isOtherResidentOpen, setIsOtherResidentOpen] = useState(false);
   const [editingResident, setEditingResident] =
     useState<HouseholdOtherResident | null>(null);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [personToSetRole, setPersonToSetRole] = useState<Person | null>(null);
+  const [personToRemove, setPersonToRemove] = useState<Person | null>(null);
+  const [membersTab, setMembersTab] = useState("directory");
 
   if (!hydrated) {
     return (
@@ -255,6 +264,14 @@ export function HouseholdDetails({
     await updatePerson(personId, { role });
   };
 
+  const handleRemoveMember = async () => {
+    if (!personToRemove) return;
+    const removed = await removeFromHousehold(personToRemove.id);
+    if (removed) {
+      setPersonToRemove(null);
+    }
+  };
+
   const handleOpenOtherResident = (resident?: HouseholdOtherResident) => {
     setEditingResident(resident ?? null);
     setIsOtherResidentOpen(true);
@@ -266,6 +283,9 @@ export function HouseholdDetails({
 
   const DualModeButtonClass =
     "rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700";
+
+  const tabTriggerClass =
+    "rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700 dark:data-[state=active]:text-white";
 
   return (
     <div className="space-y-6">
@@ -399,205 +419,256 @@ export function HouseholdDetails({
         </Card>
       </div>
 
-      {/* Members Section (Church Members) (Dual Mode) */}
       <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-slate-500 dark:text-zinc-300" />
-              <CardTitle className="text-lg text-slate-900 dark:text-white">
-                Household Members ({members.length})
-              </CardTitle>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => setIsAddMemberOpen(true)}
-              className={DualModeButtonClass}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Church Member
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {members.length > 0 ? (
-            <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60">
-              <Table>
-                <TableHeader>
-                  {/* Dual mode table header row */}
-                  <TableRow className="bg-slate-50/50 hover:bg-slate-100 dark:bg-zinc-700/50 dark:hover:bg-zinc-700/60">
-                    <TableHead className="text-slate-600 dark:text-zinc-300">
-                      Name
-                    </TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">
-                      Role
-                    </TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">
-                      Age
-                    </TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {members.map(member => (
-                    <TableRow
-                      key={member.id}
-                      className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50"
-                    >
-                      <TableCell className="font-medium text-slate-900 dark:text-white">
-                        <button
-                          type="button"
-                          className="flex items-center gap-3 text-left hover:underline"
-                          onClick={() => router.push(`/people/${member.id}`)}
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-indigo-600 dark:bg-purple-600 flex items-center justify-center shadow-sm">
-                            <span className="text-white">
-                              {member.name.charAt(0)}
-                            </span>
-                          </div>
-                          {member.name}
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        {/* Assuming default/secondary badges are globally styled for dark mode */}
-                        <Badge
-                          variant={
-                            member.role === "Head" ? "default" : "secondary"
-                          }
-                          className="rounded-lg"
-                        >
-                          {member.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-slate-600 dark:text-zinc-400">
-                        {member.age}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="rounded-lg text-slate-700 hover:bg-slate-100 dark:text-white dark:hover:bg-zinc-700/70"
-                          onClick={() => handleOpenRoleDialog(member)}
-                        >
-                          <Edit2 className="w-4 h-4 mr-1" /> Set Role
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-slate-500 border border-dashed border-slate-300 rounded-xl dark:text-zinc-500 dark:border-zinc-600">
-              No church members assigned to this household yet.
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Other Residents */}
-      <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+              <div>
                 <CardTitle className="text-lg text-slate-900 dark:text-white">
-                  Other Residents ({otherResidents.length})
+                  Household Members
                 </CardTitle>
+                <CardDescription className="text-slate-600 dark:text-zinc-400">
+                  {members.length} church member
+                  {members.length !== 1 ? "s" : ""}
+                  {otherResidents.length > 0
+                    ? ` · ${otherResidents.length} other resident${otherResidents.length !== 1 ? "s" : ""}`
+                    : ""}
+                </CardDescription>
               </div>
-              <CardDescription className="text-slate-600 dark:text-zinc-400 mt-1">
-                People living here who have not attended church yet.
-              </CardDescription>
             </div>
-            <Button
-              size="sm"
-              onClick={() => handleOpenOtherResident()}
-              className={DualModeButtonClass}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Resident
-            </Button>
+            {membersTab === "directory" && (
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsAddExistingOpen(true)}
+                  className="rounded-lg border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:text-white dark:hover:bg-zinc-700"
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Add Existing
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setIsAddMemberOpen(true)}
+                  className={DualModeButtonClass}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New
+                </Button>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent>
-          {otherResidents.length > 0 ? (
-            <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-amber-50/50 dark:bg-amber-900/20">
-                    <TableHead className="text-slate-600 dark:text-zinc-300">
-                      Name
-                    </TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">
-                      Relation
-                    </TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">
-                      Contact
-                    </TableHead>
-                    <TableHead className="text-slate-600 dark:text-zinc-300">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {otherResidents.map(resident => (
-                    <TableRow
-                      key={resident.id}
-                      className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50"
-                    >
-                      <TableCell className="font-medium text-slate-900 dark:text-white">
-                        {resident.name}
-                        {resident.notes && (
-                          <p className="text-xs text-slate-500 dark:text-zinc-500 font-normal mt-0.5">
-                            {resident.notes}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-slate-600 dark:text-zinc-400">
-                        {resident.relation}
-                      </TableCell>
-                      <TableCell className="text-slate-600 dark:text-zinc-400 text-sm">
-                        {resident.phone || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-lg"
-                            disabled={isSaving}
-                            onClick={() => handleOpenOtherResident(resident)}
+          <Tabs
+            value={membersTab}
+            onValueChange={setMembersTab}
+            className="space-y-6"
+          >
+            <TabsList className="grid h-10 w-full max-w-md grid-cols-2 bg-slate-100/80 p-1 dark:bg-zinc-800/80">
+              <TabsTrigger value="directory" className={tabTriggerClass}>
+                <Users className="mr-1.5 hidden h-4 w-4 sm:inline" />
+                Directory
+              </TabsTrigger>
+              <TabsTrigger value="tree" className={tabTriggerClass}>
+                <GitBranch className="mr-1.5 hidden h-4 w-4 sm:inline" />
+                Family Tree
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="directory" className="mt-0 space-y-6">
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-slate-700 dark:text-zinc-300">
+                  Church Members
+                </h3>
+                {members.length > 0 ? (
+                  <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-slate-50/50 hover:bg-slate-100 dark:bg-zinc-700/50 dark:hover:bg-zinc-700/60">
+                          <TableHead className="text-slate-600 dark:text-zinc-300">
+                            Name
+                          </TableHead>
+                          <TableHead className="text-slate-600 dark:text-zinc-300">
+                            Role
+                          </TableHead>
+                          <TableHead className="text-slate-600 dark:text-zinc-300">
+                            Age
+                          </TableHead>
+                          <TableHead className="text-slate-600 dark:text-zinc-300">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {members.map(member => (
+                          <TableRow
+                            key={member.id}
+                            className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50"
                           >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
-                            disabled={isSaving}
-                            onClick={() => handleDeleteResident(resident.id)}
+                            <TableCell className="font-medium text-slate-900 dark:text-white">
+                              <button
+                                type="button"
+                                className="flex items-center gap-3 text-left hover:underline"
+                                onClick={() => router.push(`/people/${member.id}`)}
+                              >
+                                <div className="w-8 h-8 rounded-lg bg-indigo-600 dark:bg-purple-600 flex items-center justify-center shadow-sm">
+                                  <span className="text-white">
+                                    {member.name.charAt(0)}
+                                  </span>
+                                </div>
+                                {member.name}
+                              </button>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  member.role === "Head" ? "default" : "secondary"
+                                }
+                                className="rounded-lg"
+                              >
+                                {member.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-slate-600 dark:text-zinc-400">
+                              {member.age}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="rounded-lg text-slate-700 hover:bg-slate-100 dark:text-white dark:hover:bg-zinc-700/70"
+                                  onClick={() => handleOpenRoleDialog(member)}
+                                >
+                                  <Edit2 className="w-4 h-4 mr-1" /> Set Role
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                                  disabled={isSaving}
+                                  onClick={() => setPersonToRemove(member)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-500 border border-dashed border-slate-300 rounded-xl dark:text-zinc-500 dark:border-zinc-600">
+                    No church members assigned to this household yet.
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-slate-700 dark:text-zinc-300">
+                      Other Residents
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
+                      People living here who have not attended church yet.
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleOpenOtherResident()}
+                    className={DualModeButtonClass}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Resident
+                  </Button>
+                </div>
+                {otherResidents.length > 0 ? (
+                  <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-amber-50/50 dark:bg-amber-900/20">
+                          <TableHead className="text-slate-600 dark:text-zinc-300">
+                            Name
+                          </TableHead>
+                          <TableHead className="text-slate-600 dark:text-zinc-300">
+                            Relation
+                          </TableHead>
+                          <TableHead className="text-slate-600 dark:text-zinc-300">
+                            Contact
+                          </TableHead>
+                          <TableHead className="text-slate-600 dark:text-zinc-300">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {otherResidents.map(resident => (
+                          <TableRow
+                            key={resident.id}
+                            className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/50"
                           >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-slate-500 border border-dashed border-slate-300 rounded-xl dark:text-zinc-500 dark:border-zinc-600">
-              No other residents listed. Add tenants, relatives, or others who
-              live here but haven&apos;t attended yet.
-            </div>
-          )}
+                            <TableCell className="font-medium text-slate-900 dark:text-white">
+                              {resident.name}
+                              {resident.notes && (
+                                <p className="text-xs text-slate-500 dark:text-zinc-500 font-normal mt-0.5">
+                                  {resident.notes}
+                                </p>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-slate-600 dark:text-zinc-400">
+                              {resident.relation}
+                            </TableCell>
+                            <TableCell className="text-slate-600 dark:text-zinc-400 text-sm">
+                              {resident.phone || "—"}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="rounded-lg"
+                                  disabled={isSaving}
+                                  onClick={() => handleOpenOtherResident(resident)}
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                                  disabled={isSaving}
+                                  onClick={() => handleDeleteResident(resident.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-slate-500 border border-dashed border-slate-300 rounded-xl dark:text-zinc-500 dark:border-zinc-600">
+                    No other residents listed.
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="tree" className="mt-0">
+              <HouseholdFamilyTree
+                members={members}
+                residents={otherResidents}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
-
       <EditHouseholdDialog
         open={isEditHouseholdOpen}
         onOpenChange={setIsEditHouseholdOpen}
@@ -617,6 +688,13 @@ export function HouseholdDetails({
         resident={editingResident}
       />
 
+      <AddExistingHouseholdMemberDialog
+        open={isAddExistingOpen}
+        onOpenChange={setIsAddExistingOpen}
+        householdId={household.id}
+        householdName={household.name}
+      />
+
       <AddHouseholdMemberDialog
         open={isAddMemberOpen}
         onOpenChange={setIsAddMemberOpen}
@@ -629,6 +707,17 @@ export function HouseholdDetails({
         onOpenChange={setIsRoleDialogOpen}
         person={personToSetRole}
         onRoleSet={handleRoleSet}
+      />
+
+      <RemoveHouseholdMemberDialog
+        open={personToRemove !== null}
+        onOpenChange={open => {
+          if (!open) setPersonToRemove(null);
+        }}
+        personName={personToRemove?.name ?? ""}
+        householdName={household.name}
+        onConfirm={handleRemoveMember}
+        isLoading={isSaving}
       />
     </div>
   );

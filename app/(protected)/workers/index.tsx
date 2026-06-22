@@ -39,6 +39,7 @@ import { formatMinistryAssignmentLabel } from "@/lib/work-ministry-labels";
 import {
   getMembershipDisplayColor,
   getMembershipDisplayLabel,
+  getPersonVisitDate,
   isAttenderNewComer,
 } from "@/lib/membership-path";
 import { cn } from "@/lib/utils";
@@ -210,12 +211,12 @@ function WorkersTable({
                   </TableCell>
                   <TableCell>
                     <Badge
-                      className={`rounded-lg ${getMembershipDisplayColor(person.membershipType, person.joinDate)}`}
-                    >
-                      {getMembershipDisplayLabel(
-                        person.membershipType,
-                        person.joinDate,
-                      )}
+                      className={`rounded-lg ${getMembershipDisplayColor(person.membershipType, getPersonVisitDate(person))}`}
+                        >
+                          {getMembershipDisplayLabel(
+                            person.membershipType,
+                            getPersonVisitDate(person),
+                          )}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -313,12 +314,12 @@ function MembershipTable({
                   {showNewComer && (
                     <TableCell>
                       <Badge
-                        className={`rounded-lg ${getMembershipDisplayColor(person.membershipType, person.joinDate)}`}
-                      >
-                        {getMembershipDisplayLabel(
-                          person.membershipType,
-                          person.joinDate,
-                        )}
+                      className={`rounded-lg ${getMembershipDisplayColor(person.membershipType, getPersonVisitDate(person))}`}
+                        >
+                          {getMembershipDisplayLabel(
+                            person.membershipType,
+                            getPersonVisitDate(person),
+                          )}
                       </Badge>
                     </TableCell>
                   )}
@@ -412,7 +413,7 @@ export function WorkersView() {
   );
   const newComers = useMemo(
     () =>
-      [...attenders.filter(p => isAttenderNewComer(p.joinDate))].sort(
+      [...attenders.filter(p => isAttenderNewComer(getPersonVisitDate(p)))].sort(
         (a, b) =>
           new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime(),
       ),

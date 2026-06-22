@@ -44,6 +44,7 @@ import {
 import { PersonHouseholdSection } from "./person-household-section";
 import { PersonAttendanceSection } from "./person-attendance-section";
 import { PersonPastoralAlert } from "./person-pastoral-alert";
+import { PersonBaptismSection } from "./person-baptism-section";
 import type { PersonAttendanceRow } from "../_lib/person-attendance";
 import type { PersonPastoralStatus } from "../_lib/person-pastoral-status";
 import { isPastoralAlertLevel } from "../_lib/person-pastoral-status";
@@ -131,6 +132,7 @@ type PersonDetailTabsProps = {
   attendanceRows: PersonAttendanceRow[];
   attendanceHydrated: boolean;
   pastoralStatus: PersonPastoralStatus;
+  people: Person[];
 };
 
 export function PersonDetailTabs(props: PersonDetailTabsProps) {
@@ -182,6 +184,7 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
     attendanceRows,
     attendanceHydrated,
     pastoralStatus,
+    people,
   } = props;
 
   const communityCount =
@@ -190,7 +193,8 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
     profileDetails.discipleship.activeEnrollments.length +
     activeTraining.length +
     discipleshipBadges.length +
-    personEvents.length;
+    personEvents.length +
+    profileDetails.baptism.records.length;
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -304,10 +308,28 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                   </div>
                   <div className="col-span-2">
                     <BirthdateField
-                      key={`${personId}-${isEditing}`}
+                      key={`${personId}-${isEditing}-birthdate`}
                       name="birthdate"
                       defaultValue={person.birthdate}
                       required
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <BirthdateField
+                      key={`${personId}-${isEditing}-first-attendance`}
+                      name="firstAttendance"
+                      label="First attendance"
+                      defaultValue={person.firstAttendance || person.joinDate}
+                      showLabel
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <BirthdateField
+                      key={`${personId}-${isEditing}-member-since`}
+                      name="memberSince"
+                      label="Member since"
+                      defaultValue={person.memberSince}
+                      showLabel
                     />
                   </div>
                   <div className="grid gap-2">
@@ -419,7 +441,23 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                     </span>
                   )}
                 </InfoTile>
-                <InfoTile icon={Calendar} label="Join date">
+                <InfoTile icon={Calendar} label="First attendance">
+                  {(person.firstAttendance || person.joinDate)
+                    ? new Date(
+                        person.firstAttendance || person.joinDate,
+                      ).toLocaleDateString()
+                    : "Not recorded"}
+                </InfoTile>
+                <InfoTile icon={CalendarCheck} label="Member since">
+                  {person.memberSince ? (
+                    new Date(person.memberSince).toLocaleDateString()
+                  ) : (
+                    <span className="text-slate-400 font-normal">
+                      Not a member yet
+                    </span>
+                  )}
+                </InfoTile>
+                <InfoTile icon={Calendar} label="Directory entry date">
                   {new Date(person.joinDate).toLocaleDateString()}
                 </InfoTile>
                 <InfoTile
@@ -597,6 +635,12 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
       </TabsContent>
 
       <TabsContent value="growth" className="mt-4 space-y-5">
+        <PersonBaptismSection
+          person={person}
+          people={people}
+          baptismRecords={profileDetails.baptism.records}
+        />
+
         <div className={cn(panelCard, "p-5")}>
           <SectionHeader
             icon={BookOpen}
@@ -782,50 +826,6 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                         ? ` · ${new Date(event.startDate).toLocaleDateString()}`
                         : ""}
                     </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className={cn(panelCard, "p-5")}>
-          <SectionHeader
-            icon={CalendarDays}
-            title="Spiritual Footprint Timeline"
-            description="Chronological history across cell, discipleship, training, and events"
-          />
-          <div className="mt-4">
-            {profileDetails.timeline.length === 0 ? (
-              <EmptyState
-                icon={CalendarDays}
-                title="No history yet"
-                description="Activity will appear here as this person participates in church life."
-              />
-            ) : (
-              <div className="space-y-2">
-                {profileDetails.timeline.map((entry, i) => (
-                  <div
-                    key={`${entry.kind}-${entry.date}-${i}`}
-                    className="flex gap-3 p-3 rounded-xl border border-slate-200/70 bg-slate-50/40 dark:border-zinc-700/70 dark:bg-zinc-800/30"
-                  >
-                    <div className="text-xs text-slate-500 dark:text-zinc-500 shrink-0 w-20 pt-0.5">
-                      {new Date(entry.date).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">
-                        {entry.label}
-                      </p>
-                      {entry.detail && (
-                        <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
-                          {entry.detail}
-                        </p>
-                      )}
-                    </div>
                   </div>
                 ))}
               </div>

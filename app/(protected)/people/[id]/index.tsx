@@ -35,6 +35,7 @@ import { buildPersonProfileDetails } from "@/lib/supabase/person-profile";
 import {
   getMembershipDisplayColor,
   getMembershipDisplayLabel,
+  getPersonVisitDate,
   getNextMembershipPathType,
   MEMBERSHIP_PATH_LABELS,
 } from "@/lib/membership-path";
@@ -44,6 +45,9 @@ import { AssignHouseholdDialog } from "../_components/assign-household-dialog";
 import { ConfirmPersonDialog } from "../_components/confirm-person-dialog";
 import { PersonProfileHero } from "../_components/person-profile-hero";
 import { PersonDetailTabs } from "../_components/person-detail-tabs";
+import { SpiritualFootprintTimeline } from "../_components/spiritual-footprint-timeline";
+import { useOrganizationSettings } from "@/lib/organization-settings";
+import { useBaptism } from "@/lib/baptism";
 import { buildPersonAttendanceStats } from "../_lib/person-attendance";
 import { getPersonPastoralStatus } from "../_lib/person-pastoral-status";
 
@@ -97,6 +101,8 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
   const { attendanceRows, hydrated: attendanceHydrated } =
     useServiceAttendance();
   const growthTrack = useGrowthTrackOptional();
+  const { settings: orgSettings } = useOrganizationSettings();
+  const { records: baptismRecords } = useBaptism();
 
   const [isEditing, setIsEditing] = useState(false);
   const [promoteOpen, setPromoteOpen] = useState(false);
@@ -146,6 +152,7 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
     courseProgress: progress,
     churchEvents: events,
     eventRegistrations: registrations,
+    baptismRecords,
   });
 
   const trackBadgeColors: Record<string, string> = {
@@ -226,6 +233,8 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
       lastName: formData.get("lastName") as string,
       phone: formData.get("phone") as string,
       birthdate: formData.get("birthdate") as string,
+      firstAttendance: (formData.get("firstAttendance") as string) || "",
+      memberSince: (formData.get("memberSince") as string) || "",
       email: (formData.get("email") as string) || "",
       gender: editGender || null,
       role: editRole,
@@ -265,6 +274,15 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
 
   const nextMembershipStep = getNextMembershipPathType(person.membershipType);
   const canPromote = nextMembershipStep !== null;
+  const visitDate = getPersonVisitDate(person);
+  const profileAchievement =
+    discipleshipBadges.length > 0 && trainingBadges.length > 0
+      ? "both"
+      : discipleshipBadges.length > 0
+        ? "discipleship"
+        : trainingBadges.length > 0
+          ? "training"
+          : null;
 
   return (
     <div className="space-y-5">
@@ -389,78 +407,90 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         </div>
       </div>
 
-      <PersonProfileHero
-        name={person.name}
-        role={person.role}
-        age={person.age}
-        status={person.status}
-        statusColorClass={getStatusColor(person.status)}
-        membershipLabel={getMembershipDisplayLabel(
-          person.membershipType,
-          person.joinDate,
-        )}
-        membershipColorClass={getMembershipDisplayColor(
-          person.membershipType,
-          person.joinDate,
-        )}
-        isProspect={person.isProspect}
-        isEditing={isEditing}
-        discipleshipBadges={discipleshipBadges}
-        trackBadgeColors={trackBadgeColors}
-        quickStats={[
-          { label: "Ministries", value: ministriesList.length },
-          { label: "Life groups", value: lifeGroups.length },
-          {
-            label: "Badges",
-            value: discipleshipBadges.length + trainingBadges.length,
-          },
-          {
-            label: "Services",
-            value: attendanceStats.totalAttended,
-            hint:
-              attendanceStats.sundayRate > 0
-                ? `${attendanceStats.sundayRate}% Sun`
-                : undefined,
-          },
-        ]}
-        pastoralStatus={pastoralStatus!}
-      />
+      <div className="flex flex-col xl:flex-row gap-5 items-start">
+        <div className="flex-1 min-w-0 space-y-5 w-full">
+          <PersonProfileHero
+            name={person.name}
+            role={person.role}
+            age={person.age}
+            status={person.status}
+            statusColorClass={getStatusColor(person.status)}
+            membershipLabel={getMembershipDisplayLabel(
+              person.membershipType,
+              visitDate,
+            )}
+            membershipColorClass={getMembershipDisplayColor(
+              person.membershipType,
+              visitDate,
+            )}
+            isProspect={person.isProspect}
+            isEditing={isEditing}
+            discipleshipBadges={discipleshipBadges}
+            trackBadgeColors={trackBadgeColors}
+            quickStats={[
+              { label: "Ministries", value: ministriesList.length },
+              { label: "Life groups", value: lifeGroups.length },
+              {
+                label: "Badges",
+                value: discipleshipBadges.length + trainingBadges.length,
+              },
+              {
+                label: "Services",
+                value: attendanceStats.totalAttended,
+                hint:
+                  attendanceStats.sundayRate > 0
+                    ? `${attendanceStats.sundayRate}% Sun`
+                    : undefined,
+              },
+            ]}
+            pastoralStatus={pastoralStatus!}
+            achievement={profileAchievement}
+            showBaptismBadge={orgSettings.waterBaptismEnabled ?? false}
+            baptizedAt={profileDetails.baptism.latestBaptizedAt}
+          />
 
-      <PersonDetailTabs
-        personId={personId}
-        person={person}
-        pastoralStatus={pastoralStatus!}
-        isEditing={isEditing}
-        isSaving={isSaving}
-        editRole={editRole}
-        editStatus={editStatus}
-        editGender={editGender}
-        editIsProspect={editIsProspect}
-        onEditRoleChange={setEditRole}
-        onEditStatusChange={setEditStatus}
-        onEditGenderChange={setEditGender}
-        onEditIsProspectChange={setEditIsProspect}
-        onUpdate={handleUpdate}
-        household={household}
-        householdMembers={householdMembers}
-        hasHousehold={hasHousehold}
-        inFamilyHousehold={inFamilyHousehold}
-        onHouseholdAssignClick={() => setHouseholdOpen(true)}
-        ministriesList={ministriesList}
-        onAssignMinistryClick={() => setAssignOpen(true)}
-        lifeGroups={lifeGroups}
-        cellGroup={cellGroup}
-        discipleshipRole={discipleshipRole}
-        discipleshipBadges={discipleshipBadges}
-        trainingBadges={trainingBadges}
-        activeTraining={activeTraining}
-        completedTraining={completedTraining}
-        personEvents={personEvents}
-        profileDetails={profileDetails}
-        trackBadgeColors={trackBadgeColors}
-        attendanceRows={attendanceRows}
-        attendanceHydrated={attendanceHydrated}
-      />
+          <PersonDetailTabs
+            personId={personId}
+            person={person}
+            pastoralStatus={pastoralStatus!}
+            isEditing={isEditing}
+            isSaving={isSaving}
+            editRole={editRole}
+            editStatus={editStatus}
+            editGender={editGender}
+            editIsProspect={editIsProspect}
+            onEditRoleChange={setEditRole}
+            onEditStatusChange={setEditStatus}
+            onEditGenderChange={setEditGender}
+            onEditIsProspectChange={setEditIsProspect}
+            onUpdate={handleUpdate}
+            household={household}
+            householdMembers={householdMembers}
+            hasHousehold={hasHousehold}
+            inFamilyHousehold={inFamilyHousehold}
+            onHouseholdAssignClick={() => setHouseholdOpen(true)}
+            ministriesList={ministriesList}
+            onAssignMinistryClick={() => setAssignOpen(true)}
+            lifeGroups={lifeGroups}
+            cellGroup={cellGroup}
+            discipleshipRole={discipleshipRole}
+            discipleshipBadges={discipleshipBadges}
+            trainingBadges={trainingBadges}
+            activeTraining={activeTraining}
+            completedTraining={completedTraining}
+            personEvents={personEvents}
+            profileDetails={profileDetails}
+            trackBadgeColors={trackBadgeColors}
+            attendanceRows={attendanceRows}
+            attendanceHydrated={attendanceHydrated}
+            people={people}
+          />
+        </div>
+
+        <aside className="w-full xl:w-72 shrink-0 xl:sticky xl:top-4 self-start">
+          <SpiritualFootprintTimeline timeline={profileDetails.timeline} />
+        </aside>
+      </div>
 
       <PromoteMemberDialog
         open={promoteOpen}

@@ -80,6 +80,8 @@ export interface Person {
   email: string;
   age: number;
   joinDate: string;
+  firstAttendance: string;
+  memberSince: string;
   status: PersonStatus;
   membershipType: MembershipType;
   evangelismStage: EvangelismStage;
@@ -102,6 +104,8 @@ export type AddPersonInput = {
   birthdate?: string;
   gender?: PersonGender | null;
   membershipType: MembershipType;
+  firstAttendance?: string;
+  memberSince?: string;
 };
 
 export type UpdatePersonInput = Partial<
@@ -121,6 +125,9 @@ export type UpdatePersonInput = Partial<
     | "status"
     | "membershipType"
     | "evangelismStage"
+    | "firstAttendance"
+    | "memberSince"
+    | "joinDate"
   >
 >;
 
@@ -373,6 +380,9 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
         isProspect: false,
         membershipType: nextType,
         evangelismStage: evangelismStageForMembershipType(nextType),
+        ...(nextType === "Member" && !person.memberSince
+          ? { memberSince: new Date().toISOString().split("T")[0] }
+          : {}),
       });
     },
     [people, updatePerson],

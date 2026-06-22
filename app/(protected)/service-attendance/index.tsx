@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -22,6 +23,7 @@ import {
   Church,
   UsersRound,
   LayoutDashboard,
+  Cake,
 } from "lucide-react";
 import { usePeople } from "@/lib/people";
 import { useServiceAttendance } from "@/lib/service-attendance";
@@ -34,12 +36,13 @@ import {
 import {
   groupAttendanceBySession,
   getSundayStats,
-  getDataDateBounds,
+  getCurrentMonthRange,
   isSundayRecord,
   type GroupedAttendanceRecord,
   type DateRangeValue,
 } from "./_lib/group-attendance";
 import { AttendanceDashboardTab } from "./_components/attendance-dashboard-tab";
+import { BirthdaysTab } from "./_components/birthdays-tab";
 import { StatCard } from "./_components/stat-card";
 
 function formatLongDate(date: string) {
@@ -170,7 +173,13 @@ function AttendanceDetailsPanel({
                 {person!.name.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="truncate text-sm">{person!.name}</p>
+                <Link
+                  href={`/people/${person!.id}`}
+                  className="truncate text-sm font-medium hover:text-violet-600 dark:hover:text-violet-400 hover:underline"
+                  onClick={e => e.stopPropagation()}
+                >
+                  {person!.name}
+                </Link>
                 <p className="text-[10px] text-muted-foreground truncate">
                   {person!.householdName}
                 </p>
@@ -194,14 +203,8 @@ function AttendanceDetailsPanel({
   );
 }
 
-function getInitialDateRange(records: GroupedAttendanceRecord[]): DateRangeValue {
-  const bounds = getDataDateBounds(records);
-  if (bounds) return bounds;
-
-  const to = new Date().toISOString().split("T")[0];
-  const from = new Date();
-  from.setMonth(from.getMonth() - 3);
-  return { from: from.toISOString().split("T")[0], to };
+function getInitialDateRange(): DateRangeValue {
+  return getCurrentMonthRange();
 }
 
 export function ServiceAttendanceView() {
@@ -229,21 +232,7 @@ export function ServiceAttendanceView() {
     [attendanceRows],
   );
 
-  const dataBounds = useMemo(
-    () => getDataDateBounds(attendanceRecords),
-    [attendanceRecords],
-  );
-
-  const [dateRange, setDateRange] = useState<DateRangeValue>(() =>
-    getInitialDateRange([]),
-  );
-  const dateRangeSynced = useRef(false);
-
-  useEffect(() => {
-    if (!hydrated || !dataBounds || dateRangeSynced.current) return;
-    setDateRange(dataBounds);
-    dateRangeSynced.current = true;
-  }, [hydrated, dataBounds]);
+  const [dateRange, setDateRange] = useState<DateRangeValue>(getInitialDateRange);
 
   const sundayRecords = useMemo(
     () => attendanceRecords.filter(isSundayRecord),
@@ -381,6 +370,10 @@ export function ServiceAttendanceView() {
               <UsersRound className="w-3.5 h-3.5" />
               Life Groups
             </TabsTrigger>
+            <TabsTrigger value="birthdays" className="gap-1 text-xs px-2.5">
+              <Cake className="w-3.5 h-3.5" />
+              Birthdays
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-3">
@@ -397,7 +390,6 @@ export function ServiceAttendanceView() {
               people={people}
               dateRange={dateRange}
               onDateRangeChange={setDateRange}
-              dataBounds={dataBounds}
             />
           </TabsContent>
 
@@ -529,6 +521,10 @@ export function ServiceAttendanceView() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="birthdays" className="mt-3">
+            <BirthdaysTab people={people} />
           </TabsContent>
         </Tabs>
       )}

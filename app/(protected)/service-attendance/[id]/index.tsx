@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -12,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, ArrowLeft, Users, Trash, Clock } from "lucide-react";
+import { Calendar, ArrowLeft, Users, Trash, Clock, X } from "lucide-react";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
@@ -23,7 +24,19 @@ import {
 } from "@/lib/supabase/service-attendance";
 import { useServiceAttendance } from "@/lib/service-attendance";
 import { usePeople } from "@/lib/people";
-import { getMembershipDisplayLabel } from "@/lib/membership-path";
+import {
+  getMembershipDisplayLabel,
+  getPersonVisitDate,
+} from "@/lib/membership-path";
+import { SessionAttendanceBreakdown } from "../_components/session-attendance-breakdown";
+import {
+  ATTENDANCE_STATUS_LABELS,
+  attendeeMatchesStatusFilter,
+  getAttendeeStatusBadgeClass,
+  getAttendeeStatusRowAccent,
+  type AttendanceStatusKey,
+} from "../_lib/attendance-breakdown";
+import { cn } from "@/lib/utils";
 
 interface Props {
   attendanceId: string;
@@ -45,6 +58,9 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<AttendanceStatusKey | null>(
+    null,
+  );
 
   const parsed = parseSessionPath(attendanceId);
 
@@ -103,6 +119,30 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
     const ok = await removeAttendee(attendanceRowId);
     if (ok) await reloadSession();
   };
+
+  const breakdownAttendees = useMemo(
+    () =>
+      (session?.attendees ?? []).map(person => {
+        const directoryPerson = people.find(p => p.id === person.personId);
+        return {
+          personId: person.personId,
+          attendanceId: person.attendanceId,
+          membershipType: person.membershipType,
+          firstAttendance: directoryPerson?.firstAttendance,
+          joinDate: directoryPerson?.joinDate,
+        };
+      }),
+    [session?.attendees, people],
+  );
+
+  const filteredAttendees = useMemo(() => {
+    if (!session) return [];
+    return session.attendees.filter(person => {
+      const meta = breakdownAttendees.find(a => a.attendanceId === person.attendanceId);
+      if (!meta) return true;
+      return attendeeMatchesStatusFilter(meta, statusFilter);
+    });
+  }, [session, breakdownAttendees, statusFilter]);
 
   if (loading) {
     return (
@@ -163,6 +203,14 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
         </div>
       </div>
 
+      {session.attendees.length > 0 && (
+        <SessionAttendanceBreakdown
+          attendees={breakdownAttendees}
+          activeFilter={statusFilter}
+          onFilterChange={setStatusFilter}
+        />
+      )}
+
       <Card
         className={
           isSunday
@@ -177,12 +225,16 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
               Attendance
             </CardTitle>
             <CardDescription className="text-xs">
-              Recorded attendees
+              {statusFilter
+                ? `Showing ${ATTENDANCE_STATUS_LABELS[statusFilter].toLowerCase()} only`
+                : "Recorded attendees"}
             </CardDescription>
           </div>
           <Badge variant="outline" className="gap-1 text-[10px]">
             <Users className="w-3 h-3" />
-            {session.attendees.length}
+            {statusFilter
+              ? `${filteredAttendees.length} / ${session.attendees.length}`
+              : session.attendees.length}
           </Badge>
         </CardHeader>
 
@@ -193,16 +245,56 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
             </div>
           )}
 
+          {statusFilter && (
+            <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-800 text-xs">
+              <span>
+                Filtered to{" "}
+                <span className="font-medium">
+                  {ATTENDANCE_STATUS_LABELS[statusFilter]}
+                </span>
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs gap-1"
+                onClick={() => setStatusFilter(null)}
+              >
+                <X className="w-3 h-3" />
+                Clear
+              </Button>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             {session.attendees.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">
                 No attendees recorded.
               </p>
+            ) : filteredAttendees.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                No attendees match this filter.
+              </p>
             ) : (
-              session.attendees.map((person) => (
+              filteredAttendees.map(person => {
+                const attendeeMeta =
+                  breakdownAttendees.find(
+                    a => a.attendanceId === person.attendanceId,
+                  ) ?? person;
+                const visitDate = getPersonVisitDate(
+                  people.find(p => p.id === person.personId) ?? {},
+                );
+                const statusLabel = getMembershipDisplayLabel(
+                  person.membershipType,
+                  visitDate,
+                );
+
+                return (
                 <div
                   key={person.attendanceId}
-                  className="flex items-center gap-2 p-2 rounded-lg border border-border/50 bg-background/60 text-sm"
+                  className={cn(
+                    "flex items-center gap-2 p-2 rounded-lg border border-border/50 bg-background/60 text-sm border-l-[3px]",
+                    getAttendeeStatusRowAccent(attendeeMeta),
+                  )}
                 >
                   <div
                     className={`w-7 h-7 rounded-md flex items-center justify-center text-xs text-white shrink-0 ${
@@ -212,7 +304,12 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
                     {person.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="truncate">{person.name}</p>
+                    <Link
+                      href={`/people/${person.personId}`}
+                      className="truncate block font-medium hover:text-violet-600 dark:hover:text-violet-400 hover:underline"
+                    >
+                      {person.name}
+                    </Link>
                     <p className="text-[10px] text-muted-foreground truncate">
                       {person.householdName}
                       {person.timeOfArrival && (
@@ -224,11 +321,13 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
                       )}
                     </p>
                   </div>
-                  <Badge variant="outline" className="text-[10px] shrink-0">
-                    {getMembershipDisplayLabel(
-                      person.membershipType,
-                      people.find(p => p.id === person.personId)?.joinDate,
+                  <Badge
+                    className={cn(
+                      "text-[10px] shrink-0 border",
+                      getAttendeeStatusBadgeClass(attendeeMeta),
                     )}
+                  >
+                    {statusLabel}
                   </Badge>
                   <Button
                     size="icon"
@@ -240,7 +339,8 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
                     <Trash className="w-3.5 h-3.5" />
                   </Button>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </CardContent>

@@ -1,8 +1,8 @@
 "use client";
 
-import { Award } from "lucide-react";
+import { Award, Droplets } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { PersonAvatar, panelCard } from "./person-detail-ui";
+import { PersonAvatar, panelCard, type PersonAchievementKind } from "./person-detail-ui";
 import { PersonPastoralBadge, PersonPastoralAlert } from "./person-pastoral-alert";
 import type { PersonPastoralStatus } from "../_lib/person-pastoral-status";
 import { isPastoralAlertLevel } from "../_lib/person-pastoral-status";
@@ -66,6 +66,9 @@ type PersonProfileHeroProps = {
   trackBadgeColors: Record<string, string>;
   quickStats: QuickStat[];
   pastoralStatus: PersonPastoralStatus;
+  achievement?: PersonAchievementKind;
+  baptizedAt?: string | null;
+  showBaptismBadge?: boolean;
 };
 
 export function PersonProfileHero({
@@ -82,6 +85,9 @@ export function PersonProfileHero({
   trackBadgeColors,
   quickStats,
   pastoralStatus,
+  achievement = null,
+  baptizedAt = null,
+  showBaptismBadge = false,
 }: PersonProfileHeroProps) {
   const visibleBadges = discipleshipBadges.slice(0, 2);
   const extraBadgeCount = discipleshipBadges.length - visibleBadges.length;
@@ -90,7 +96,7 @@ export function PersonProfileHero({
     <div className={cn(panelCard, "overflow-hidden")}>
       <div className="px-4 py-3 space-y-2.5">
         <div className="flex items-start gap-3 min-w-0">
-          <PersonAvatar name={name} size="profile" />
+          <PersonAvatar name={name} size="profile" achievement={achievement} />
           <div className="flex-1 min-w-0 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div className="min-w-0 pt-0.5">
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -124,6 +130,12 @@ export function PersonProfileHero({
                 {isProspect && (
                   <Badge className="rounded-md px-1.5 py-0 text-[10px] h-5 bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300">
                     Prospect
+                  </Badge>
+                )}
+                {showBaptismBadge && baptizedAt && (
+                  <Badge className="rounded-md px-1.5 py-0 text-[10px] h-5 bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200">
+                    <Droplets className="w-2.5 h-2.5 mr-0.5 inline" />
+                    Baptized
                   </Badge>
                 )}
                 {visibleBadges.map(badge => (

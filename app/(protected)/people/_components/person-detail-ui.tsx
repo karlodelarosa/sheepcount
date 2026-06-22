@@ -109,12 +109,16 @@ export function StatTile({
   );
 }
 
+export type PersonAchievementKind = "discipleship" | "training" | "both" | null;
+
 export function PersonAvatar({
   name,
   size = "md",
+  achievement = null,
 }: {
   name: string;
   size?: "sm" | "md" | "profile" | "lg";
+  achievement?: PersonAchievementKind;
 }) {
   const sizes = {
     sm: "w-8 h-8 rounded-lg text-sm",
@@ -122,14 +126,53 @@ export function PersonAvatar({
     profile: "w-12 h-12 rounded-xl text-lg",
     lg: "w-20 h-20 rounded-2xl text-3xl",
   };
+
+  const ringStyles: Record<NonNullable<PersonAchievementKind>, string> = {
+    discipleship:
+      "ring-2 ring-amber-400 ring-offset-2 ring-offset-white shadow-[0_0_10px_rgba(251,191,36,0.35)] dark:ring-amber-500 dark:ring-offset-zinc-900",
+    training:
+      "ring-2 ring-emerald-400 ring-offset-2 ring-offset-white shadow-[0_0_10px_rgba(52,211,153,0.35)] dark:ring-emerald-500 dark:ring-offset-zinc-900",
+    both:
+      "ring-2 ring-amber-400 ring-offset-2 ring-offset-white shadow-[0_0_14px_rgba(251,191,36,0.45)] dark:ring-amber-500 dark:ring-offset-zinc-900",
+  };
+
+  const achievementTitle =
+    achievement === "both"
+      ? "Completed discipleship and training"
+      : achievement === "discipleship"
+        ? "Completed discipleship track"
+        : achievement === "training"
+          ? "Completed training course"
+          : undefined;
+
   return (
     <div
-      className={cn(
-        "bg-gradient-to-br from-slate-800 to-slate-600 dark:from-purple-700 dark:to-purple-500 flex items-center justify-center shrink-0 font-semibold text-white",
-        sizes[size],
-      )}
+      className="relative shrink-0"
+      title={achievementTitle}
     >
-      {name.charAt(0)}
+      <div
+        className={cn(
+          "bg-gradient-to-br from-slate-800 to-slate-600 dark:from-purple-700 dark:to-purple-500 flex items-center justify-center font-semibold text-white",
+          sizes[size],
+          achievement && ringStyles[achievement],
+        )}
+      >
+        {name.charAt(0)}
+      </div>
+      {achievement && (
+        <span
+          className={cn(
+            "absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border-2 border-white dark:border-zinc-900 text-[9px] leading-none",
+            size === "lg" ? "w-5 h-5" : "w-4 h-4",
+            achievement === "training"
+              ? "bg-emerald-500 text-white"
+              : "bg-amber-500 text-white",
+          )}
+          aria-hidden
+        >
+          ★
+        </span>
+      )}
     </div>
   );
 }

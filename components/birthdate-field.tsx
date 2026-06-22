@@ -64,6 +64,7 @@ function daysInMonth(month: string, year: string) {
 export interface BirthdateFieldProps {
   name?: string;
   id?: string;
+  label?: string;
   value?: string;
   defaultValue?: string;
   onChange?: (value: string) => void;
@@ -77,6 +78,7 @@ export interface BirthdateFieldProps {
 export function BirthdateField({
   name = "birthdate",
   id,
+  label = "Birthdate",
   value,
   defaultValue,
   onChange,
@@ -154,7 +156,7 @@ export function BirthdateField({
     <div className={cn("grid gap-2", className)}>
       {showLabel && (
         <Label htmlFor={`${fieldId}-month`}>
-          Birthdate
+          {label}
           {required && <span className="text-destructive ml-0.5">*</span>}
         </Label>
       )}

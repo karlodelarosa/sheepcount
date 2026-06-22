@@ -84,10 +84,18 @@ export function getMembershipColor(type: string): string {
 
 const NEWCOMER_PERIOD_DAYS = 30;
 
+/** First visit date — prefers recorded first attendance over directory join date. */
+export function getPersonVisitDate(person: {
+  firstAttendance?: string;
+  joinDate?: string;
+}): string {
+  return person.firstAttendance || person.joinDate || "";
+}
+
 /** Attenders within their first calendar month are shown as "New Comer". */
-export function isAttenderNewComer(joinDate: string): boolean {
-  if (!joinDate) return false;
-  const joined = new Date(joinDate);
+export function isAttenderNewComer(visitDate: string): boolean {
+  if (!visitDate) return false;
+  const joined = new Date(visitDate);
   if (Number.isNaN(joined.getTime())) return false;
 
   const today = new Date();

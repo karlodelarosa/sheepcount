@@ -36,6 +36,7 @@ import {
   Tent,
   HeartHandshake,
   GitBranch,
+  Droplets,
 } from "lucide-react";
 import {
   Collapsible,
@@ -44,6 +45,7 @@ import {
 } from "@/components/ui/collapsible/index";
 import { useTheme } from "@/context/theme-context";
 import { usePeople } from "@/lib/people";
+import { useOrganizationSettingsOptional } from "@/lib/organization-settings";
 import { APP_NAME } from "@/lib/branding";
 
 type ViewRoute =
@@ -65,12 +67,14 @@ type ViewRoute =
   | "service-attendance"
   | "event-attendance"
   | "growth-track"
+  | "water-baptism"
   | "bible-study"
   | "church-goals";
 
 export function Sidebar() {
   const { settings } = useTheme();
   const { people, hydrated } = usePeople();
+  const orgSettings = useOrganizationSettingsOptional();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -115,6 +119,15 @@ export function Sidebar() {
         { title: "People", icon: Users, value: "people" as const },
         { title: "Workers", icon: UserCog, value: "workers" as const },
         { title: "Households", icon: Home, value: "households" as const },
+        ...(orgSettings?.settings.waterBaptismEnabled
+          ? [
+              {
+                title: "Water Baptism",
+                icon: Droplets,
+                value: "water-baptism" as const,
+              },
+            ]
+          : []),
       ],
     },
     {

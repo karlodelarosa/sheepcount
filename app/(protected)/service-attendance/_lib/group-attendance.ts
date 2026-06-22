@@ -71,6 +71,74 @@ export function getSundayStats(records: GroupedAttendanceRecord[]) {
 
 export type DateRangeValue = { from: string; to: string };
 
+export const MAX_DATE_RANGE_DAYS = 365;
+
+function toDateString(date: Date) {
+  return date.toISOString().split("T")[0];
+}
+
+export function getCurrentMonthRange(referenceDate = new Date()): DateRangeValue {
+  const from = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    1,
+  );
+  return { from: toDateString(from), to: toDateString(referenceDate) };
+}
+
+export function clampDateRange(
+  range: DateRangeValue,
+  changed: "from" | "to" = "to",
+): DateRangeValue {
+  let from = new Date(`${range.from}T12:00:00`);
+  let to = new Date(`${range.to}T12:00:00`);
+  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return range;
+
+  if (to < from) {
+    if (changed === "from") to = new Date(from);
+    else from = new Date(to);
+  }
+
+  const msPerDay = 86_400_000;
+  const days = Math.round((to.getTime() - from.getTime()) / msPerDay);
+  if (days > MAX_DATE_RANGE_DAYS) {
+    if (changed === "from") {
+      to = new Date(from);
+      to.setDate(to.getDate() + MAX_DATE_RANGE_DAYS);
+    } else {
+      from = new Date(to);
+      from.setDate(from.getDate() - MAX_DATE_RANGE_DAYS);
+    }
+  }
+
+  return { from: toDateString(from), to: toDateString(to) };
+}
+
+export type ServiceCategoryFilter = {
+  sunday: boolean;
+  lifeGroup: boolean;
+};
+
+export function filterRecordsByServiceCategory(
+  records: GroupedAttendanceRecord[],
+  filter: ServiceCategoryFilter,
+): GroupedAttendanceRecord[] {
+  return records.filter(record => {
+    if (record.serviceCategory === "sunday") return filter.sunday;
+    return filter.lifeGroup;
+  });
+}
+
+export function filterRowsByServiceCategory(
+  rows: ServiceAttendanceRow[],
+  filter: ServiceCategoryFilter,
+): ServiceAttendanceRow[] {
+  return rows.filter(row => {
+    if (row.serviceCategory === "sunday") return filter.sunday;
+    return filter.lifeGroup;
+  });
+}
+
 export function isDateInRange(
   date: string,
   from: string,
@@ -163,4 +231,96 @@ export function getEvangelismVisitorCount(
   }
 
   return visitorIds.size;
+}
+
+export type DashboardAttendeeSummary = {
+  personId: string;
+  name: string;
+  householdName: string;
+  attendanceCount: number;
+  membershipType: string;
+  firstAttendance?: string;
+  joinDate?: string;
+  birthdate?: string;
+  age: number;
+  gender: import("@/lib/people").PersonGender | null;
+};
+
+export function buildDashboardAttendeeSummaries(
+  rows: ServiceAttendanceRow[],
+  people: {
+    id: string;
+    name: string;
+    householdName: string;
+    membershipType: string;
+    firstAttendance?: string;
+    joinDate?: string;
+    birthdate?: string;
+    age: number;
+    gender: import("@/lib/people").PersonGender | null;
+  }[],
+  range: DateRangeValue,
+  serviceFilter: ServiceCategoryFilter,
+): DashboardAttendeeSummary[] {
+  const counts = new Map<string, number>();
+
+  for (const row of rows) {
+    if (!isDateInRange(row.date, range.from, range.to)) continue;
+    if (row.serviceCategory === "sunday" && !serviceFilter.sunday) continue;
+    if (row.serviceCategory === "life_group" && !serviceFilter.lifeGroup) continue;
+    counts.set(row.personId, (counts.get(row.personId) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([personId, attendanceCount]) => {
+      const person = people.find(p => p.id === personId);
+      return {
+        personId,
+        name: person?.name ?? "Unknown",
+        householdName: person?.householdName ?? "",
+        attendanceCount,
+        membershipType: person?.membershipType ?? "Attender",
+        firstAttendance: person?.firstAttendance,
+        joinDate: person?.joinDate,
+        birthdate: person?.birthdate,
+        age: person?.age ?? 0,
+        gender: person?.gender ?? null,
+      };
+    })
+    .sort((a, b) => b.attendanceCount - a.attendanceCount || a.name.localeCompare(b.name));
+}
+
+export function buildDashboardBreakdownAttendees(
+  rows: ServiceAttendanceRow[],
+  people: {
+    id: string;
+    membershipType: string;
+    firstAttendance?: string;
+    joinDate?: string;
+    birthdate?: string;
+    age: number;
+    gender: import("@/lib/people").PersonGender | null;
+  }[],
+  range: DateRangeValue,
+  serviceFilter: ServiceCategoryFilter,
+) {
+  return rows
+    .filter(row => {
+      if (!isDateInRange(row.date, range.from, range.to)) return false;
+      if (row.serviceCategory === "sunday" && !serviceFilter.sunday) return false;
+      if (row.serviceCategory === "life_group" && !serviceFilter.lifeGroup) return false;
+      return true;
+    })
+    .map(row => {
+      const person = people.find(p => p.id === row.personId);
+      return {
+        personId: row.personId,
+        membershipType: person?.membershipType ?? "Attender",
+        firstAttendance: person?.firstAttendance,
+        joinDate: person?.joinDate,
+        birthdate: person?.birthdate,
+        age: person?.age ?? 0,
+        gender: person?.gender ?? null,
+      };
+    });
 }

@@ -83,6 +83,8 @@ export function AddPersonDialog({
       lastName: formData.get("lastName") as string,
       phone: phone || undefined,
       birthdate: birthdate || undefined,
+      firstAttendance:
+        (formData.get("firstAttendance") as string)?.trim() || undefined,
       gender: gender || null,
       membershipType,
     };
@@ -235,6 +237,12 @@ export function AddPersonDialog({
                 />
               </div>
               <BirthdateField key={formKey} name="birthdate" />
+              <BirthdateField
+                key={`${formKey}-first-attendance`}
+                name="firstAttendance"
+                label="First attendance"
+                showLabel
+              />
               <div className="grid gap-2">
                 <Label htmlFor="gender">Gender</Label>
                 <Select

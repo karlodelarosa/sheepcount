@@ -12,6 +12,7 @@ import type {
   TrainingBadge,
   TrainingCourse,
 } from "@/lib/supabase/training";
+import type { BaptismRecord } from "@/lib/supabase/baptism";
 import { getPersonTrainingBadges } from "@/lib/supabase/training";
 import { fetchCellGroupMembers, fetchCellGroups } from "@/lib/supabase/cell-groups";
 import {
@@ -20,6 +21,7 @@ import {
 } from "@/lib/supabase/discipleship";
 import { fetchChurchEvents, fetchEventRegistrations } from "@/lib/supabase/events";
 import { fetchPeople } from "@/lib/supabase/people";
+import { fetchBaptismRecords } from "@/lib/supabase/baptism";
 import {
   fetchCourseModules,
   fetchPersonCourseProgress,
@@ -30,7 +32,7 @@ export type PersonDiscipleshipRole = "Learner" | "Guide" | "Both" | null;
 
 export type PersonProfileTimelineEntry = {
   date: string;
-  kind: "cell" | "discipleship" | "training" | "event";
+  kind: "cell" | "discipleship" | "training" | "event" | "baptism";
   label: string;
   detail?: string;
 };
@@ -64,6 +66,16 @@ export type PersonProfileDetails = {
     attendanceStatus: string;
     registeredAsChild: boolean;
   }>;
+  baptism: {
+    records: Array<{
+      id: string;
+      baptizedAt: string;
+      location: string;
+      officiantName: string | null;
+      notes: string;
+    }>;
+    latestBaptizedAt: string | null;
+  };
   timeline: PersonProfileTimelineEntry[];
 };
 
@@ -79,6 +91,7 @@ export type BuildPersonProfileDeps = {
   courseProgress: PersonCourseProgress[];
   churchEvents: ChurchEvent[];
   eventRegistrations: ChurchEventRegistration[];
+  baptismRecords: BaptismRecord[];
 };
 
 function getPersonName(people: Person[], personId: string | null): string | null {
@@ -245,6 +258,33 @@ export function buildPersonProfileDetails(
     });
   }
 
+  const personBaptismRecords = deps.baptismRecords
+    .filter(r => r.personId === personId)
+    .sort((a, b) => b.baptizedAt.localeCompare(a.baptizedAt));
+
+  const baptismProfileRecords = personBaptismRecords.map(record => ({
+    id: record.id,
+    baptizedAt: record.baptizedAt,
+    location: record.location,
+    officiantName: getPersonName(deps.people, record.officiantPersonId),
+    notes: record.notes,
+  }));
+
+  for (const record of personBaptismRecords) {
+    const officiantName = getPersonName(deps.people, record.officiantPersonId);
+    timeline.push({
+      date: record.baptizedAt,
+      kind: "baptism",
+      label: "Water Baptism",
+      detail: [
+        record.location,
+        officiantName ? `Officiant: ${officiantName}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    });
+  }
+
   timeline.sort((a, b) => b.date.localeCompare(a.date));
 
   return {
@@ -266,6 +306,10 @@ export function buildPersonProfileDetails(
       badges: trainingBadges,
     },
     events,
+    baptism: {
+      records: baptismProfileRecords,
+      latestBaptizedAt: baptismProfileRecords[0]?.baptizedAt ?? null,
+    },
     timeline,
   };
 }
@@ -286,6 +330,7 @@ export async function fetchPersonProfileDetails(
     courseProgress,
     churchEvents,
     eventRegistrations,
+    baptismRecords,
   ] = await Promise.all([
     fetchPeople(supabase, organizationId),
     fetchCellGroups(supabase, organizationId),
@@ -297,6 +342,7 @@ export async function fetchPersonProfileDetails(
     fetchPersonCourseProgress(supabase, organizationId),
     fetchChurchEvents(supabase, organizationId),
     fetchEventRegistrations(supabase, organizationId),
+    fetchBaptismRecords(supabase, organizationId),
   ]);
 
   return buildPersonProfileDetails({
@@ -311,5 +357,6 @@ export async function fetchPersonProfileDetails(
     courseProgress,
     churchEvents,
     eventRegistrations,
+    baptismRecords,
   });
 }

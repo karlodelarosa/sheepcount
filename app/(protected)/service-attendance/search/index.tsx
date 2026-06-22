@@ -26,7 +26,7 @@ import { ArrowLeft } from "lucide-react";
 import { usePeople } from "@/lib/people";
 import { useServiceAttendance } from "@/lib/service-attendance";
 import { buildSessionPath } from "@/lib/supabase/service-attendance";
-import { getMembershipDisplayLabel } from "@/lib/membership-path";
+import { getMembershipDisplayLabel, getPersonVisitDate } from "@/lib/membership-path";
 
 export default function SearchView() {
   const router = useRouter();
@@ -48,7 +48,7 @@ export default function SearchView() {
         personId: r.personId,
         personName: person?.name ?? "Unknown",
         personStatus: person
-          ? getMembershipDisplayLabel(person.membershipType, person.joinDate)
+          ? getMembershipDisplayLabel(person.membershipType, getPersonVisitDate(person))
           : "Unknown",
       };
     });
@@ -66,7 +66,7 @@ export default function SearchView() {
   const statuses = Array.from(
     new Set(
       people.map(p =>
-        getMembershipDisplayLabel(p.membershipType, p.joinDate),
+        getMembershipDisplayLabel(p.membershipType, getPersonVisitDate(p)),
       ),
     ),
   ).filter(Boolean);
