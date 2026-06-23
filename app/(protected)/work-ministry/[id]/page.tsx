@@ -1,16 +1,15 @@
 // app/ministries/[id]/page.tsx
 // This is the Server Component wrapper for the dynamic route.
 
-import { MinistryDetailPage } from "./index"; // 🔑 Import the client component
+import { MinistryDetailPage } from "./index";
 
-// Next.js automatically receives params in the server component
 interface MinistryPageProps {
-  params: {
-    id: string; // The ministry ID from the URL
-  };
+  params: Promise<{
+    id: string;
+  }>;
 }
 
-export default function MinistryPage({ params }: MinistryPageProps) {
-  // Pass the ID down to the client component.
-  return <MinistryDetailPage ministryId={params.id} />;
+export default async function MinistryPage({ params }: MinistryPageProps) {
+  const { id } = await params;
+  return <MinistryDetailPage ministryId={id} />;
 }

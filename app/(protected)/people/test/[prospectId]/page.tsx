@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 // Same mock data (static)
@@ -10,13 +10,10 @@ const mockPeople = [
   { id: "p3", name: "Titus Cruz", email: "titus@email.com", phone: "09171234569", status: "Prospect" },
 ];
 
-interface Props {
-  params: { prospectId: string };
-}
-
-export default function ProspectDetailPage({ params }: Props) {
+export default function ProspectDetailPage() {
   const router = useRouter();
-  const { prospectId } = params;
+  const params = useParams();
+  const prospectId = params?.prospectId as string | undefined;
 
   const person = mockPeople.find(p => p.id === prospectId);
 

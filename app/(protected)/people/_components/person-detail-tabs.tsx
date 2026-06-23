@@ -34,6 +34,11 @@ import { BirthdateField } from "@/components/birthdate-field";
 import type { PersonProfileDetails } from "@/lib/supabase/person-profile";
 import type { Person, PersonGender } from "@/lib/people";
 import type { Household } from "@/lib/people";
+import type {
+  WorkMinistry,
+  WorkMinistryMember,
+  WorkMinistryTeam,
+} from "@/lib/supabase/work-ministries";
 import { formatMinistryAssignmentLabel } from "@/lib/work-ministry-labels";
 import {
   EmptyState,
@@ -86,11 +91,10 @@ type PersonDetailTabsProps = {
   hasHousehold: boolean;
   inFamilyHousehold: boolean;
   onHouseholdAssignClick: () => void;
-  ministriesList: Array<{
-    id: string;
-    ministryId: string;
-    ministry?: { name: string; description?: string };
-  }>;
+  ministriesList: (WorkMinistryMember & {
+    ministry?: WorkMinistry;
+    team?: WorkMinistryTeam;
+  })[];
   onAssignMinistryClick: () => void;
   lifeGroups: Array<{
     id: string;

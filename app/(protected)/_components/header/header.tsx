@@ -1,5 +1,5 @@
 import { AuthButton } from "@/components/auth-button";
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 
 export default function Header() {
   return (
