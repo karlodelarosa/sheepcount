@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import { Textarea } from "@/components/ui/textarea";
 import { usePeople } from "@/lib/people";
 import { useTraining } from "@/lib/training";
@@ -116,23 +117,20 @@ export function EnrollTrainingDialog({
               <Label htmlFor="person" className="text-slate-700 dark:text-zinc-300">
                 Person
               </Label>
-              <Select
+              <PersonSelect
+                id="person"
+                people={people}
                 value={personId}
                 onValueChange={setPersonId}
+                placeholder="Choose a person"
+                triggerClassName={DualModeInputClass}
                 disabled={!!existingProgress}
-              >
-                <SelectTrigger className={DualModeInputClass}>
-                  <SelectValue placeholder="Choose a person" />
-                </SelectTrigger>
-                <SelectContent>
-                  {people.map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name}
-                      {person.householdName ? ` · ${person.householdName}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                formatLabel={person =>
+                  person.householdName
+                    ? `${person.name} · ${person.householdName}`
+                    : person.name
+                }
+              />
             </div>
 
             {existingProgress && nextModule && (

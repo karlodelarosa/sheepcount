@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -162,18 +163,13 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Select Person</Label>
-              <Select value={newPersonId} onValueChange={setNewPersonId}>
-                <SelectTrigger className={DualModeInputClass}>
-                  <SelectValue placeholder="Choose a person" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePeople.map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name} - {person.householdName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PersonSelect
+                people={availablePeople}
+                value={newPersonId}
+                onValueChange={setNewPersonId}
+                placeholder="Choose a person"
+                triggerClassName={DualModeInputClass}
+              />
             </div>
             <div className="space-y-2">
               <Label>Role</Label>

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import { Label } from "@/components/ui/label";
 import { UserPlus } from "lucide-react";
 import type { Person } from "@/lib/people";
@@ -94,24 +95,15 @@ export function EnrollParticipantDialog({
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="person" className={DualModeLabelClass}>Select Person</Label>
-            <Select value={selectedPersonId} onValueChange={setSelectedPersonId}>
-              <SelectTrigger id="person" className={DualModeInputClass}>
-                <SelectValue placeholder="Choose a person to enroll" />
-              </SelectTrigger>
-              <SelectContent>
-                {availablePeople.length === 0 ? (
-                  <SelectItem value="__none" disabled>
-                    No available people
-                  </SelectItem>
-                ) : (
-                  availablePeople.map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name} - {person.householdName}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+            <PersonSelect
+              id="person"
+              people={availablePeople}
+              value={selectedPersonId}
+              onValueChange={setSelectedPersonId}
+              placeholder="Choose a person to enroll"
+              triggerClassName={DualModeInputClass}
+              emptyMessage="No available people"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="role" className={DualModeLabelClass}>Role in Program</Label>
@@ -130,18 +122,15 @@ export function EnrollParticipantDialog({
               <Label htmlFor="mentor" className={DualModeLabelClass}>
                 Mentor {track?.category === "Mentorship" ? "*" : "(optional)"}
               </Label>
-              <Select value={mentorPersonId} onValueChange={setMentorPersonId}>
-                <SelectTrigger id="mentor" className={DualModeInputClass}>
-                  <SelectValue placeholder="Select mentor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mentorCandidates.map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PersonSelect
+                id="mentor"
+                people={mentorCandidates}
+                value={mentorPersonId}
+                onValueChange={setMentorPersonId}
+                placeholder="Select mentor"
+                triggerClassName={DualModeInputClass}
+                formatLabel={person => person.name}
+              />
             </div>
           )}
         </div>

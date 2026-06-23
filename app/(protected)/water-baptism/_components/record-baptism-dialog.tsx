@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import { Droplets } from "lucide-react";
 import type { Person } from "@/lib/people";
 import type {
@@ -111,22 +112,15 @@ export function RecordBaptismDialog({
         <div className="grid gap-4 py-2">
           <div className="space-y-2">
             <Label htmlFor="baptism-person">Person</Label>
-            <Select
+            <PersonSelect
+              id="baptism-person"
+              people={people}
               value={personId}
               onValueChange={setPersonId}
+              placeholder="Select person"
               disabled={!!defaultPersonId}
-            >
-              <SelectTrigger id="baptism-person">
-                <SelectValue placeholder="Select person" />
-              </SelectTrigger>
-              <SelectContent>
-                {people.map(person => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {person.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              formatLabel={person => person.name}
+            />
           </div>
 
           <div className="space-y-2">
@@ -151,24 +145,17 @@ export function RecordBaptismDialog({
 
           <div className="space-y-2">
             <Label htmlFor="baptism-officiant">Officiant (optional)</Label>
-            <Select
+            <PersonSelect
+              id="baptism-officiant"
+              people={officiantCandidates}
               value={officiantPersonId || "__none__"}
               onValueChange={value =>
                 setOfficiantPersonId(value === "__none__" ? "" : value)
               }
-            >
-              <SelectTrigger id="baptism-officiant">
-                <SelectValue placeholder="Select officiant" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">None</SelectItem>
-                {officiantCandidates.map(person => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {person.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder="Select officiant"
+              formatLabel={person => person.name}
+              pinnedOptions={[{ value: "__none__", label: "None" }]}
+            />
           </div>
 
           <div className="space-y-2">

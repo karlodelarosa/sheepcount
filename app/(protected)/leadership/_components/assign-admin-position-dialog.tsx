@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import { Input } from "@/components/ui/input";
 import { usePeople } from "@/lib/people";
 import { useLeadership } from "@/lib/leadership";
@@ -124,25 +125,20 @@ export function AssignAdminPositionDialog({
               >
                 Select Person
               </Label>
-              <Select
+              <PersonSelect
+                people={sortedPeople}
                 value={formData.personId}
                 onValueChange={value =>
                   setFormData({ ...formData, personId: value })
                 }
-                required
-              >
-                <SelectTrigger className={`rounded-lg ${DualModeInputClass}`}>
-                  <SelectValue placeholder="Choose a person" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sortedPeople.map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name}
-                      {person.householdName ? ` - ${person.householdName}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Choose a person"
+                triggerClassName={`rounded-lg ${DualModeInputClass}`}
+                formatLabel={person =>
+                  person.householdName
+                    ? `${person.name} - ${person.householdName}`
+                    : person.name
+                }
+              />
             </div>
 
             <div className="space-y-2">

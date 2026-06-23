@@ -12,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Card,
   CardContent,
@@ -326,18 +328,13 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Select Person</Label>
-              <Select value={newPersonId} onValueChange={setNewPersonId}>
-                <SelectTrigger className={DualModeInputClass}>
-                  <SelectValue placeholder="Choose a person" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePeople.map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name} - {person.householdName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PersonSelect
+                people={availablePeople}
+                value={newPersonId}
+                onValueChange={setNewPersonId}
+                placeholder="Choose a person"
+                triggerClassName={DualModeInputClass}
+              />
             </div>
             <div className="space-y-2">
               <Label>Role</Label>
@@ -359,18 +356,14 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                 <Label>
                   Mentor {track.category === "Mentorship" ? "*" : "(optional)"}
                 </Label>
-                <Select value={newMentorId} onValueChange={setNewMentorId}>
-                  <SelectTrigger className={DualModeInputClass}>
-                    <SelectValue placeholder="Select mentor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mentorCandidates.map(person => (
-                      <SelectItem key={person.id} value={person.id}>
-                        {person.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PersonSelect
+                  people={mentorCandidates}
+                  value={newMentorId}
+                  onValueChange={setNewMentorId}
+                  placeholder="Select mentor"
+                  triggerClassName={DualModeInputClass}
+                  formatLabel={person => person.name}
+                />
               </div>
             )}
             <Button
@@ -687,21 +680,18 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                       </CardDescription>
                     </div>
                     {enrollmentRows.length > 0 && (
-                      <Select
+                      <SearchableSelect
                         value={activeEnrollmentId}
                         onValueChange={setSelectedEnrollmentId}
-                      >
-                        <SelectTrigger className={`w-full sm:w-56 ${DualModeInputClass}`}>
-                          <SelectValue placeholder="Select person" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {enrollmentRows.map(row => (
-                            <SelectItem key={row.id} value={row.id}>
-                              {row.person?.name ?? "Unknown"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Select person"
+                        triggerClassName={`w-full sm:w-56 ${DualModeInputClass}`}
+                        options={enrollmentRows.map(row => ({
+                          value: row.id,
+                          label: row.person?.name ?? "Unknown",
+                          keywords: row.person?.name,
+                        }))}
+                        searchPlaceholder="Search people..."
+                      />
                     )}
                   </div>
                 </CardHeader>

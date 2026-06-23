@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import { Crown } from "lucide-react";
 import { usePeople } from "@/lib/people";
 import { useBibleStudy } from "@/lib/bible-study";
@@ -107,25 +108,20 @@ export function ChangeLeaderDialog({
 
           <div className="grid gap-2">
             <Label htmlFor="leaderPersonId">New Leader</Label>
-            <Select value={leaderPersonId} onValueChange={setLeaderPersonId}>
-              <SelectTrigger id="leaderPersonId">
-                <SelectValue placeholder="Select a leader" />
-              </SelectTrigger>
-              <SelectContent>
-                {leaderOptions.map(person => {
-                  const isFromHostHousehold =
-                    person.householdId === group.householdId;
-                  return (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name}
-                      {isFromHostHousehold
-                        ? ` (${person.role})`
-                        : ` — ${person.householdName}`}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            <PersonSelect
+              id="leaderPersonId"
+              people={leaderOptions}
+              value={leaderPersonId}
+              onValueChange={setLeaderPersonId}
+              placeholder="Select a leader"
+              formatLabel={person => {
+                const isFromHostHousehold =
+                  person.householdId === group.householdId;
+                return isFromHostHousehold
+                  ? `${person.name} (${person.role})`
+                  : `${person.name} — ${person.householdName}`;
+              }}
+            />
           </div>
 
           <DialogFooter>

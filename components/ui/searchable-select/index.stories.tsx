@@ -1,6 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { SearchableSelect } from "./index";
 
+const fruitOptions = [
+  { value: "apple", label: "Apple" },
+  { value: "banana", label: "Banana" },
+  { value: "blueberry", label: "Blueberry" },
+  { value: "cherry", label: "Cherry" },
+  { value: "date", label: "Date" },
+  { value: "grape", label: "Grape" },
+];
+
 const meta: Meta<typeof SearchableSelect> = {
   title: "ui/SearchableSelect",
   component: SearchableSelect,
@@ -17,31 +26,28 @@ const meta: Meta<typeof SearchableSelect> = {
 export default meta;
 type Story = StoryObj<typeof SearchableSelect>;
 
-// Default searchable select
 export const Default: Story = {
   args: {
-    options: ["Apple", "Banana", "Blueberry", "Cherry", "Date", "Grape"],
+    options: fruitOptions,
     placeholder: "Select a fruit",
   },
 };
 
-// Pre-selected value
 export const DefaultValue: Story = {
   args: {
-    options: ["Apple", "Banana", "Blueberry", "Cherry", "Date", "Grape"],
+    options: fruitOptions,
     placeholder: "Select a fruit",
-    value: "Cherry",
+    value: "cherry",
     onValueChange: (val: string) => console.log("Selected:", val),
   },
 };
 
-// Disabled state
 export const Disabled: Story = {
   args: {
-    options: ["Apple", "Banana", "Blueberry", "Cherry", "Date", "Grape"],
+    options: fruitOptions,
     placeholder: "Select a fruit",
     value: "",
     onValueChange: () => {},
-    className: "opacity-50 cursor-not-allowed",
+    disabled: true,
   },
 };

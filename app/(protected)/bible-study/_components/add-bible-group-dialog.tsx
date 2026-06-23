@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import { usePeople } from "@/lib/people";
 import { useBibleStudy } from "@/lib/bible-study";
 
@@ -137,28 +138,20 @@ export function AddBibleStudyGroupDialog({
 
           <div className="grid gap-2">
             <Label htmlFor="leaderPersonId">Group Leader</Label>
-            <Select
+            <PersonSelect
+              id="leaderPersonId"
+              people={leaderOptions}
               value={leaderPersonId}
               onValueChange={setLeaderPersonId}
+              placeholder="Select a leader"
               disabled={!householdId}
-            >
-              <SelectTrigger id="leaderPersonId">
-                <SelectValue placeholder="Select a leader" />
-              </SelectTrigger>
-              <SelectContent>
-                {leaderOptions.map(person => {
-                  const isFromHostHousehold = person.householdId === householdId;
-                  return (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name}
-                      {isFromHostHousehold
-                        ? ` (${person.role})`
-                        : ` — ${person.householdName}`}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+              formatLabel={person => {
+                const isFromHostHousehold = person.householdId === householdId;
+                return isFromHostHousehold
+                  ? `${person.name} (${person.role})`
+                  : `${person.name} — ${person.householdName}`;
+              }}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

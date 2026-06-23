@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import { Label } from "@/components/ui/label";
 import { Plus, BookOpen } from "lucide-react";
 import type { Person } from "@/lib/people";
@@ -152,18 +153,15 @@ export function AddProgramDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="leader" className={DualModeLabelClass}>Leader</Label>
-              <Select value={leaderPersonId} onValueChange={setLeaderPersonId}>
-                <SelectTrigger id="leader" className={DualModeInputClass}>
-                  <SelectValue placeholder="Select leader" />
-                </SelectTrigger>
-                <SelectContent>
-                  {people.map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PersonSelect
+                id="leader"
+                people={people}
+                value={leaderPersonId}
+                onValueChange={setLeaderPersonId}
+                placeholder="Select leader"
+                triggerClassName={DualModeInputClass}
+                formatLabel={person => person.name}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="color" className={DualModeLabelClass}>Color</Label>

@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import { Loader2, UserPlus } from "lucide-react";
 import { usePeople } from "@/lib/people";
 
@@ -84,31 +85,18 @@ export function AddExistingHouseholdMemberDialog({
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>Person</Label>
-              <Select
+              <PersonSelect
+                people={availablePeople}
                 value={personId}
                 onValueChange={setPersonId}
+                placeholder="Choose a person"
+                triggerClassName="rounded-lg"
                 disabled={isSaving}
-              >
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Choose a person" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePeople.length === 0 ? (
-                    <SelectItem value="__none" disabled>
-                      No available people
-                    </SelectItem>
-                  ) : (
-                    availablePeople.map(person => (
-                      <SelectItem key={person.id} value={person.id}>
-                        {person.name}
-                        {person.householdName
-                          ? ` · ${person.householdName}`
-                          : " · No household"}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                emptyMessage="No available people"
+                formatLabel={person =>
+                  `${person.name}${person.householdName ? ` · ${person.householdName}` : " · No household"}`
+                }
+              />
             </div>
 
             <div className="space-y-2">

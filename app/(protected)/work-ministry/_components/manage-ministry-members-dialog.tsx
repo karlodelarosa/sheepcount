@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import { Label } from "@/components/ui/label";
 
 interface ManageMinistryMembersDialogProps {
@@ -114,19 +115,13 @@ export function ManageMinistryMembersDialog({
                 <Label className="text-slate-700 dark:text-zinc-300">
                   Select Person
                 </Label>
-                <Select value={newPersonId} onValueChange={setNewPersonId}>
-                  <SelectTrigger className={DualModeInputClass}>
-                    <SelectValue placeholder="Choose a person" />
-                  </SelectTrigger>
-                  {/* SelectContent component relies on global styling */}
-                  <SelectContent>
-                    {availablePeople.map(person => (
-                      <SelectItem key={person.id} value={person.id}>
-                        {person.name} - {person.householdName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PersonSelect
+                  people={availablePeople}
+                  value={newPersonId}
+                  onValueChange={setNewPersonId}
+                  placeholder="Choose a person"
+                  triggerClassName={DualModeInputClass}
+                />
               </div>
 
               <div className="space-y-2">

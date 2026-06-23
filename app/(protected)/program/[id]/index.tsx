@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PersonSelect } from "@/components/person-select";
 import {
   Card,
   CardContent,
@@ -277,37 +278,30 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Participant</Label>
-              <Select value={personId} onValueChange={setPersonId}>
-                <SelectTrigger className={DualModeInputClass}>
-                  <SelectValue placeholder="Select person" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePeople.map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name}
-                      {person.role === "Child" ? " (Child)" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PersonSelect
+                people={availablePeople}
+                value={personId}
+                onValueChange={setPersonId}
+                placeholder="Select person"
+                triggerClassName={DualModeInputClass}
+                formatLabel={person =>
+                  `${person.name}${person.role === "Child" ? " (Child)" : ""}`
+                }
+              />
             </div>
 
             {isChildRegistration && (
               <>
                 <div className="space-y-2">
                   <Label>Parent / Guardian *</Label>
-                  <Select value={parentPersonId} onValueChange={setParentPersonId}>
-                    <SelectTrigger className={DualModeInputClass}>
-                      <SelectValue placeholder="Select parent profile" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {parentCandidates.map(person => (
-                        <SelectItem key={person.id} value={person.id}>
-                          {person.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <PersonSelect
+                    people={parentCandidates}
+                    value={parentPersonId}
+                    onValueChange={setParentPersonId}
+                    placeholder="Select parent profile"
+                    triggerClassName={DualModeInputClass}
+                    formatLabel={person => person.name}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Medical Notes</Label>
