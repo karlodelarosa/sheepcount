@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function TopBar() {
   const { settings, updateSettings } = useTheme();
-  const { user, tenant, isLoading } = useTenant();
+  const { user, tenant, isLoading, isLoggingOut } = useTenant();
 
   useEffect(() => {
     if (tenant?.tenant.name && tenant.tenant.name !== settings.organizationName) {
@@ -32,7 +32,7 @@ export function TopBar() {
     );
   }
 
-  if (!user) return null;
+  if (!user && !isLoggingOut) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md h-10">

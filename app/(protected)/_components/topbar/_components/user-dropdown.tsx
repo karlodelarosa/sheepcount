@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Settings, LogOut, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button/index";
 import {
@@ -30,29 +31,31 @@ function getDisplayName(
 }
 
 const UserDropdown = () => {
-  const { user, tenant, logout } = useTenant();
+  const { user, tenant, isLoggingOut, logout } = useTenant();
   const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  if (!user) return null;
+  if (!user && !isLoggingOut) return null;
 
   const profile = tenant?.profile;
+  const email = user?.email ?? "";
   const displayName = getDisplayName(
     profile?.first_name,
     profile?.last_name,
-    user.email,
+    email,
   );
   const initials = profile?.first_name?.trim() || profile?.last_name?.trim()
     ? getInitials(profile.first_name, profile.last_name)
     : (displayName.charAt(0).toUpperCase() || "U");
 
   const handleLogout = async () => {
-    await logout();
+    setMenuOpen(false);
     router.replace("/auth/login");
-    router.refresh();
+    await logout();
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -75,7 +78,7 @@ const UserDropdown = () => {
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-foreground">{displayName}</p>
-            <p className="text-muted-foreground text-sm">{user.email}</p>
+            <p className="text-muted-foreground text-sm">{email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

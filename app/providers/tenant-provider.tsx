@@ -19,6 +19,7 @@ type TenantContextType = {
   user: AuthUser | null;
   tenant: TenantMembership | null;
   isLoading: boolean;
+  isLoggingOut: boolean;
   refreshSession: () => Promise<TenantMembership | null>;
   logout: () => Promise<void>;
 };
@@ -27,6 +28,7 @@ const TenantContext = createContext<TenantContextType>({
   user: null,
   tenant: null,
   isLoading: true,
+  isLoggingOut: false,
   refreshSession: async () => null,
   logout: async () => {},
 });
@@ -35,6 +37,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [tenant, setTenant] = useState<TenantMembership | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const supabase = useMemo(() => createClient(), []);
 
   const loadSession = useCallback(async (): Promise<TenantMembership | null> => {
@@ -113,14 +116,19 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, [loadSession, supabase]);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setTenant(null);
+    setIsLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setTenant(null);
+    } finally {
+      setIsLoggingOut(false);
+    }
   }, [supabase]);
 
   return (
     <TenantContext.Provider
-      value={{ user, tenant, isLoading, refreshSession, logout }}
+      value={{ user, tenant, isLoading, isLoggingOut, refreshSession, logout }}
     >
       {children}
     </TenantContext.Provider>
