@@ -129,7 +129,7 @@ export function OrgChartTab() {
                       <CardDescription className={TextMutedClass}>
                         {deptHead
                           ? `Led by ${deptHead.name}`
-                          : "No leader assigned"}
+                          : "No department head assigned — set one on the Work ministry page"}
                       </CardDescription>
                     </div>
                   </div>

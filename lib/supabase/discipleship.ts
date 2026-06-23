@@ -6,7 +6,7 @@ export type DiscipleshipCategory =
   | "Leadership"
   | "Mentorship";
 
-export type DiscipleshipTrackStatus = "active" | "finished";
+export type DiscipleshipTrackStatus = "not_started" | "active" | "finished";
 
 export type DiscipleshipRole = "Learner" | "Guide";
 
@@ -248,6 +248,8 @@ export type UpdateDiscipleshipTrackInput = {
   name?: string;
   description?: string;
   category?: DiscipleshipCategory;
+  duration?: string;
+  schedule?: string;
   status?: DiscipleshipTrackStatus;
 };
 
@@ -261,6 +263,8 @@ export async function updateDiscipleshipTrack(
     payload.description = input.description.trim();
   }
   if (input.category !== undefined) payload.category = input.category;
+  if (input.duration !== undefined) payload.duration = input.duration.trim();
+  if (input.schedule !== undefined) payload.schedule = input.schedule.trim();
   if (input.status !== undefined) payload.status = input.status;
 
   const { data, error } = await supabase

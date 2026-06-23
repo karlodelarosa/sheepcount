@@ -58,6 +58,7 @@ const CATEGORIES: DiscipleshipCategory[] = [
 ];
 
 const TRACK_STATUS_LABELS: Record<DiscipleshipTrackStatus, string> = {
+  not_started: "Not yet started",
   active: "In Progress",
   finished: "Finished",
 };
@@ -97,6 +98,8 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editCategory, setEditCategory] = useState<DiscipleshipCategory>("Foundation");
+  const [editDuration, setEditDuration] = useState("");
+  const [editSchedule, setEditSchedule] = useState("");
   const [editStatus, setEditStatus] = useState<DiscipleshipTrackStatus>("active");
   const [editInitialized, setEditInitialized] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -205,6 +208,8 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
     setEditName(track.name);
     setEditDescription(track.description);
     setEditCategory(track.category);
+    setEditDuration(track.duration);
+    setEditSchedule(track.schedule);
     setEditStatus(track.status);
     setEditInitialized(true);
   }, [track, editInitialized]);
@@ -216,6 +221,8 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
       name: editName,
       description: editDescription,
       category: editCategory,
+      duration: editDuration,
+      schedule: editSchedule,
       status: editStatus,
     });
   };
@@ -290,6 +297,11 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
               <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
                 {track.category}
               </Badge>
+              {track.status === "not_started" && (
+                <Badge className="rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300 border-0">
+                  Not yet started
+                </Badge>
+              )}
               {track.status === "finished" && (
                 <Badge className="rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border-0">
                   Finished
@@ -877,6 +889,26 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                         </Select>
                       </div>
                       <div className="space-y-2">
+                        <Label>Duration</Label>
+                        <Input
+                          value={editDuration}
+                          onChange={e => setEditDuration(e.target.value)}
+                          placeholder="e.g., 8 weeks"
+                          className={DualModeInputClass}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Schedule</Label>
+                        <Input
+                          value={editSchedule}
+                          onChange={e => setEditSchedule(e.target.value)}
+                          placeholder="e.g., Sundays, 9:00 AM"
+                          className={DualModeInputClass}
+                        />
+                      </div>
+                      <div className="space-y-2">
                         <Label>Program Status</Label>
                         <Select
                           value={editStatus}
@@ -900,8 +932,8 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                       </div>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-zinc-500">
-                      Mark as Finished when this program session or cohort has
-                      wrapped up.
+                      Use Not yet started for upcoming cohorts, In Progress while
+                      running, and Finished when the session has wrapped up.
                     </p>
                     <Button
                       onClick={() => void handleSaveTrack()}

@@ -46,6 +46,7 @@ import {
   fetchWorkMinistryTeams,
   removeWorkMinistryMember,
   removeWorkMinistryTeamRole,
+  updateWorkMinistry,
   updateWorkMinistryMember,
   updateWorkMinistryTeam,
   type CreateWorkMinistryInput,
@@ -90,6 +91,10 @@ type GroupsMinistryContextValue = {
   ) => Promise<WorkMinistryMember | null>;
   removeWorkMinistryMemberById: (membershipId: string) => Promise<boolean>;
   addWorkMinistry: (input: CreateWorkMinistryInput) => Promise<WorkMinistry | null>;
+  assignWorkMinistryHead: (
+    ministryId: string,
+    personId: string | null,
+  ) => Promise<WorkMinistry | null>;
   removeWorkMinistryById: (ministryId: string) => Promise<boolean>;
   addWorkMinistryTeam: (
     ministryId: string,
@@ -388,6 +393,33 @@ export function GroupsMinistryProvider({
     [organizationId, refreshGroupsMinistry, supabase],
   );
 
+  const assignWorkMinistryHead = useCallback(
+    async (
+      ministryId: string,
+      personId: string | null,
+    ): Promise<WorkMinistry | null> => {
+      setIsSaving(true);
+      try {
+        const ministry = await updateWorkMinistry(supabase, ministryId, {
+          headPersonId: personId,
+        });
+        await refreshGroupsMinistry();
+        toast.success(
+          personId ? "Department head assigned" : "Department head cleared",
+        );
+        return ministry;
+      } catch (error) {
+        toast.error("Failed to assign department head", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshGroupsMinistry, supabase],
+  );
+
   const removeWorkMinistryById = useCallback(
     async (ministryId: string): Promise<boolean> => {
       setIsSaving(true);
@@ -652,14 +684,45 @@ export function GroupsMinistryProvider({
   );
 
   const getPersonMinistries = useCallback(
-    (personId: string) =>
-      workMinistryMembers
+    (personId: string) => {
+      const memberships = workMinistryMembers
         .filter(a => a.personId === personId)
-        .map(a => ({
-          ...a,
-          ministry: workMinistries.find(m => m.id === a.ministryId),
-          team: workMinistryTeams.find(t => t.id === a.teamId),
-        })),
+        .map(a => {
+          const ministry = workMinistries.find(m => m.id === a.ministryId);
+          const role =
+            ministry?.headPersonId === personId && a.role === "Member"
+              ? "Department Head"
+              : a.role;
+          return {
+            ...a,
+            role,
+            ministry,
+            team: workMinistryTeams.find(t => t.id === a.teamId),
+          };
+        });
+
+      const memberMinistryIds = new Set(memberships.map(a => a.ministryId));
+
+      const headAssignments = workMinistries
+        .filter(
+          ministry =>
+            ministry.headPersonId === personId &&
+            !memberMinistryIds.has(ministry.id),
+        )
+        .map(ministry => ({
+          id: `head-${ministry.id}`,
+          ministryId: ministry.id,
+          personId,
+          teamId: null,
+          role: "Department Head",
+          serviceRole: "",
+          assignedDate: "",
+          ministry,
+          team: undefined,
+        }));
+
+      return [...memberships, ...headAssignments];
+    },
     [workMinistryMembers, workMinistries, workMinistryTeams],
   );
 
@@ -707,6 +770,7 @@ export function GroupsMinistryProvider({
         updateWorkMinistryMemberById,
         removeWorkMinistryMemberById,
         addWorkMinistry,
+        assignWorkMinistryHead,
         removeWorkMinistryById,
         addWorkMinistryTeam,
         updateWorkMinistryTeamById,

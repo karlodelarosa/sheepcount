@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, UserPlus, Search, ArrowLeft, Settings2 } from "lucide-react";
+import { X, UserPlus, Search, ArrowLeft, Settings2, UserCog } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,6 +26,7 @@ import { usePeople } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
 import { formatMinistryAssignmentLabel } from "@/lib/work-ministry-labels";
 import { ManageMinistryTeamsDialog } from "../_components/manage-ministry-teams-dialog";
+import { AssignDepartmentHeadDialog } from "../_components/assign-department-head-dialog";
 
 interface MinistryDetailPageProps {
   ministryId: string;
@@ -57,6 +58,7 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
   const [newServiceRole, setNewServiceRole] = useState("");
   const [newRole, setNewRole] = useState("");
   const [teamsDialogOpen, setTeamsDialogOpen] = useState(false);
+  const [headDialogOpen, setHeadDialogOpen] = useState(false);
 
   const ministry = workMinistries.find(m => m.id === ministryId);
   const teams = getMinistryTeams(ministryId);
@@ -198,14 +200,24 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setTeamsDialogOpen(true)}
-          className="rounded-xl border-slate-200 dark:border-zinc-700"
-        >
-          <Settings2 className="w-4 h-4 mr-2" />
-          Manage Teams
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setHeadDialogOpen(true)}
+            className="rounded-xl border-slate-200 dark:border-zinc-700"
+          >
+            <UserCog className="w-4 h-4 mr-2" />
+            Department Head
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setTeamsDialogOpen(true)}
+            className="rounded-xl border-slate-200 dark:border-zinc-700"
+          >
+            <Settings2 className="w-4 h-4 mr-2" />
+            Manage Teams
+          </Button>
+        </div>
       </div>
 
       {hasTeams && (
@@ -463,6 +475,14 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
         onOpenChange={setTeamsDialogOpen}
         ministryId={ministryId}
         ministryName={ministry.name}
+      />
+
+      <AssignDepartmentHeadDialog
+        open={headDialogOpen}
+        onOpenChange={setHeadDialogOpen}
+        ministryId={ministryId}
+        ministryName={ministry.name}
+        currentHeadPersonId={ministry.headPersonId}
       />
     </div>
   );

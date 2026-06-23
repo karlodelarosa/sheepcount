@@ -176,6 +176,11 @@ export function DiscipleshipView() {
                           <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
                             {track.category}
                           </Badge>
+                          {track.status === "not_started" && (
+                            <Badge className="rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300 border-0">
+                              Not yet started
+                            </Badge>
+                          )}
                           {track.status === "finished" && (
                             <Badge className="rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border-0">
                               Finished

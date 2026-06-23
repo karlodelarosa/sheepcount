@@ -235,6 +235,29 @@ export async function deleteWorkMinistry(
   if (error) throw error;
 }
 
+export async function updateWorkMinistry(
+  supabase: SupabaseClient,
+  ministryId: string,
+  input: { headPersonId?: string | null },
+): Promise<WorkMinistry> {
+  const updates: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+  if (input.headPersonId !== undefined) {
+    updates.head_person_id = input.headPersonId;
+  }
+
+  const { data, error } = await supabase
+    .from("work_ministries")
+    .update(updates)
+    .eq("id", ministryId)
+    .select("id, name, description, color, sort_order, is_default, head_person_id")
+    .single();
+
+  if (error) throw error;
+  return toWorkMinistry(data as DbWorkMinistry);
+}
+
 export async function createWorkMinistryTeam(
   supabase: SupabaseClient,
   ministryId: string,
