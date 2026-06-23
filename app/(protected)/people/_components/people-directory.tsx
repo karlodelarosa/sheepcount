@@ -34,7 +34,7 @@ import {
   getPersonVisitDate,
 } from "@/lib/membership-path";
 import {
-  getBirthMonthShort,
+  formatBirthdayDisplay,
   isBirthdayToday,
   isBirthMonth,
 } from "@/lib/person-birthdate";
@@ -169,7 +169,7 @@ export function PeopleDirectory() {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Cake className="w-3.5 h-3.5 text-rose-500" />
-              Birthday today
+              Birthday today!
             </span>
             <span className="inline-flex items-center gap-1.5">
               <CalendarHeart className="w-3.5 h-3.5 text-pink-500" />
@@ -189,7 +189,7 @@ export function PeopleDirectory() {
                     Name
                   </TableHead>
                   <TableHead className="text-slate-600 dark:text-zinc-300">
-                    Birthday
+                    Birthdate
                   </TableHead>
                   <TableHead className="text-slate-600 dark:text-zinc-300">
                     Life Group
@@ -218,14 +218,19 @@ export function PeopleDirectory() {
                     const achievement =
                       achievementByPersonId.get(person.id) ?? null;
                     const lifeGroupName = lifeGroupByPersonId.get(person.id);
+                    const birthdateLabel = formatBirthdayDisplay(person.birthdate);
                     const birthdayToday = isBirthdayToday(person.birthdate);
-                    const birthMonth = isBirthMonth(person.birthdate);
-                    const birthMonthLabel = getBirthMonthShort(person.birthdate);
+                    const birthMonth =
+                      !birthdayToday && isBirthMonth(person.birthdate);
 
                     return (
                       <TableRow
                         key={person.id}
-                        className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-slate-900 dark:text-white transition-colors"
+                        className={`cursor-pointer text-slate-900 dark:text-white transition-colors ${
+                          birthdayToday
+                            ? "bg-rose-50/70 hover:bg-rose-50 dark:bg-rose-950/25 dark:hover:bg-rose-950/40"
+                            : "hover:bg-slate-50 dark:hover:bg-zinc-800/80"
+                        }`}
                         onClick={() => router.push(`/people/${person.id}`)}
                         onKeyDown={e => {
                           if (e.key === "Enter" || e.key === " ") {
@@ -283,29 +288,40 @@ export function PeopleDirectory() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {birthdayToday ? (
-                              <Badge
-                                className="rounded-lg gap-1 bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/60"
-                                title="Birthday today"
+                          {birthdateLabel ? (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`text-sm tabular-nums ${
+                                  birthdayToday
+                                    ? "font-semibold text-rose-700 dark:text-rose-300"
+                                    : "text-slate-700 dark:text-zinc-300"
+                                }`}
                               >
-                                <Cake className="w-3 h-3" />
-                                Birthday today
-                              </Badge>
-                            ) : birthMonth && birthMonthLabel ? (
-                              <Badge
-                                className="rounded-lg gap-1 bg-pink-50 text-pink-700 border border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-800/50"
-                                title={`Birth month: ${birthMonthLabel}`}
-                              >
-                                <CalendarHeart className="w-3 h-3" />
-                                {birthMonthLabel}
-                              </Badge>
-                            ) : (
-                              <span className="text-slate-400 dark:text-zinc-500 text-sm">
-                                —
+                                {birthdateLabel}
                               </span>
-                            )}
-                          </div>
+                              {birthdayToday ? (
+                                <Badge
+                                  className="rounded-lg gap-1 bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800/60"
+                                  title="Birthday today"
+                                >
+                                  <Cake className="w-3 h-3" />
+                                  Birthday today!
+                                </Badge>
+                              ) : birthMonth ? (
+                                <Badge
+                                  className="rounded-lg gap-1 bg-pink-50 text-pink-700 border border-pink-200 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-800/50"
+                                  title="Birth month"
+                                >
+                                  <CalendarHeart className="w-3 h-3" />
+                                  Birth month
+                                </Badge>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 dark:text-zinc-500 text-sm">
+                              —
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell>
                           {lifeGroupName ? (
