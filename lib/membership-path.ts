@@ -61,6 +61,37 @@ export function evangelismStageForMembershipType(
   }
 }
 
+export const MEMBERSHIP_TYPE_OPTIONS: {
+  value: MembershipType;
+  label: string;
+}[] = [
+  { value: "Prospect", label: "Prospect" },
+  { value: "For Evangelism", label: "For Evangelism" },
+  { value: "Attender", label: "Attender" },
+  { value: "Member", label: "Member" },
+  { value: "Volunteer Worker", label: "Volunteer" },
+  { value: "Worker", label: "Worker" },
+];
+
+export function defaultsForMembershipType(type: MembershipType): {
+  isProspect: boolean;
+  evangelismStage: EvangelismStage;
+} {
+  if (type === "Prospect") {
+    return { isProspect: true, evangelismStage: "First-time Attendee" };
+  }
+  if (type === "For Evangelism") {
+    return { isProspect: false, evangelismStage: "First-time Attendee" };
+  }
+  if (isMembershipPathType(type)) {
+    return {
+      isProspect: false,
+      evangelismStage: evangelismStageForMembershipType(type),
+    };
+  }
+  return { isProspect: false, evangelismStage: "Follow-up" };
+}
+
 export function getMembershipColor(type: string): string {
   switch (type) {
     case "Worker":

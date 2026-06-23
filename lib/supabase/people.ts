@@ -302,7 +302,9 @@ export async function updatePerson(
 
   if (input.phone !== undefined) updates.phone = input.phone.trim();
   if (input.email !== undefined) updates.email = input.email.trim();
-  if (input.birthdate !== undefined) updates.birthdate = input.birthdate;
+  if (input.birthdate !== undefined) {
+    updates.birthdate = input.birthdate.trim() || null;
+  }
   if (input.gender !== undefined) updates.gender = input.gender;
   if (input.firstAttendance !== undefined) {
     updates.first_attendance = input.firstAttendance.trim() || null;
@@ -310,7 +312,9 @@ export async function updatePerson(
   if (input.memberSince !== undefined) {
     updates.member_since = input.memberSince.trim() || null;
   }
-  if (input.joinDate !== undefined) updates.join_date = input.joinDate;
+  if (input.joinDate !== undefined) {
+    updates.join_date = input.joinDate.trim() || null;
+  }
   if (input.role !== undefined) updates.role = input.role;
   if (input.status !== undefined) updates.status = input.status;
   if (input.isProspect !== undefined) updates.is_prospect = input.isProspect;

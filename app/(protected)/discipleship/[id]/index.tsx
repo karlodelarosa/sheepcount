@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,13 +33,32 @@ import {
   LayoutDashboard,
   ListChecks,
   Plus,
+  Settings,
   TrendingUp,
+  Trash2,
   Users,
   X,
 } from "lucide-react";
 import { usePeople } from "@/lib/people";
 import { useDiscipleship } from "@/lib/discipleship";
-import type { DiscipleshipRole } from "@/lib/supabase/discipleship";
+import type {
+  DiscipleshipCategory,
+  DiscipleshipRole,
+  DiscipleshipTrackStatus,
+} from "@/lib/supabase/discipleship";
+import { ConfirmDeleteDialog } from "@/app/(protected)/work-ministry/_components/confirm-delete-dialog";
+
+const CATEGORIES: DiscipleshipCategory[] = [
+  "Foundation",
+  "Growth",
+  "Leadership",
+  "Mentorship",
+];
+
+const TRACK_STATUS_LABELS: Record<DiscipleshipTrackStatus, string> = {
+  active: "In Progress",
+  finished: "Finished",
+};
 
 interface TrackDetailsProps {
   trackId: string;
@@ -53,6 +72,8 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
     milestoneCompletions,
     hydrated,
     isSaving,
+    updateTrack,
+    removeTrack,
     enrollPerson,
     removeEnrollmentById,
     toggleMilestone,
@@ -71,6 +92,12 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
   const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<string>("");
   const [milestoneName, setMilestoneName] = useState("");
   const [milestoneDescription, setMilestoneDescription] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCategory, setEditCategory] = useState<DiscipleshipCategory>("Foundation");
+  const [editStatus, setEditStatus] = useState<DiscipleshipTrackStatus>("active");
+  const [editInitialized, setEditInitialized] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const track = tracks.find(t => t.id === trackId);
   const trackEnrollments = useMemo(
@@ -171,6 +198,34 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
     }
   };
 
+  useEffect(() => {
+    if (!track || editInitialized) return;
+    setEditName(track.name);
+    setEditDescription(track.description);
+    setEditCategory(track.category);
+    setEditStatus(track.status);
+    setEditInitialized(true);
+  }, [track, editInitialized]);
+
+  const handleSaveTrack = async () => {
+    if (!editName.trim()) return;
+    await updateTrack({
+      trackId,
+      name: editName,
+      description: editDescription,
+      category: editCategory,
+      status: editStatus,
+    });
+  };
+
+  const handleDeleteTrack = async () => {
+    const success = await removeTrack(trackId);
+    if (success) {
+      setIsDeleteDialogOpen(false);
+      onBack();
+    }
+  };
+
   const DualModePrimaryButtonClass =
     "rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700";
   const DualModeInputClass =
@@ -233,6 +288,11 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
               <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
                 {track.category}
               </Badge>
+              {track.status === "finished" && (
+                <Badge className="rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border-0">
+                  Finished
+                </Badge>
+              )}
             </div>
             <p className="text-slate-600 dark:text-zinc-400">
               {track.description || "Discipleship track"}
@@ -331,18 +391,22 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
 
         <div className="lg:col-span-2">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
+            <TabsList className="grid w-full grid-cols-4 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
               <TabsTrigger value="overview" className={tabTriggerClass}>
                 <LayoutDashboard className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Overview
               </TabsTrigger>
               <TabsTrigger value="manage" className={tabTriggerClass}>
                 <ListChecks className="w-4 h-4 mr-1.5 hidden sm:inline" />
-                Manage Milestones
+                Milestones
               </TabsTrigger>
               <TabsTrigger value="progress" className={tabTriggerClass}>
                 <TrendingUp className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Progress
+              </TabsTrigger>
+              <TabsTrigger value="settings" className={tabTriggerClass}>
+                <Settings className="w-4 h-4 mr-1.5 hidden sm:inline" />
+                Settings
               </TabsTrigger>
             </TabsList>
 
@@ -770,9 +834,129 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent value="settings" className="mt-0">
+              <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
+                <CardHeader>
+                  <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    Program Details
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-zinc-400">
+                    Update program information or remove this discipleship track
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Title</Label>
+                      <Input
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        className={DualModeInputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea
+                        value={editDescription}
+                        onChange={e => setEditDescription(e.target.value)}
+                        className={DualModeInputClass}
+                        rows={3}
+                      />
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Category</Label>
+                        <Select
+                          value={editCategory}
+                          onValueChange={v =>
+                            setEditCategory(v as DiscipleshipCategory)
+                          }
+                        >
+                          <SelectTrigger className={DualModeInputClass}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CATEGORIES.map(cat => (
+                              <SelectItem key={cat} value={cat}>
+                                {cat}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Program Status</Label>
+                        <Select
+                          value={editStatus}
+                          onValueChange={v =>
+                            setEditStatus(v as DiscipleshipTrackStatus)
+                          }
+                        >
+                          <SelectTrigger className={DualModeInputClass}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(Object.keys(TRACK_STATUS_LABELS) as DiscipleshipTrackStatus[]).map(
+                              status => (
+                                <SelectItem key={status} value={status}>
+                                  {TRACK_STATUS_LABELS[status]}
+                                </SelectItem>
+                              ),
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-zinc-500">
+                      Mark as Finished when this program session or cohort has
+                      wrapped up.
+                    </p>
+                    <Button
+                      onClick={() => void handleSaveTrack()}
+                      disabled={!editName.trim() || isSaving}
+                      className={DualModePrimaryButtonClass}
+                    >
+                      Save Changes
+                    </Button>
+                  </div>
+
+                  <div className="border-t border-slate-200 dark:border-zinc-700 pt-6 space-y-3">
+                    <p className="text-sm font-medium text-slate-700 dark:text-zinc-300">
+                      Danger zone
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-zinc-500">
+                      {track.isDefault
+                        ? "Built-in programs cannot be removed."
+                        : "Removing this program will hide it from the discipleship list and remove it from participant profiles."}
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      disabled={track.isDefault || isSaving}
+                      className="rounded-lg border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Program
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      <ConfirmDeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Delete discipleship program?"
+        description={`"${track.name}" will be removed from the discipleship list and hidden from participant profiles.`}
+        confirmLabel="Delete Program"
+        onConfirm={handleDeleteTrack}
+        isLoading={isSaving}
+      />
     </div>
   );
 }

@@ -153,9 +153,10 @@ export async function fetchCourseModules(
   const { data, error } = await supabase
     .from("training_course_modules")
     .select(
-      "id, course_id, name, description, sort_order, training_courses!inner(organization_id)",
+      "id, course_id, name, description, sort_order, training_courses!inner(organization_id, is_active)",
     )
     .eq("training_courses.organization_id", organizationId)
+    .eq("training_courses.is_active", true)
     .order("sort_order");
 
   if (error) throw error;
@@ -169,9 +170,10 @@ export async function fetchPersonCourseProgress(
   const { data, error } = await supabase
     .from("person_course_progress")
     .select(
-      "id, course_id, person_id, status, completed_module_ids, monday_mission_action, enrolled_date, completed_at, training_courses!inner(organization_id)",
+      "id, course_id, person_id, status, completed_module_ids, monday_mission_action, enrolled_date, completed_at, training_courses!inner(organization_id, is_active)",
     )
-    .eq("training_courses.organization_id", organizationId);
+    .eq("training_courses.organization_id", organizationId)
+    .eq("training_courses.is_active", true);
 
   if (error) throw error;
   return (data as DbPersonCourseProgress[]).map(toProgress);
@@ -183,6 +185,47 @@ export type CreateTrainingCourseInput = {
   category: TrainingCategory;
   slug: string;
 };
+
+export type UpdateTrainingCourseInput = {
+  courseId: string;
+  name?: string;
+  description?: string;
+};
+
+export async function updateTrainingCourse(
+  supabase: SupabaseClient,
+  input: UpdateTrainingCourseInput,
+): Promise<TrainingCourse> {
+  const payload: Record<string, unknown> = {};
+  if (input.name !== undefined) payload.name = input.name.trim();
+  if (input.description !== undefined) {
+    payload.description = input.description.trim();
+  }
+
+  const { data, error } = await supabase
+    .from("training_courses")
+    .update(payload)
+    .eq("id", input.courseId)
+    .select(
+      "id, name, description, category, slug, sort_order, is_default, is_active",
+    )
+    .single();
+
+  if (error) throw error;
+  return toCourse(data as DbTrainingCourse);
+}
+
+export async function deleteTrainingCourse(
+  supabase: SupabaseClient,
+  courseId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("training_courses")
+    .update({ is_active: false })
+    .eq("id", courseId);
+
+  if (error) throw error;
+}
 
 export async function createTrainingCourse(
   supabase: SupabaseClient,

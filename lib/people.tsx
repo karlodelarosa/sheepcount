@@ -12,7 +12,11 @@ import { toast } from "sonner";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
-import { evangelismStageForMembershipType, getNextMembershipPathType } from "@/lib/membership-path";
+import {
+  defaultsForMembershipType,
+  evangelismStageForMembershipType,
+  getNextMembershipPathType,
+} from "@/lib/membership-path";
 import {
   createPerson as createPersonDb,
   createPersonInHousehold as createPersonInHouseholdDb,
@@ -293,13 +297,38 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
       }
 
       const payload = { ...input };
-      if (input.isProspect === true) {
+
+      if (input.membershipType !== undefined) {
+        const defaults = defaultsForMembershipType(input.membershipType);
+        payload.membershipType = input.membershipType;
+        payload.isProspect = defaults.isProspect;
+        if (input.evangelismStage === undefined) {
+          payload.evangelismStage = defaults.evangelismStage;
+        }
+
+        const isMemberType =
+          input.membershipType === "Member" ||
+          input.membershipType === "Volunteer Worker" ||
+          input.membershipType === "Worker";
+        if (
+          isMemberType &&
+          !existing.memberSince &&
+          input.memberSince === undefined
+        ) {
+          payload.memberSince = new Date().toISOString().split("T")[0];
+        }
+      } else if (input.isProspect === true) {
         payload.membershipType = "Prospect";
+        payload.isProspect = true;
       } else if (
         input.isProspect === false &&
         existing.membershipType === "Prospect"
       ) {
         payload.membershipType = "Attender";
+        payload.isProspect = false;
+        if (input.evangelismStage === undefined) {
+          payload.evangelismStage = evangelismStageForMembershipType("Attender");
+        }
       }
 
       setIsSaving(true);

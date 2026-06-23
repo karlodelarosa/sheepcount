@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Home,
   Award,
+  Sparkles,
   UserCheck,
   Pencil,
   X,
@@ -24,7 +25,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/index";
-import { usePeople, type PersonGender, type UpdatePersonInput } from "@/lib/people";
+import {
+  usePeople,
+  type PersonGender,
+  type UpdatePersonInput,
+} from "@/lib/people";
 import { useServiceAttendance } from "@/lib/service-attendance";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
 import { useDiscipleship } from "@/lib/discipleship";
@@ -40,6 +45,7 @@ import {
   MEMBERSHIP_PATH_LABELS,
 } from "@/lib/membership-path";
 import { PromoteMemberDialog } from "../_components/promote-member-dialog";
+import { ChangeMembershipDialog } from "../_components/change-membership-dialog";
 import { AssignMinistryDialog } from "../_components/assign-ministry-dialog";
 import { AssignHouseholdDialog } from "../_components/assign-household-dialog";
 import { ConfirmPersonDialog } from "../_components/confirm-person-dialog";
@@ -106,6 +112,7 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [promoteOpen, setPromoteOpen] = useState(false);
+  const [changeMembershipOpen, setChangeMembershipOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [householdOpen, setHouseholdOpen] = useState(false);
   const [confirmEditOpen, setConfirmEditOpen] = useState(false);
@@ -118,7 +125,6 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
   const [editRole, setEditRole] = useState("");
   const [editGender, setEditGender] = useState<PersonGender | "">("");
   const [editStatus, setEditStatus] = useState("");
-  const [editIsProspect, setEditIsProspect] = useState(false);
 
   const person = getPerson(personId);
   const ministriesList = getPersonMinistries(personId);
@@ -220,7 +226,6 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
     setEditRole(person.role);
     setEditGender(person.gender ?? "");
     setEditStatus(person.status);
-    setEditIsProspect(person.isProspect);
     setIsEditing(true);
   };
 
@@ -232,14 +237,15 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
       middleName: (formData.get("middleName") as string) || "",
       lastName: formData.get("lastName") as string,
       phone: formData.get("phone") as string,
-      birthdate: formData.get("birthdate") as string,
-      firstAttendance: (formData.get("firstAttendance") as string) || "",
-      memberSince: (formData.get("memberSince") as string) || "",
+      birthdate: ((formData.get("birthdate") as string) || "").trim() || undefined,
+      firstAttendance:
+        ((formData.get("firstAttendance") as string) || "").trim() || undefined,
+      memberSince:
+        ((formData.get("memberSince") as string) || "").trim() || undefined,
       email: (formData.get("email") as string) || "",
       gender: editGender || null,
       role: editRole,
       status: editStatus as "Active" | "Inactive" | "Exited",
-      isProspect: editIsProspect,
     });
     setConfirmEditOpen(true);
   };
@@ -341,6 +347,13 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
                 align="end"
                 className="w-56 rounded-xl border-slate-200/60 dark:border-zinc-700/60"
               >
+                <DropdownMenuItem
+                  className="cursor-pointer rounded-lg"
+                  onClick={() => setChangeMembershipOpen(true)}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Change membership
+                </DropdownMenuItem>
                 {canPromote && nextMembershipStep && (
                   <DropdownMenuItem
                     className="cursor-pointer rounded-lg"
@@ -458,11 +471,9 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
             editRole={editRole}
             editStatus={editStatus}
             editGender={editGender}
-            editIsProspect={editIsProspect}
             onEditRoleChange={setEditRole}
             onEditStatusChange={setEditStatus}
             onEditGenderChange={setEditGender}
-            onEditIsProspectChange={setEditIsProspect}
             onUpdate={handleUpdate}
             household={household}
             householdMembers={householdMembers}
@@ -491,6 +502,19 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
           <SpiritualFootprintTimeline timeline={profileDetails.timeline} />
         </aside>
       </div>
+
+      <ChangeMembershipDialog
+        open={changeMembershipOpen}
+        onOpenChange={setChangeMembershipOpen}
+        personName={person.name}
+        currentMembershipType={person.membershipType}
+        visitDate={visitDate}
+        isSaving={isSaving}
+        onConfirm={async membershipType => {
+          const updated = await updatePerson(personId, { membershipType });
+          if (updated) setChangeMembershipOpen(false);
+        }}
+      />
 
       <PromoteMemberDialog
         open={promoteOpen}

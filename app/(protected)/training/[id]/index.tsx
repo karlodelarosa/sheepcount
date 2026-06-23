@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,11 +33,14 @@ import {
   LayoutDashboard,
   ListChecks,
   Plus,
+  Settings,
   TrendingUp,
+  Trash2,
   X,
 } from "lucide-react";
 import { usePeople } from "@/lib/people";
 import { useTraining } from "@/lib/training";
+import { ConfirmDeleteDialog } from "@/app/(protected)/work-ministry/_components/confirm-delete-dialog";
 
 interface CourseDetailsProps {
   courseId: string;
@@ -50,6 +53,8 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
     courses,
     hydrated,
     isSaving,
+    updateCourse,
+    removeCourse,
     enrollPersonInCourse,
     removeEnrollment,
     addModule,
@@ -66,6 +71,10 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
   const [moduleName, setModuleName] = useState("");
   const [moduleDescription, setModuleDescription] = useState("");
   const [mondayMissionAction, setMondayMissionAction] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editInitialized, setEditInitialized] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const course = courses.find(c => c.id === courseId);
   const courseModules = useMemo(
@@ -148,6 +157,30 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
       mondayMissionAction,
     });
     setMondayMissionAction("");
+  };
+
+  useEffect(() => {
+    if (!course || editInitialized) return;
+    setEditName(course.name);
+    setEditDescription(course.description);
+    setEditInitialized(true);
+  }, [course, editInitialized]);
+
+  const handleSaveCourse = async () => {
+    if (!editName.trim()) return;
+    await updateCourse({
+      courseId,
+      name: editName,
+      description: editDescription,
+    });
+  };
+
+  const handleDeleteCourse = async () => {
+    const success = await removeCourse(courseId);
+    if (success) {
+      setIsDeleteDialogOpen(false);
+      onBack();
+    }
   };
 
   const nextModule = activeEnrollment
@@ -271,18 +304,22 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
 
         <div className="lg:col-span-2">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
+            <TabsList className="grid w-full grid-cols-4 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
               <TabsTrigger value="overview" className={tabTriggerClass}>
                 <LayoutDashboard className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Overview
               </TabsTrigger>
               <TabsTrigger value="manage" className={tabTriggerClass}>
                 <ListChecks className="w-4 h-4 mr-1.5 hidden sm:inline" />
-                Manage Modules
+                Modules
               </TabsTrigger>
               <TabsTrigger value="progress" className={tabTriggerClass}>
                 <TrendingUp className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Progress
+              </TabsTrigger>
+              <TabsTrigger value="settings" className={tabTriggerClass}>
+                <Settings className="w-4 h-4 mr-1.5 hidden sm:inline" />
+                Settings
               </TabsTrigger>
             </TabsList>
 
@@ -713,9 +750,81 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent value="settings" className="mt-0">
+              <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
+                <CardHeader>
+                  <CardTitle className="text-slate-900 dark:text-white flex items-center gap-2">
+                    <Settings className="w-5 h-5" />
+                    Course Details
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-zinc-400">
+                    Update course information or remove this training
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Title</Label>
+                      <Input
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        className={DualModeInputClass}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea
+                        value={editDescription}
+                        onChange={e => setEditDescription(e.target.value)}
+                        className={DualModeInputClass}
+                        rows={3}
+                      />
+                    </div>
+                    <Button
+                      onClick={() => void handleSaveCourse()}
+                      disabled={!editName.trim() || isSaving}
+                      className={DualModePrimaryButtonClass}
+                    >
+                      Save Changes
+                    </Button>
+                  </div>
+
+                  <div className="border-t border-slate-200 dark:border-zinc-700 pt-6 space-y-3">
+                    <p className="text-sm font-medium text-slate-700 dark:text-zinc-300">
+                      Danger zone
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-zinc-500">
+                      {course.isDefault
+                        ? "Built-in courses cannot be removed."
+                        : "Removing this course will hide it from the training list and remove it from participant profiles."}
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      disabled={course.isDefault || isSaving}
+                      className="rounded-lg border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-950/30"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Course
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      <ConfirmDeleteDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        title="Delete training course?"
+        description={`"${course.name}" will be removed from the training list and hidden from participant profiles.`}
+        confirmLabel="Delete Course"
+        onConfirm={handleDeleteCourse}
+        isLoading={isSaving}
+      />
     </div>
   );
 }

@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -34,6 +33,11 @@ import { BirthdateField } from "@/components/birthdate-field";
 import type { PersonProfileDetails } from "@/lib/supabase/person-profile";
 import type { Person, PersonGender } from "@/lib/people";
 import type { Household } from "@/lib/people";
+import {
+  getMembershipDisplayColor,
+  getMembershipDisplayLabel,
+  getPersonVisitDate,
+} from "@/lib/membership-path";
 import type {
   WorkMinistry,
   WorkMinistryMember,
@@ -80,11 +84,9 @@ type PersonDetailTabsProps = {
   editRole: string;
   editStatus: string;
   editGender: PersonGender | "";
-  editIsProspect: boolean;
   onEditRoleChange: (value: string) => void;
   onEditStatusChange: (value: string) => void;
   onEditGenderChange: (value: PersonGender | "") => void;
-  onEditIsProspectChange: (value: boolean) => void;
   onUpdate: (e: React.FormEvent<HTMLFormElement>) => void;
   household: Household | undefined;
   householdMembers: Person[];
@@ -162,11 +164,9 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
     editRole,
     editStatus,
     editGender,
-    editIsProspect,
     onEditRoleChange,
     onEditStatusChange,
     onEditGenderChange,
-    onEditIsProspectChange,
     onUpdate,
     household,
     householdMembers,
@@ -306,7 +306,6 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                       name="phone"
                       type="tel"
                       defaultValue={person.phone}
-                      required
                       className="rounded-xl"
                     />
                   </div>
@@ -315,7 +314,6 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                       key={`${personId}-${isEditing}-birthdate`}
                       name="birthdate"
                       defaultValue={person.birthdate}
-                      required
                     />
                   </div>
                   <div className="col-span-2">
@@ -367,7 +365,7 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                     </Select>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="role">Role</Label>
+                    <Label htmlFor="role">Household role</Label>
                     <Select value={editRole} onValueChange={onEditRoleChange}>
                       <SelectTrigger className="rounded-xl">
                         <SelectValue />
@@ -396,14 +394,6 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                         <SelectItem value="Exited">Exited</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="flex items-center justify-between rounded-xl border border-slate-200/60 p-4 dark:border-zinc-700/60">
-                    <Label htmlFor="isProspect">Prospect</Label>
-                    <Switch
-                      id="isProspect"
-                      checked={editIsProspect}
-                      onCheckedChange={onEditIsProspectChange}
-                    />
                   </div>
                 </div>
                 <div className="flex justify-end">
@@ -444,6 +434,19 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                       Not provided
                     </span>
                   )}
+                </InfoTile>
+                <InfoTile icon={Sparkles} label="Membership">
+                  <Badge
+                    className={`rounded-lg font-normal ${getMembershipDisplayColor(
+                      person.membershipType,
+                      getPersonVisitDate(person),
+                    )}`}
+                  >
+                    {getMembershipDisplayLabel(
+                      person.membershipType,
+                      getPersonVisitDate(person),
+                    )}
+                  </Badge>
                 </InfoTile>
                 <InfoTile icon={Calendar} label="First attendance">
                   {(person.firstAttendance || person.joinDate)

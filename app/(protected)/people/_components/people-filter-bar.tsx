@@ -15,6 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  getMembershipDisplayColor,
+  getMembershipDisplayLabel,
+  MEMBERSHIP_TYPE_OPTIONS,
+} from "@/lib/membership-path";
 import type { EvangelismStage, MembershipType } from "@/lib/people";
 import {
   countActivePeopleFilters,
@@ -32,12 +37,7 @@ const STATUS_OPTIONS = [
 
 const MEMBERSHIP_OPTIONS: { value: MembershipType | "all"; label: string }[] = [
   { value: "all", label: "All types" },
-  { value: "Prospect", label: "Prospect" },
-  { value: "For Evangelism", label: "For Evangelism" },
-  { value: "Attender", label: "Attender" },
-  { value: "Member", label: "Member" },
-  { value: "Volunteer Worker", label: "Volunteer" },
-  { value: "Worker", label: "Worker" },
+  ...MEMBERSHIP_TYPE_OPTIONS,
 ];
 
 const STAGE_OPTIONS: { value: EvangelismStage | "all"; label: string }[] = [

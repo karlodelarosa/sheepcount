@@ -6,6 +6,8 @@ export type DiscipleshipCategory =
   | "Leadership"
   | "Mentorship";
 
+export type DiscipleshipTrackStatus = "active" | "finished";
+
 export type DiscipleshipRole = "Learner" | "Guide";
 
 export type DiscipleshipEnrollmentStatus = "active" | "completed" | "paused";
@@ -22,6 +24,7 @@ export type DiscipleshipTrack = {
   sortOrder: number;
   isDefault: boolean;
   isActive: boolean;
+  status: DiscipleshipTrackStatus;
 };
 
 export type DiscipleshipEnrollment = {
@@ -65,6 +68,7 @@ type DbDiscipleshipTrack = {
   sort_order: number;
   is_default: boolean;
   is_active: boolean;
+  status: DiscipleshipTrackStatus;
 };
 
 type DbDiscipleshipEnrollment = {
@@ -109,6 +113,7 @@ function toTrack(row: DbDiscipleshipTrack): DiscipleshipTrack {
     sortOrder: row.sort_order,
     isDefault: row.is_default,
     isActive: row.is_active,
+    status: row.status ?? "active",
   };
 }
 
@@ -168,7 +173,7 @@ export async function fetchDiscipleshipTracks(
   const { data, error } = await supabase
     .from("discipleship_tracks")
     .select(
-      "id, name, description, category, duration, schedule, leader_person_id, color, sort_order, is_default, is_active",
+      "id, name, description, category, duration, schedule, leader_person_id, color, sort_order, is_default, is_active, status",
     )
     .eq("organization_id", organizationId)
     .eq("is_active", true)
@@ -186,9 +191,10 @@ export async function fetchDiscipleshipEnrollments(
   const { data, error } = await supabase
     .from("discipleship_enrollments")
     .select(
-      "id, track_id, person_id, mentor_person_id, role, status, enrolled_date, current_module, completed_at, discipleship_tracks!inner(organization_id)",
+      "id, track_id, person_id, mentor_person_id, role, status, enrolled_date, current_module, completed_at, discipleship_tracks!inner(organization_id, is_active)",
     )
-    .eq("discipleship_tracks.organization_id", organizationId);
+    .eq("discipleship_tracks.organization_id", organizationId)
+    .eq("discipleship_tracks.is_active", true);
 
   if (error) throw error;
   return (data as DbDiscipleshipEnrollment[]).map(toEnrollment);
@@ -201,9 +207,10 @@ export async function fetchDiscipleshipMilestones(
   const { data, error } = await supabase
     .from("discipleship_milestones")
     .select(
-      "id, track_id, name, description, sort_order, discipleship_tracks!inner(organization_id)",
+      "id, track_id, name, description, sort_order, discipleship_tracks!inner(organization_id, is_active)",
     )
     .eq("discipleship_tracks.organization_id", organizationId)
+    .eq("discipleship_tracks.is_active", true)
     .order("sort_order");
 
   if (error) throw error;
@@ -217,9 +224,10 @@ export async function fetchDiscipleshipMilestoneCompletions(
   const { data, error } = await supabase
     .from("discipleship_milestone_completions")
     .select(
-      "id, enrollment_id, milestone_id, completed_at, notes, completed_by_person_id, discipleship_enrollments!inner(track_id, discipleship_tracks!inner(organization_id))",
+      "id, enrollment_id, milestone_id, completed_at, notes, completed_by_person_id, discipleship_enrollments!inner(track_id, discipleship_tracks!inner(organization_id, is_active))",
     )
-    .eq("discipleship_enrollments.discipleship_tracks.organization_id", organizationId);
+    .eq("discipleship_enrollments.discipleship_tracks.organization_id", organizationId)
+    .eq("discipleship_enrollments.discipleship_tracks.is_active", true);
 
   if (error) throw error;
   return (data as DbDiscipleshipMilestoneCompletion[]).map(toMilestoneCompletion);
@@ -234,6 +242,51 @@ export type CreateDiscipleshipTrackInput = {
   leaderPersonId?: string;
   color?: string;
 };
+
+export type UpdateDiscipleshipTrackInput = {
+  trackId: string;
+  name?: string;
+  description?: string;
+  category?: DiscipleshipCategory;
+  status?: DiscipleshipTrackStatus;
+};
+
+export async function updateDiscipleshipTrack(
+  supabase: SupabaseClient,
+  input: UpdateDiscipleshipTrackInput,
+): Promise<DiscipleshipTrack> {
+  const payload: Record<string, unknown> = {};
+  if (input.name !== undefined) payload.name = input.name.trim();
+  if (input.description !== undefined) {
+    payload.description = input.description.trim();
+  }
+  if (input.category !== undefined) payload.category = input.category;
+  if (input.status !== undefined) payload.status = input.status;
+
+  const { data, error } = await supabase
+    .from("discipleship_tracks")
+    .update(payload)
+    .eq("id", input.trackId)
+    .select(
+      "id, name, description, category, duration, schedule, leader_person_id, color, sort_order, is_default, is_active, status",
+    )
+    .single();
+
+  if (error) throw error;
+  return toTrack(data as DbDiscipleshipTrack);
+}
+
+export async function deleteDiscipleshipTrack(
+  supabase: SupabaseClient,
+  trackId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("discipleship_tracks")
+    .update({ is_active: false })
+    .eq("id", trackId);
+
+  if (error) throw error;
+}
 
 export async function createDiscipleshipTrack(
   supabase: SupabaseClient,
@@ -253,7 +306,7 @@ export async function createDiscipleshipTrack(
       color: input.color ?? "blue",
     })
     .select(
-      "id, name, description, category, duration, schedule, leader_person_id, color, sort_order, is_default, is_active",
+      "id, name, description, category, duration, schedule, leader_person_id, color, sort_order, is_default, is_active, status",
     )
     .single();
 

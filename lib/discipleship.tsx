@@ -15,6 +15,7 @@ import { getOrganizationId } from "@/lib/supabase/tenant";
 import {
   createDiscipleshipTrack,
   createMilestone,
+  deleteDiscipleshipTrack,
   deleteMilestone,
   enrollInTrack,
   fetchDiscipleshipEnrollments,
@@ -24,8 +25,10 @@ import {
   removeEnrollment,
   syncEnrollmentCompletion,
   toggleMilestoneCompletion,
+  updateDiscipleshipTrack,
   updateMilestoneSortOrder,
   type CreateDiscipleshipTrackInput,
+  type UpdateDiscipleshipTrackInput,
   type CreateMilestoneInput,
   type DiscipleshipBadge,
   type DiscipleshipEnrollment,
@@ -33,6 +36,7 @@ import {
   type DiscipleshipMilestoneCompletion,
   type DiscipleshipRole,
   type DiscipleshipTrack,
+  type DiscipleshipTrackStatus,
   type EnrollInTrackInput,
 } from "@/lib/supabase/discipleship";
 
@@ -47,6 +51,10 @@ type DiscipleshipContextValue = {
   isSaving: boolean;
   refreshDiscipleship: () => Promise<void>;
   addTrack: (input: CreateDiscipleshipTrackInput) => Promise<DiscipleshipTrack | null>;
+  updateTrack: (
+    input: UpdateDiscipleshipTrackInput,
+  ) => Promise<DiscipleshipTrack | null>;
+  removeTrack: (trackId: string) => Promise<boolean>;
   enrollPerson: (input: EnrollInTrackInput) => Promise<DiscipleshipEnrollment | null>;
   removeEnrollmentById: (enrollmentId: string) => Promise<boolean>;
   toggleMilestone: (
@@ -158,6 +166,54 @@ export function DiscipleshipProvider({
       }
     },
     [organizationId, refreshDiscipleship, supabase],
+  );
+
+  const updateTrack = useCallback(
+    async (input: UpdateDiscipleshipTrackInput): Promise<DiscipleshipTrack | null> => {
+      setIsSaving(true);
+      try {
+        const track = await updateDiscipleshipTrack(supabase, input);
+        await refreshDiscipleship();
+        toast.success("Program updated");
+        return track;
+      } catch (error) {
+        toast.error("Failed to update program", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase],
+  );
+
+  const removeTrack = useCallback(
+    async (trackId: string): Promise<boolean> => {
+      const track = tracks.find(t => t.id === trackId);
+      if (track?.isDefault) {
+        toast.error("Cannot delete default program", {
+          description: "Built-in discipleship programs cannot be removed.",
+        });
+        return false;
+      }
+
+      setIsSaving(true);
+      try {
+        await deleteDiscipleshipTrack(supabase, trackId);
+        await refreshDiscipleship();
+        toast.success("Program removed");
+        return true;
+      } catch (error) {
+        toast.error("Failed to remove program", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase, tracks],
   );
 
   const enrollPerson = useCallback(
@@ -459,6 +515,8 @@ export function DiscipleshipProvider({
         isSaving,
         refreshDiscipleship,
         addTrack,
+        updateTrack,
+        removeTrack,
         enrollPerson,
         removeEnrollmentById,
         toggleMilestone,
@@ -487,4 +545,4 @@ export function useDiscipleship() {
   return ctx;
 }
 
-export type { DiscipleshipRole, DiscipleshipTrack, DiscipleshipEnrollment, DiscipleshipBadge };
+export type { DiscipleshipRole, DiscipleshipTrack, DiscipleshipEnrollment, DiscipleshipBadge, DiscipleshipTrackStatus };

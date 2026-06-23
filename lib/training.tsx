@@ -16,6 +16,7 @@ import {
   createCourseModule,
   createTrainingCourse,
   deleteCourseModule,
+  deleteTrainingCourse,
   enrollInCourse,
   fetchCourseModules,
   fetchPersonCourseProgress,
@@ -24,8 +25,10 @@ import {
   removeCourseEnrollment,
   updateCourseModuleProgress,
   updateModuleSortOrder,
+  updateTrainingCourse,
   type CreateCourseModuleInput,
   type CreateTrainingCourseInput,
+  type UpdateTrainingCourseInput,
   type EnrollInCourseInput,
   type PersonCourseProgress,
   type TrainingBadge,
@@ -42,6 +45,10 @@ type TrainingContextValue = {
   isSaving: boolean;
   refreshTraining: () => Promise<void>;
   addCourse: (input: CreateTrainingCourseInput) => Promise<TrainingCourse | null>;
+  updateCourse: (
+    input: UpdateTrainingCourseInput,
+  ) => Promise<TrainingCourse | null>;
+  removeCourse: (courseId: string) => Promise<boolean>;
   addModule: (input: CreateCourseModuleInput) => Promise<TrainingCourseModule | null>;
   removeModuleById: (moduleId: string) => Promise<boolean>;
   moveModule: (courseId: string, moduleId: string, direction: "up" | "down") => Promise<boolean>;
@@ -149,6 +156,54 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
       }
     },
     [organizationId, refreshTraining, supabase],
+  );
+
+  const updateCourse = useCallback(
+    async (input: UpdateTrainingCourseInput): Promise<TrainingCourse | null> => {
+      setIsSaving(true);
+      try {
+        const course = await updateTrainingCourse(supabase, input);
+        await refreshTraining();
+        toast.success("Course updated");
+        return course;
+      } catch (error) {
+        toast.error("Failed to update course", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshTraining, supabase],
+  );
+
+  const removeCourse = useCallback(
+    async (courseId: string): Promise<boolean> => {
+      const course = courses.find(c => c.id === courseId);
+      if (course?.isDefault) {
+        toast.error("Cannot delete default course", {
+          description: "Built-in courses cannot be removed.",
+        });
+        return false;
+      }
+
+      setIsSaving(true);
+      try {
+        await deleteTrainingCourse(supabase, courseId);
+        await refreshTraining();
+        toast.success("Course removed");
+        return true;
+      } catch (error) {
+        toast.error("Failed to remove course", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [courses, refreshTraining, supabase],
   );
 
   const addModule = useCallback(
@@ -404,6 +459,8 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         isSaving,
         refreshTraining,
         addCourse,
+        updateCourse,
+        removeCourse,
         addModule,
         removeModuleById,
         moveModule,
