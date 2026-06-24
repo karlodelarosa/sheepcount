@@ -7,6 +7,7 @@ import { WelcomeMessage } from "./_components/welcome-message";
 import { UserDropdown } from "./_components/user-dropdown";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 import { NotificationDropdown } from "./_components/notification";
+import { AuditTrailButton } from "./_components/audit-trail-button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function TopBar() {
@@ -56,7 +57,8 @@ export function TopBar() {
           {/* Dark Mode Toggle */}
           <ThemeSwitcher />
 
-          {/* Notifications */}
+          <AuditTrailButton />
+
           <NotificationDropdown />
 
           {/* User Dropdown */}

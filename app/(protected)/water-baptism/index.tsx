@@ -1,16 +1,19 @@
 "use client";
 
-import Link from "next/link";
-import { Droplets, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Droplets } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useOrganizationSettings } from "@/lib/organization-settings";
+import { useEntitlements } from "@/lib/subscription/use-entitlements";
+import { isItemEnabled } from "@/lib/subscription/entitlements";
 import { BaptismRegistry } from "./_components/baptism-registry";
 
 export function WaterBaptismView() {
-  const { settings, hydrated } = useOrganizationSettings();
+  const { entitlements, isLoading } = useEntitlements();
+  const waterBaptismEnabled = isItemEnabled(
+    entitlements.modules,
+    "water_baptism",
+  );
 
-  if (!hydrated) {
+  if (isLoading) {
     return (
       <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
         Loading...
@@ -18,7 +21,7 @@ export function WaterBaptismView() {
     );
   }
 
-  if (!settings.waterBaptismEnabled) {
+  if (!waterBaptismEnabled) {
     return (
       <div className="space-y-6">
         <div>
@@ -34,18 +37,12 @@ export function WaterBaptismView() {
           <CardContent className="py-16 text-center">
             <Droplets className="w-12 h-12 mx-auto text-slate-300 dark:text-zinc-600" />
             <h2 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">
-              Water baptism tracking is disabled
+              Water baptism tracking is not enabled
             </h2>
             <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 max-w-md mx-auto">
-              Enable this feature in Settings to record baptisms, view the
-              registry, and generate digital certificates.
+              This module is managed by your platform administrator. Contact
+              support if you need water baptism tracking for your church.
             </p>
-            <Button asChild className="mt-6 rounded-xl">
-              <Link href="/settings">
-                <Settings className="w-4 h-4 mr-2" />
-                Open Settings
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       </div>

@@ -1,3 +1,5 @@
+import type { Entitlements } from "@/lib/subscription/plans";
+
 export type ProfileRole = "admin" | "member";
 export type AccountStatus = "active" | "inactive";
 
@@ -42,6 +44,7 @@ export type TenantMembership = {
     created_at?: string;
   };
   subscription: Subscription;
+  entitlements: Entitlements;
   organizations?: Organization[];
 };
 

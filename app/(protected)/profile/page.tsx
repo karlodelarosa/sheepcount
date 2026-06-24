@@ -374,7 +374,10 @@ function ProfilePageContent() {
   if (!user) return null;
 
   const selectedOrg = organizations[selectedOrgIndex] ?? organizations[0];
-  const plan = selectedOrg?.plan || tenant?.tenant.plan || "Standard";
+  const plan = (selectedOrg?.plan || tenant?.tenant.plan || "basic").replace(
+    /^./,
+    c => c.toUpperCase(),
+  );
   const status = tenant?.status || "Active";
   const subscribedAt = subscription?.current_period_start
     ? dayjs(subscription.current_period_start).format("MMM D, YYYY")

@@ -27,6 +27,7 @@ const routeTitles: Record<string, string> = {
   settings: "Settings",
   profile: "Profile",
   prospect: "Prospects",
+  "audit-trail": "Audit Trail",
 };
 
 function getPageTitle(pathname: string) {

@@ -272,9 +272,16 @@ export type Database = {
           created_at: string;
           current_period_end: string;
           current_period_start: string;
+          features_override: Json;
           id: string;
+          module_overrides: Json;
           organization_id: string;
+          override_max_admin_seats: number | null;
+          override_max_attendance_sessions: number | null;
+          override_max_member_seats: number | null;
+          override_max_people: number | null;
           plan: string;
+          plan_key: string;
           provider: string;
           status: string;
           updated_at: string;
@@ -284,9 +291,16 @@ export type Database = {
           created_at?: string;
           current_period_end?: string;
           current_period_start?: string;
+          features_override?: Json;
           id?: string;
+          module_overrides?: Json;
           organization_id: string;
+          override_max_admin_seats?: number | null;
+          override_max_attendance_sessions?: number | null;
+          override_max_member_seats?: number | null;
+          override_max_people?: number | null;
           plan?: string;
+          plan_key?: string;
           provider?: string;
           status?: string;
           updated_at?: string;
@@ -296,9 +310,16 @@ export type Database = {
           created_at?: string;
           current_period_end?: string;
           current_period_start?: string;
+          features_override?: Json;
           id?: string;
+          module_overrides?: Json;
           organization_id?: string;
+          override_max_admin_seats?: number | null;
+          override_max_attendance_sessions?: number | null;
+          override_max_member_seats?: number | null;
+          override_max_people?: number | null;
           plan?: string;
+          plan_key?: string;
           provider?: string;
           status?: string;
           updated_at?: string;
@@ -311,6 +332,99 @@ export type Database = {
             referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "subscriptions_plan_key_fkey";
+            columns: ["plan_key"];
+            isOneToOne: false;
+            referencedRelation: "subscription_plans";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      subscription_plans: {
+        Row: {
+          created_at: string;
+          features: Json;
+          id: string;
+          is_active: boolean;
+          key: string;
+          max_admin_seats: number;
+          max_attendance_sessions: number;
+          max_member_seats: number;
+          max_people: number;
+          modules: Json;
+          name: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          features?: Json;
+          id?: string;
+          is_active?: boolean;
+          key: string;
+          max_admin_seats?: number;
+          max_attendance_sessions?: number;
+          max_member_seats?: number;
+          max_people?: number;
+          modules?: Json;
+          name: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          features?: Json;
+          id?: string;
+          is_active?: boolean;
+          key?: string;
+          max_admin_seats?: number;
+          max_attendance_sessions?: number;
+          max_member_seats?: number;
+          max_people?: number;
+          modules?: Json;
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      organization_audit_logs: {
+        Row: {
+          action: string;
+          actor_user_id: string | null;
+          created_at: string;
+          entity_id: string | null;
+          entity_type: string;
+          id: string;
+          metadata: Json;
+          organization_id: string;
+        };
+        Insert: {
+          action: string;
+          actor_user_id?: string | null;
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type?: string;
+          id?: string;
+          metadata?: Json;
+          organization_id: string;
+        };
+        Update: {
+          action?: string;
+          actor_user_id?: string | null;
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type?: string;
+          id?: string;
+          metadata?: Json;
+          organization_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "organization_audit_logs_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
         ];
       };
     };
@@ -318,6 +432,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      get_org_entitlements: { Args: { p_org_id: string }; Returns: Json };
       is_org_admin: { Args: { org_id: string }; Returns: boolean };
       is_org_member: { Args: { org_id: string }; Returns: boolean };
       setup_organization: {

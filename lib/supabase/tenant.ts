@@ -7,6 +7,7 @@ import type {
   Subscription,
   TenantMembership,
 } from "@/lib/types/tenant";
+import { fetchOrgEntitlements } from "@/lib/supabase/entitlements";
 
 type DbOrganization = {
   id: string;
@@ -104,6 +105,8 @@ export async function fetchTenantMembership(
 
   const organization = toOrganization(org as DbOrganization);
 
+  const entitlements = await fetchOrgEntitlements(supabase, org.id);
+
   return {
     id: membership.id,
     user_id: membership.user_id,
@@ -126,6 +129,7 @@ export async function fetchTenantMembership(
     },
     organizations: [organization],
     subscription: toSubscription(subscription, org as DbOrganization),
+    entitlements,
   };
 }
 

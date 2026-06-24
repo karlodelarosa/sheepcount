@@ -7,9 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/context/theme-context";
-import { Moon, Sun, Palette, Building2, Upload, Droplets } from "lucide-react";
+import { Moon, Sun, Palette, Building2, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useOrganizationSettings } from "@/lib/organization-settings";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
@@ -34,12 +33,6 @@ export function SettingsView() {
   const supabase = useMemo(() => createClient(), []);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const {
-    settings: orgSettings,
-    hydrated: orgSettingsHydrated,
-    isSaving: orgSettingsSaving,
-    setWaterBaptismEnabled,
-  } = useOrganizationSettings();
 
   const organizationId = getOrganizationId(tenant);
 
@@ -267,38 +260,6 @@ export function SettingsView() {
                   )}
                 </button>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Features */}
-        <Card className="border-border/60 bg-card/50 backdrop-blur-sm lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center">
-                <Droplets className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <CardTitle>Features</CardTitle>
-                <CardDescription>
-                  Enable optional modules for your church
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-background/50">
-              <div>
-                <p className="text-foreground">Water Baptism</p>
-                <p className="text-muted-foreground">
-                  Track baptisms, view the registry, and generate certificates
-                </p>
-              </div>
-              <Switch
-                checked={orgSettings.waterBaptismEnabled ?? false}
-                disabled={!orgSettingsHydrated || orgSettingsSaving}
-                onCheckedChange={setWaterBaptismEnabled}
-              />
             </div>
           </CardContent>
         </Card>

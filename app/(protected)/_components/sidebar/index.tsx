@@ -13,30 +13,7 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from "@/components/ui/sidebar/index";
-import {
-  LayoutDashboard,
-  Users,
-  Building2,
-  Home,
-  Award,
-  Shield,
-  GraduationCap,
-  UserCircle,
-  DollarSign,
-  Target,
-  BookOpen,
-  CalendarDays,
-  UserCog,
-  ChevronDown,
-  Settings,
-  Church,
-  Book,
-  Lightbulb,
-  Tent,
-  HeartHandshake,
-  GitBranch,
-  Droplets,
-} from "lucide-react";
+import { ChevronDown, Settings } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -44,38 +21,21 @@ import {
 } from "@/components/ui/collapsible/index";
 import { useTheme } from "@/context/theme-context";
 import { usePeople } from "@/lib/people";
-import { useOrganizationSettingsOptional } from "@/lib/organization-settings";
 import { APP_NAME } from "@/lib/branding";
 import { BrandingLogo } from "@/components/branding-logo";
 import { cn } from "@/lib/utils";
-
-type ViewRoute =
-  | "dashboard"
-  | "people"
-  | "households"
-  | "life-groups"
-  | "cell-groups"
-  | "work-ministry"
-  | "leadership"
-  | "training"
-  | "properties"
-  | "financial"
-  | "goal-projects"
-  | "discipleship"
-  | "program"
-  | "workers"
-  | "settings"
-  | "service-attendance"
-  | "event-attendance"
-  | "growth-track"
-  | "water-baptism"
-  | "bible-study"
-  | "church-goals";
+import { useEntitlements } from "@/lib/subscription/use-entitlements";
+import {
+  DASHBOARD_MENU_ITEM,
+  SIDEBAR_MENU_REGISTRY,
+  type ViewRoute,
+} from "@/lib/subscription/plans";
+import { isGroupEnabled, isItemEnabled } from "@/lib/subscription/entitlements";
 
 export function Sidebar() {
   const { settings } = useTheme();
   const { people, hydrated } = usePeople();
-  const orgSettings = useOrganizationSettingsOptional();
+  const { entitlements } = useEntitlements();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -89,14 +49,11 @@ export function Sidebar() {
     return `/${view}`;
   };
 
-  // Helper to determine active state by comparing the current pathname to the link path
   const isActive = (view: ViewRoute) => {
     const path = getPath(view);
-    // Dashboard should be an exact match for the root protected path
     if (view === "dashboard") {
       return pathname === path;
     }
-    // Other links should check if the pathname starts with their route path
     return pathname.startsWith(path);
   };
 
@@ -115,138 +72,18 @@ export function Sidebar() {
           : "hover:bg-muted text-foreground",
     );
 
-  const menuGroups: {
-    title: string;
-    defaultOpen?: boolean;
-    items: {
-      title: string;
-      icon: React.ComponentType<{ className?: string }>;
-      value: ViewRoute;
-      disabled?: boolean;
-    }[];
-  }[] = [
-    {
-      title: "People & Membership",
-      items: [
-        { title: "People", icon: Users, value: "people" as const },
-        { title: "Workers", icon: UserCog, value: "workers" as const },
-        { title: "Households", icon: Home, value: "households" as const },
-        ...(orgSettings?.settings.waterBaptismEnabled
-          ? [
-              {
-                title: "Water Baptism",
-                icon: Droplets,
-                value: "water-baptism" as const,
-              },
-            ]
-          : []),
-      ],
-    },
-    {
-      title: "Groups & Ministry",
-      items: [
-        {
-          title: "Life Groups",
-          icon: UserCircle,
-          value: "life-groups" as const,
-        },
-        {
-          title: "Cell Groups",
-          icon: HeartHandshake,
-          value: "cell-groups" as const,
-        },
-        {
-          title: "Work Ministry",
-          icon: Award,
-          value: "work-ministry" as const,
-        },
-      ],
-    },
-    {
-      title: "Attendance",
-      items: [
-        {
-          title: "Service Attendance",
-          icon: Church,
-          value: "service-attendance" as const,
-        },
-        {
-          title: "Event Attendance",
-          icon: Tent,
-          value: "event-attendance" as const,
-        },
-      ],
-    },
-    {
-      title: "Development",
-      items: [
-        { title: "Training", icon: GraduationCap, value: "training" as const },
-        {
-          title: "Discipleship",
-          icon: BookOpen,
-          value: "discipleship" as const,
-        },
-        { title: "Bible Studies", icon: Book, value: "bible-study" as const },
-        { title: "Programs", icon: CalendarDays, value: "program" as const },
-      ],
-    },
-    {
-      title: "Leadership",
-      items: [
-        {
-          title: "Leadership",
-          icon: Shield,
-          value: "leadership" as const,
-        },
-      ],
-    },
-    {
-      title: "Growth Track",
-      items: [
-        {
-          title: "Growth Track",
-          icon: GitBranch,
-          value: "growth-track" as const,
-        },
-      ],
-    },
-    {
-      title: "Operations",
-      defaultOpen: false,
-      items: [
-        {
-          title: "Properties",
-          icon: Building2,
-          value: "properties" as const,
-          disabled: true,
-        },
-      ],
-    },
-    {
-      title: "Finance & Projects",
-      defaultOpen: false,
-      items: [
-        {
-          title: "Financial",
-          icon: DollarSign,
-          value: "financial" as const,
-          disabled: true,
-        },
-        {
-          title: "Goal Projects",
-          icon: Target,
-          value: "goal-projects" as const,
-          disabled: true,
-        },
-        {
-          title: "Church Goals",
-          icon: Lightbulb,
-          value: "church-goals" as const,
-          disabled: true,
-        },
-      ],
-    },
-  ];
+  const visibleGroups = SIDEBAR_MENU_REGISTRY.map(group => ({
+    ...group,
+    items: group.items.filter(item => isItemEnabled(entitlements.modules, item.key)),
+  })).filter(
+    group =>
+      isGroupEnabled(entitlements.modules, group.key) && group.items.length > 0,
+  );
+
+  const showDashboard = isItemEnabled(
+    entitlements.modules,
+    DASHBOARD_MENU_ITEM.key,
+  );
 
   return (
     <SidebarComponent className="w-52 shrink-0 border-r border-border/60 bg-card/80 backdrop-blur-sm text-sm">
@@ -266,22 +103,24 @@ export function Sidebar() {
 
       <SidebarContent className="p-2">
         <SidebarMenu className="space-y-0.5">
-          {/* Dashboard - Always visible */}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => navigateTo("dashboard")}
-              isActive={isActive("dashboard")}
-              className={sidebarItemClass(isActive("dashboard"))}
-            >
-              <LayoutDashboard className="w-4 h-4 mr-2" />
-              <span>Dashboard</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {showDashboard && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => navigateTo(DASHBOARD_MENU_ITEM.route)}
+                isActive={isActive(DASHBOARD_MENU_ITEM.route)}
+                className={sidebarItemClass(
+                  isActive(DASHBOARD_MENU_ITEM.route),
+                )}
+              >
+                <DASHBOARD_MENU_ITEM.icon className="w-4 h-4 mr-2" />
+                <span>{DASHBOARD_MENU_ITEM.title}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
 
-          {/* Grouped Menu Items */}
-          {menuGroups.map((group, groupIndex) => (
+          {visibleGroups.map(group => (
             <Collapsible
-              key={groupIndex}
+              key={group.key}
               defaultOpen={group.defaultOpen ?? true}
               className="group/collapsible"
             >
@@ -295,29 +134,33 @@ export function Sidebar() {
                 <CollapsibleContent>
                   <SidebarGroupContent>
                     <SidebarMenu className="space-y-1">
-                      {group.items.map(item => (
-                        <SidebarMenuItem key={item.value}>
-                          <SidebarMenuButton
-                            disabled={item.disabled}
-                            onClick={
-                              item.disabled
-                                ? undefined
-                                : () => navigateTo(item.value)
-                            }
-                            isActive={!item.disabled && isActive(item.value)}
-                            tooltip={
-                              item.disabled ? "Coming soon" : undefined
-                            }
-                            className={sidebarItemClass(
-                              !item.disabled && isActive(item.value),
-                              item.disabled,
-                            )}
-                          >
-                            <item.icon className="w-4 h-4 mr-2" />
-                            <span>{item.title}</span>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
+                      {group.items.map(item => {
+                        const disabled = item.comingSoon ?? false;
+
+                        return (
+                          <SidebarMenuItem key={item.key}>
+                            <SidebarMenuButton
+                              disabled={disabled}
+                              onClick={
+                                disabled
+                                  ? undefined
+                                  : () => navigateTo(item.route)
+                              }
+                              isActive={!disabled && isActive(item.route)}
+                              tooltip={
+                                disabled ? "Coming soon" : undefined
+                              }
+                              className={sidebarItemClass(
+                                !disabled && isActive(item.route),
+                                disabled,
+                              )}
+                            >
+                              <item.icon className="w-4 h-4 mr-2" />
+                              <span>{item.title}</span>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        );
+                      })}
                     </SidebarMenu>
                   </SidebarGroupContent>
                 </CollapsibleContent>
@@ -325,7 +168,6 @@ export function Sidebar() {
             </Collapsible>
           ))}
 
-          {/* Settings - Always visible at bottom */}
           <SidebarMenuItem className="mt-2">
             <SidebarMenuButton
               onClick={() => navigateTo("settings")}

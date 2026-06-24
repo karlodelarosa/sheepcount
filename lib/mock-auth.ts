@@ -1,5 +1,6 @@
 import type { TenantMembership } from "@/lib/types/tenant";
 import { DEMO_EMAIL, DEMO_ORG_NAME, DEMO_TENANT_SLUG } from "@/lib/branding";
+import { PRO_ENTITLEMENTS_FALLBACK } from "@/lib/subscription/entitlements";
 
 export const mockUser = {
   id: "mock-user-id",
@@ -13,14 +14,14 @@ const mockOrganization = {
   address: "123 Main St, Demo City",
   phone: "(555) 000-0000",
   image: "",
-  plan: "Standard",
+  plan: "pro",
   created_at: "2024-01-01T00:00:00Z",
   updated_at: "2024-01-01T00:00:00Z",
 };
 
 const mockSubscription = {
   provider: "mock",
-  plan: "Standard",
+  plan: "pro",
   status: "active",
   current_period_start: "2024-01-01T00:00:00Z",
   current_period_end: "2025-01-01T00:00:00Z",
@@ -54,13 +55,13 @@ export const mockTenantMembership: TenantMembership & {
     id: "mock-tenant-id",
     name: DEMO_ORG_NAME,
     slug: DEMO_TENANT_SLUG,
-    plan: "standard",
+    plan: "pro",
     status: "active" as const,
     organizations: [mockOrganization],
   },
   organizations: [mockOrganization],
   subscription: mockSubscription,
-  status: "Active",
+  entitlements: PRO_ENTITLEMENTS_FALLBACK,
 };
 
 export function seedLocalSession(email?: string) {

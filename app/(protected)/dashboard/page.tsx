@@ -586,7 +586,7 @@ export default function DashboardPage() {
           <span>
             Plan:{" "}
             <span className="text-violet-700 dark:text-violet-300 font-medium capitalize">
-              {tenant?.subscription?.plan ?? "Standard"}
+              {(tenant?.subscription?.plan ?? "basic").replace(/^./, c => c.toUpperCase())}
             </span>
           </span>
           <span className="text-border">·</span>
