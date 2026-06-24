@@ -32,6 +32,7 @@ const mockThemeSettings = {
   accentColor: "#030213",
   organizationName: DEMO_ORG_NAME,
   organizationLogo: null,
+  useOrganizationLogo: false,
 };
 
 export const mockTenantMembership: TenantMembership & {

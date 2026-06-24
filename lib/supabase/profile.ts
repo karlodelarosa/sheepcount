@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const AVATAR_BUCKET = "avatars";
+export const ORGANIZATION_LOGO_BUCKET = "organization-logos";
 
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 const AVATAR_MIME_TYPES = new Set([
@@ -20,6 +21,7 @@ export type UpdateOrganizationInput = {
   name?: string;
   phone?: string | null;
   address?: string | null;
+  image?: string | null;
 };
 
 function getAvatarExtension(file: File): string {
@@ -129,6 +131,72 @@ export async function updateUserProfile(
 
   if (error) throw error;
   return data;
+}
+
+function getOrganizationLogoObjectPath(
+  organizationId: string,
+  extension: string,
+): string {
+  return `${organizationId}/logo.${extension}`;
+}
+
+async function deleteOrganizationLogoFiles(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<void> {
+  const { data: files, error: listError } = await supabase.storage
+    .from(ORGANIZATION_LOGO_BUCKET)
+    .list(organizationId);
+
+  if (listError) throw listError;
+  if (!files?.length) return;
+
+  const paths = files.map(file => `${organizationId}/${file.name}`);
+  const { error: removeError } = await supabase.storage
+    .from(ORGANIZATION_LOGO_BUCKET)
+    .remove(paths);
+
+  if (removeError) throw removeError;
+}
+
+export async function uploadOrganizationLogo(
+  supabase: SupabaseClient,
+  organizationId: string,
+  file: File,
+) {
+  validateAvatarFile(file);
+
+  const extension = getAvatarExtension(file);
+  const path = getOrganizationLogoObjectPath(organizationId, extension);
+
+  await deleteOrganizationLogoFiles(supabase, organizationId);
+
+  const { error: uploadError } = await supabase.storage
+    .from(ORGANIZATION_LOGO_BUCKET)
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: file.type,
+    });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage
+    .from(ORGANIZATION_LOGO_BUCKET)
+    .getPublicUrl(path);
+  const logoUrl = `${data.publicUrl}?t=${Date.now()}`;
+
+  return updateOrganizationDetails(supabase, organizationId, {
+    image: logoUrl,
+  });
+}
+
+export async function removeOrganizationLogo(
+  supabase: SupabaseClient,
+  organizationId: string,
+) {
+  await deleteOrganizationLogoFiles(supabase, organizationId);
+  return updateOrganizationDetails(supabase, organizationId, { image: null });
 }
 
 export async function updateOrganizationDetails(

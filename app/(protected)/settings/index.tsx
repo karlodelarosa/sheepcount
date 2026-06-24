@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,15 +10,90 @@ import { useTheme } from "@/context/theme-context";
 import { Moon, Sun, Palette, Building2, Upload, Droplets } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useOrganizationSettings } from "@/lib/organization-settings";
+import { useTenant } from "@/app/providers/tenant-provider";
+import { createClient } from "@/lib/supabase/client";
+import { getOrganizationId } from "@/lib/supabase/tenant";
+import {
+  removeOrganizationLogo,
+  uploadOrganizationLogo,
+  validateAvatarFile,
+} from "@/lib/supabase/profile";
+import { toast } from "sonner";
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null && "message" in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return "Something went wrong. Please try again.";
+}
 
 export function SettingsView() {
   const { settings, updateSettings, toggleMode } = useTheme();
+  const { tenant, refreshSession } = useTenant();
+  const supabase = useMemo(() => createClient(), []);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const {
     settings: orgSettings,
     hydrated: orgSettingsHydrated,
     isSaving: orgSettingsSaving,
     setWaterBaptismEnabled,
   } = useOrganizationSettings();
+
+  const organizationId = getOrganizationId(tenant);
+
+  const handleLogoFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || !organizationId) return;
+
+    try {
+      validateAvatarFile(file);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      const updated = await uploadOrganizationLogo(
+        supabase,
+        organizationId,
+        file,
+      );
+      updateSettings({ organizationLogo: updated.image ?? null });
+      await refreshSession();
+      toast.success("Organization logo updated");
+    } catch (error) {
+      toast.error("Failed to upload organization logo", {
+        description: getErrorMessage(error),
+      });
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!organizationId) return;
+
+    setIsUploadingLogo(true);
+    try {
+      await removeOrganizationLogo(supabase, organizationId);
+      updateSettings({ organizationLogo: null, useOrganizationLogo: false });
+      await refreshSession();
+      toast.success("Organization logo removed");
+    } catch (error) {
+      toast.error("Failed to remove organization logo", {
+        description: getErrorMessage(error),
+      });
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
 
   const accentColors = [
     { name: "Slate", value: "#030213" },
@@ -95,15 +171,61 @@ export function SettingsView() {
             <div className="space-y-2">
               <Label>Organization Logo</Label>
               <div className="flex items-center gap-3">
-                <Button variant="outline" className="gap-2">
+                {settings.organizationLogo ? (
+                  <img
+                    src={settings.organizationLogo}
+                    alt="Organization logo"
+                    className="h-12 w-12 rounded-lg border border-border/60 object-cover"
+                  />
+                ) : null}
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleLogoFileChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2"
+                  disabled={!organizationId || isUploadingLogo}
+                  onClick={() => logoInputRef.current?.click()}
+                >
                   <Upload className="w-4 h-4" />
-                  Upload Logo
+                  {isUploadingLogo ? "Uploading..." : "Upload Logo"}
                 </Button>
-                {settings.organizationLogo && (
+                {settings.organizationLogo ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={!organizationId || isUploadingLogo}
+                    onClick={handleRemoveLogo}
+                  >
+                    Remove
+                  </Button>
+                ) : null}
+                {settings.organizationLogo && !isUploadingLogo ? (
                   <Badge variant="secondary">Logo uploaded</Badge>
-                )}
+                ) : null}
               </div>
               <p className="text-muted-foreground">Recommended: Square image, at least 200x200px</p>
+            </div>
+
+            <div className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-background/50">
+              <div>
+                <p className="text-foreground">Use organization logo</p>
+                <p className="text-muted-foreground">
+                  Show your logo in the sidebar instead of the Ministry Lens icon
+                </p>
+              </div>
+              <Switch
+                checked={settings.useOrganizationLogo}
+                disabled={!settings.organizationLogo}
+                onCheckedChange={(checked) =>
+                  updateSettings({ useOrganizationLogo: checked })
+                }
+              />
             </div>
           </CardContent>
         </Card>

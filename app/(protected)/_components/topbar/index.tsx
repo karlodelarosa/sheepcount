@@ -14,10 +14,23 @@ export function TopBar() {
   const { user, tenant, isLoading, isLoggingOut } = useTenant();
 
   useEffect(() => {
-    if (tenant?.tenant.name && tenant.tenant.name !== settings.organizationName) {
-      updateSettings({ organizationName: tenant.tenant.name });
+    const org = tenant?.organizations?.[0] ?? tenant?.tenant.organizations?.[0];
+    if (!org) return;
+
+    if (org.name && org.name !== settings.organizationName) {
+      updateSettings({ organizationName: org.name });
     }
-  }, [tenant, settings.organizationName, updateSettings]);
+
+    const orgLogo = org.image || null;
+    if (orgLogo !== settings.organizationLogo) {
+      updateSettings({
+        organizationLogo: orgLogo || null,
+        ...(!orgLogo && settings.useOrganizationLogo
+          ? { useOrganizationLogo: false }
+          : {}),
+      });
+    }
+  }, [tenant, settings.organizationName, settings.organizationLogo, updateSettings]);
 
   if (isLoading) {
     return (

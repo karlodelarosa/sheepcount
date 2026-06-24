@@ -9,6 +9,7 @@ interface ThemeSettings {
   accentColor: string;
   organizationName: string;
   organizationLogo: string | null;
+  useOrganizationLogo: boolean;
 }
 
 interface ThemeContextType {
@@ -23,6 +24,7 @@ const defaultSettings: ThemeSettings = {
   accentColor: "#030213",
   organizationName: "Grace Community Church",
   organizationLogo: null,
+  useOrganizationLogo: false,
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

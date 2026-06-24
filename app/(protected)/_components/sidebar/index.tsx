@@ -46,7 +46,7 @@ import { useTheme } from "@/context/theme-context";
 import { usePeople } from "@/lib/people";
 import { useOrganizationSettingsOptional } from "@/lib/organization-settings";
 import { APP_NAME } from "@/lib/branding";
-import { BrandLogoIcon } from "@/components/brand-logo-icon";
+import { BrandingLogo } from "@/components/branding-logo";
 import { cn } from "@/lib/utils";
 
 type ViewRoute =
@@ -252,7 +252,7 @@ export function Sidebar() {
     <SidebarComponent className="w-52 shrink-0 border-r border-border/60 bg-card/80 backdrop-blur-sm text-sm">
       <SidebarHeader className="border-b border-border/60 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <BrandLogoIcon className="w-7 h-7" iconClassName="w-3.5 h-3.5" />
+          <BrandingLogo className="w-7 h-7" iconClassName="w-3.5 h-3.5" />
           <div className="min-w-0">
             <h2 className="text-foreground text-sm font-semibold truncate">
               {APP_NAME}
