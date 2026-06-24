@@ -10,6 +10,7 @@ import { useEvents } from "@/lib/events";
 import { usePeople } from "@/lib/people";
 import { AddProgramDialog } from "./_components/add-program-dialog";
 import { RegisterParticipantDialog } from "./_components/register-participants-dialog";
+import { OverviewStatCard } from "@/components/overview-stat-card";
 
 export function ProgramsView() {
   const router = useRouter();
@@ -24,7 +25,6 @@ export function ProgramsView() {
     "border-slate-200/60 bg-white hover:shadow-lg transition-all duration-200 cursor-pointer group dark:border-zinc-700/60 dark:bg-zinc-800/70";
   const DualModeSecondaryBadgeClass =
     "rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
-  const DualModeIconColor = "h-5 w-5 text-slate-600 dark:text-zinc-400";
   const DualModeMemberAvatarClass =
     "from-slate-900 to-slate-700 dark:from-purple-700 dark:to-purple-500";
 
@@ -52,45 +52,32 @@ export function ProgramsView() {
         </AlertDescription>
       </Alert>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className={DualModeHeaderCardClass}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-slate-900 dark:text-white">Total Events</CardTitle>
-            <Calendar className={DualModeIconColor} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-slate-900 dark:text-white">{publishedEvents.length}</div>
-            <p className="text-slate-600 dark:text-zinc-400">Church calendar events</p>
-          </CardContent>
-        </Card>
-
-        <Card className={DualModeHeaderCardClass}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-slate-900 dark:text-white">Registrations</CardTitle>
-            <Users className={DualModeIconColor} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-slate-900 dark:text-white">{registrations.length}</div>
-            <p className="text-slate-600 dark:text-zinc-400">Total sign-ups</p>
-          </CardContent>
-        </Card>
-
-        <Card className={DualModeHeaderCardClass}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-slate-900 dark:text-white">Upcoming</CardTitle>
-            <Calendar className={DualModeIconColor} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-slate-900 dark:text-white">
-              {
-                publishedEvents.filter(
-                  e => new Date(e.startDate) >= new Date(new Date().toDateString()),
-                ).length
-              }
-            </div>
-            <p className="text-slate-600 dark:text-zinc-400">Events ahead</p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <OverviewStatCard
+          label="Total Events"
+          value={publishedEvents.length}
+          hint="Church calendar events"
+          icon={Calendar}
+          variant="violet"
+        />
+        <OverviewStatCard
+          label="Registrations"
+          value={registrations.length}
+          hint="Total sign-ups"
+          icon={Users}
+          variant="blue"
+        />
+        <OverviewStatCard
+          label="Upcoming"
+          value={
+            publishedEvents.filter(
+              e => new Date(e.startDate) >= new Date(new Date().toDateString()),
+            ).length
+          }
+          hint="Events ahead"
+          icon={Calendar}
+          variant="emerald"
+        />
       </div>
 
       <Card className={DualModeHeaderCardClass}>

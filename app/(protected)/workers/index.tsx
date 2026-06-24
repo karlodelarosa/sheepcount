@@ -43,12 +43,10 @@ import {
   isAttenderNewComer,
 } from "@/lib/membership-path";
 import { cn } from "@/lib/utils";
+import { OverviewStatCard } from "@/components/overview-stat-card";
 
 const panelCard =
   "rounded-xl border border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:border-zinc-700/90 dark:bg-zinc-900/95 dark:shadow-[0_1px_3px_rgba(0,0,0,0.25)]";
-
-const statCard =
-  "rounded-xl border border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:border-zinc-700/90 dark:bg-zinc-900/95 dark:shadow-[0_1px_3px_rgba(0,0,0,0.25)] transition-shadow hover:shadow-[0_2px_8px_rgba(15,23,42,0.08)] dark:hover:shadow-[0_2px_8px_rgba(0,0,0,0.35)]";
 
 function formatDate(date: string) {
   if (!date) return "—";
@@ -60,41 +58,6 @@ function PersonAvatar({ name }: { name: string }) {
     <div className="w-9 h-9 rounded-lg bg-slate-800 dark:bg-zinc-700 flex items-center justify-center shadow-sm shrink-0">
       <span className="text-white text-sm font-medium">{name.charAt(0)}</span>
     </div>
-  );
-}
-
-function StatSummaryCard({
-  label,
-  value,
-  hint,
-  icon: Icon,
-}: {
-  label: string;
-  value: number;
-  hint: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
-  return (
-    <Card className={statCard}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1 min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-              {label}
-            </p>
-            <p className="text-2xl font-semibold tabular-nums text-slate-900 dark:text-white leading-none">
-              {value}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-zinc-500 truncate">
-              {hint}
-            </p>
-          </div>
-          <div className="shrink-0 rounded-lg border border-slate-200/80 bg-slate-50 p-2 dark:border-zinc-600/80 dark:bg-zinc-800/80">
-            <Icon className="w-4 h-4 text-slate-600 dark:text-zinc-300" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -481,30 +444,34 @@ export function WorkersView() {
       </TabsList>
 
       <TabsContent value="overview" className="mt-0 space-y-5">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatSummaryCard
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 pb-6">
+          <OverviewStatCard
             label="Total active"
             value={totalActive}
             hint="Workers, members & attenders"
             icon={Users}
+            variant="violet"
           />
-          <StatSummaryCard
+          <OverviewStatCard
             label="Workers"
             value={workers.length}
             hint={`${workersWithMinistry.length} in ministries`}
             icon={UserCog}
+            variant="blue"
           />
-          <StatSummaryCard
+          <OverviewStatCard
             label="Members"
             value={members.length}
             hint="Official church members"
             icon={UserCheck}
+            variant="emerald"
           />
-          <StatSummaryCard
+          <OverviewStatCard
             label="Attenders"
             value={attenders.length}
             hint={`${newComers.length} new comer${newComers.length !== 1 ? "s" : ""}`}
             icon={UserPlus}
+            variant="amber"
           />
         </div>
 

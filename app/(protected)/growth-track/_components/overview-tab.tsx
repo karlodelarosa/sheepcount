@@ -35,7 +35,7 @@ import {
 import type { GrowthTrackOverview } from "@/lib/growth-track/overview";
 import type { EvangelismStage } from "@/lib/people";
 import type { ActionHubSectionFilter } from "../_lib/action-sections";
-import { OverviewStatCard } from "./overview-stat-card";
+import { OverviewStatCard } from "@/components/overview-stat-card";
 import { ChartPanel, ChartEmpty } from "./chart-panel";
 import { cn } from "@/lib/utils";
 

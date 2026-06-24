@@ -29,6 +29,7 @@ import { AddBibleStudyGroupDialog } from "./_components/add-bible-group-dialog";
 import { ManageMembersDialog } from "./_components/manage-member-dialog";
 import { UpdateBibleStudyStatusDialog } from "./_components/update-status-dialog";
 import { ChangeLeaderDialog } from "./_components/change-leader-dialog";
+import { OverviewStatCard } from "@/components/overview-stat-card";
 
 const STATUS_LABELS: Record<BibleStudyStatus, string> = {
   active: "Active",
@@ -127,50 +128,35 @@ export function BibleStudyGroupsView() {
         </AddBibleStudyGroupDialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Active Groups</CardTitle>
-            <Book className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-foreground">{activeGroups.length}</div>
-            <p className="text-muted-foreground">Currently meeting</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Total Participants</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-foreground">{members.length}</div>
-            <p className="text-muted-foreground">Across all groups</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Host Households</CardTitle>
-            <Home className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-foreground">{activeHouseholdIds.size}</div>
-            <p className="text-muted-foreground">Hosting Bible studies</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Avg Group Size</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-foreground">{avgGroupSize}</div>
-            <p className="text-muted-foreground">Members per group</p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <OverviewStatCard
+          label="Active Groups"
+          value={activeGroups.length}
+          hint="Currently meeting"
+          icon={Book}
+          variant="violet"
+        />
+        <OverviewStatCard
+          label="Total Participants"
+          value={members.length}
+          hint="Across all groups"
+          icon={Users}
+          variant="blue"
+        />
+        <OverviewStatCard
+          label="Host Households"
+          value={activeHouseholdIds.size}
+          hint="Hosting Bible studies"
+          icon={Home}
+          variant="emerald"
+        />
+        <OverviewStatCard
+          label="Avg Group Size"
+          value={avgGroupSize}
+          hint="Members per group"
+          icon={Users}
+          variant="amber"
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
