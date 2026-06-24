@@ -9,8 +9,7 @@ import { useGrowthTrack } from "@/lib/growth-track";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
 import { useOrganizationSettings } from "@/lib/organization-settings";
 import { useEntitlements } from "@/lib/subscription/use-entitlements";
-import { isItemEnabled } from "@/lib/subscription/entitlements";
-import { isMenuItemVisibleInNav } from "@/lib/types/organization-settings";
+import { isMenuItemShownInNavigation } from "@/lib/navigation-visibility";
 import type { ModuleItemKey } from "@/lib/subscription/plans";
 import { GROWTH_TRACK_STAGES } from "@/lib/growth-track/stage-config";
 import {
@@ -210,20 +209,18 @@ export default function DashboardPage() {
   const loading = !peopleHydrated || !growthHydrated || !groupsHydrated;
 
   const visibleShortcuts = useMemo(() => {
-    const hiddenMenuItems = orgSettings.hiddenMenuItems ?? [];
-
     return shortcuts.filter(item => {
       if (!item.moduleKey) {
         return true;
       }
 
-      if (!isItemEnabled(entitlements.modules, item.moduleKey)) {
-        return false;
-      }
-
-      return isMenuItemVisibleInNav(item.moduleKey, hiddenMenuItems);
+      return isMenuItemShownInNavigation(
+        item.moduleKey,
+        orgSettings,
+        entitlements.modules,
+      );
     });
-  }, [entitlements.modules, orgSettings.hiddenMenuItems]);
+  }, [entitlements.modules, orgSettings]);
 
   const stats = useMemo(() => {
     const activeMembers = people.filter(p => p.status === "Active").length;

@@ -29,6 +29,10 @@ type OrganizationSettingsContextValue = {
     itemKey: ModuleItemKey,
     hidden: boolean,
   ) => Promise<boolean>;
+  setMenuItemVisibility: (
+    itemKey: ModuleItemKey,
+    visible: boolean,
+  ) => Promise<boolean>;
 };
 
 const OrganizationSettingsContext =
@@ -130,6 +134,46 @@ export function OrganizationSettingsProvider({
     [organizationId, settings.hiddenMenuItems, supabase],
   );
 
+  const setMenuItemVisibility = useCallback(
+    async (itemKey: ModuleItemKey, visible: boolean): Promise<boolean> => {
+      if (!organizationId) return false;
+
+      const current = settings.hiddenMenuItems ?? [];
+      const hiddenMenuItems = visible
+        ? current.filter(key => key !== itemKey)
+        : [...new Set([...current, itemKey])];
+
+      const updates: Partial<OrganizationSettings> = { hiddenMenuItems };
+      if (itemKey === "water_baptism") {
+        updates.waterBaptismEnabled = visible;
+      }
+
+      setIsSaving(true);
+      try {
+        const next = await updateOrganizationSettings(
+          supabase,
+          organizationId,
+          updates,
+        );
+        setSettings(next);
+        if (itemKey === "water_baptism") {
+          toast.success(
+            visible
+              ? "Water baptism shown in navigation"
+              : "Water baptism hidden from navigation",
+          );
+        }
+        return true;
+      } catch (error) {
+        toast.error(getErrorMessage(error));
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, settings.hiddenMenuItems, supabase],
+  );
+
   const value = useMemo(
     () => ({
       settings,
@@ -138,6 +182,7 @@ export function OrganizationSettingsProvider({
       refreshSettings,
       setWaterBaptismEnabled,
       setMenuItemHidden,
+      setMenuItemVisibility,
     }),
     [
       settings,
@@ -146,6 +191,7 @@ export function OrganizationSettingsProvider({
       refreshSettings,
       setWaterBaptismEnabled,
       setMenuItemHidden,
+      setMenuItemVisibility,
     ],
   );
 

@@ -316,7 +316,6 @@ export const SIDEBAR_MENU_REGISTRY: SidebarMenuGroupDef[] = [
         title: "Properties",
         icon: Building2,
         route: "properties",
-        comingSoon: true,
       },
     ],
   },

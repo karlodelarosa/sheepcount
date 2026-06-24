@@ -30,8 +30,8 @@ import {
   SIDEBAR_MENU_REGISTRY,
   type ViewRoute,
 } from "@/lib/subscription/plans";
-import { isGroupEnabled, isItemEnabled } from "@/lib/subscription/entitlements";
-import { isMenuItemVisibleInNav } from "@/lib/types/organization-settings";
+import { isGroupEnabled } from "@/lib/subscription/entitlements";
+import { isMenuItemShownInNavigation } from "@/lib/navigation-visibility";
 import { useOrganizationSettings } from "@/lib/organization-settings";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -92,26 +92,21 @@ export function Sidebar() {
           : "hover:bg-muted text-foreground",
     );
 
-  const hiddenMenuItems = orgSettings.hiddenMenuItems ?? [];
-
-  const isNavItemVisible = (itemKey: (typeof DASHBOARD_MENU_ITEM)["key"]) =>
-    isMenuItemVisibleInNav(itemKey, hiddenMenuItems);
-
   const visibleGroups = SIDEBAR_MENU_REGISTRY.map(group => ({
     ...group,
-    items: group.items.filter(
-      item =>
-        isItemEnabled(entitlements.modules, item.key) &&
-        isNavItemVisible(item.key),
+    items: group.items.filter(item =>
+      isMenuItemShownInNavigation(item.key, orgSettings, entitlements.modules),
     ),
   })).filter(
     group =>
       isGroupEnabled(entitlements.modules, group.key) && group.items.length > 0,
   );
 
-  const showDashboard =
-    isItemEnabled(entitlements.modules, DASHBOARD_MENU_ITEM.key) &&
-    isNavItemVisible(DASHBOARD_MENU_ITEM.key);
+  const showDashboard = isMenuItemShownInNavigation(
+    DASHBOARD_MENU_ITEM.key,
+    orgSettings,
+    entitlements.modules,
+  );
 
   return (
     <SidebarComponent className="w-52 shrink-0 border-r border-border/60 bg-card/80 backdrop-blur-sm text-sm">

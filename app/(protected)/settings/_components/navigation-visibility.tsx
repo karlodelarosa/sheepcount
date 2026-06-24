@@ -12,14 +12,16 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useOrganizationSettings } from "@/lib/organization-settings";
+import {
+  getMenuItemVisibilityInSettings,
+  isMenuItemConfigurableInSettings,
+} from "@/lib/navigation-visibility";
 import { useEntitlements } from "@/lib/subscription/use-entitlements";
-import { isItemEnabled } from "@/lib/subscription/entitlements";
 import {
   DASHBOARD_MENU_ITEM,
   SIDEBAR_MENU_REGISTRY,
   type ModuleItemKey,
 } from "@/lib/subscription/plans";
-import { isMenuItemVisibleInNav } from "@/lib/types/organization-settings";
 
 export function NavigationVisibilitySettings() {
   const { entitlements, isLoading: entitlementsLoading } = useEntitlements();
@@ -27,29 +29,27 @@ export function NavigationVisibilitySettings() {
     settings,
     hydrated,
     isSaving,
-    setMenuItemHidden,
+    setMenuItemVisibility,
   } = useOrganizationSettings();
 
-  const hiddenMenuItems = settings.hiddenMenuItems ?? [];
-
-  const visibleMenuGroups = useMemo(() => {
-    const dashboardEnabled = isItemEnabled(
-      entitlements.modules,
+  const configurableMenuGroups = useMemo(() => {
+    const dashboardConfigurable = isMenuItemConfigurableInSettings(
       DASHBOARD_MENU_ITEM.key,
+      entitlements.modules,
     );
 
     const groups = SIDEBAR_MENU_REGISTRY.map(group => ({
       ...group,
       items: group.items.filter(item =>
-        isItemEnabled(entitlements.modules, item.key),
+        isMenuItemConfigurableInSettings(item.key, entitlements.modules),
       ),
     })).filter(group => group.items.length > 0);
 
-    return { dashboardEnabled, groups };
+    return { dashboardConfigurable, groups };
   }, [entitlements.modules]);
 
   const handleToggle = async (itemKey: ModuleItemKey, visible: boolean) => {
-    await setMenuItemHidden(itemKey, !visible);
+    await setMenuItemVisibility(itemKey, visible);
   };
 
   const isReady = hydrated && !entitlementsLoading;
@@ -74,13 +74,14 @@ export function NavigationVisibilitySettings() {
           <p className="text-sm text-muted-foreground">Loading menu options...</p>
         ) : (
           <>
-            {visibleMenuGroups.dashboardEnabled ? (
+            {configurableMenuGroups.dashboardConfigurable ? (
               <MenuItemRow
                 title={DASHBOARD_MENU_ITEM.title}
                 groupLabel="General"
-                visible={isMenuItemVisibleInNav(
+                visible={getMenuItemVisibilityInSettings(
                   DASHBOARD_MENU_ITEM.key,
-                  hiddenMenuItems,
+                  settings,
+                  entitlements.modules,
                 )}
                 disabled={isSaving}
                 onVisibleChange={visible =>
@@ -89,7 +90,7 @@ export function NavigationVisibilitySettings() {
               />
             ) : null}
 
-            {visibleMenuGroups.groups.map(group => (
+            {configurableMenuGroups.groups.map(group => (
               <div key={group.key} className="space-y-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   {group.title}
@@ -100,11 +101,12 @@ export function NavigationVisibilitySettings() {
                       key={item.key}
                       title={item.title}
                       comingSoon={item.comingSoon}
-                      visible={isMenuItemVisibleInNav(
+                      visible={getMenuItemVisibilityInSettings(
                         item.key,
-                        hiddenMenuItems,
+                        settings,
+                        entitlements.modules,
                       )}
-                      disabled={isSaving}
+                      disabled={isSaving || item.comingSoon}
                       onVisibleChange={visible =>
                         handleToggle(item.key, visible)
                       }

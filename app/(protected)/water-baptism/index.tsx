@@ -3,17 +3,21 @@
 import { Droplets } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useEntitlements } from "@/lib/subscription/use-entitlements";
-import { isItemEnabled } from "@/lib/subscription/entitlements";
+import { isMenuItemShownInNavigation } from "@/lib/navigation-visibility";
+import { useOrganizationSettings } from "@/lib/organization-settings";
 import { BaptismRegistry } from "./_components/baptism-registry";
 
 export function WaterBaptismView() {
-  const { entitlements, isLoading } = useEntitlements();
-  const waterBaptismEnabled = isItemEnabled(
-    entitlements.modules,
+  const { entitlements, isLoading: entitlementsLoading } = useEntitlements();
+  const { settings: orgSettings, hydrated: orgSettingsHydrated } =
+    useOrganizationSettings();
+  const waterBaptismEnabled = isMenuItemShownInNavigation(
     "water_baptism",
+    orgSettings,
+    entitlements.modules,
   );
 
-  if (isLoading) {
+  if (entitlementsLoading || !orgSettingsHydrated) {
     return (
       <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
         Loading...

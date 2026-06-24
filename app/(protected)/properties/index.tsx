@@ -7,10 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Building2, Car, MapPin, DollarSign, Calendar } from "lucide-react";
 import { mockProperties } from "@/components/mock-data";
+import { useEntitlements } from "@/lib/subscription/use-entitlements";
+import { isItemEnabled } from "@/lib/subscription/entitlements";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 
 export function PropertyManagementView() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { entitlements, isLoading } = useEntitlements();
+  const propertiesEnabled = isItemEnabled(entitlements.modules, "properties");
 
   const totalValue = mockProperties.reduce((sum, prop) => sum + prop.estimatedValue, 0);
 
@@ -34,6 +38,42 @@ export function PropertyManagementView() {
     acc[property.type].push(property);
     return acc;
   }, {} as Record<string, typeof mockProperties>);
+
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!propertiesEnabled) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+            Properties
+          </h1>
+          <p className="text-slate-600 dark:text-zinc-400 mt-1">
+            Manage and monitor church-owned assets
+          </p>
+        </div>
+
+        <Card className="border-slate-200/70 dark:border-zinc-700/70">
+          <CardContent className="py-16 text-center">
+            <Building2 className="w-12 h-12 mx-auto text-slate-300 dark:text-zinc-600" />
+            <h2 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">
+              Operations is not enabled
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 max-w-md mx-auto">
+              Property management is available on the Pro plan. Contact support
+              to upgrade your subscription.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
