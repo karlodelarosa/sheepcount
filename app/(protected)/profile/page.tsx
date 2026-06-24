@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { PageLoader } from "@/components/page-loader";
 import { getInitials } from "@/app/helpers";
@@ -29,7 +31,44 @@ import {
 } from "@/lib/supabase/profile";
 import dayjs from "dayjs";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import {
+  Activity,
+  Building2,
+  CreditCard,
+  Lock,
+  Upload,
+  User,
+} from "lucide-react";
+
+type ProfileTab =
+  | "personal"
+  | "organization"
+  | "subscription"
+  | "security"
+  | "activity";
+
+const ADMIN_TABS: ProfileTab[] = [
+  "personal",
+  "organization",
+  "subscription",
+  "security",
+  "activity",
+];
+
+const MEMBER_TABS: ProfileTab[] = [
+  "personal",
+  "subscription",
+  "security",
+  "activity",
+];
+
+function parseTab(value: string | null, isAdmin: boolean): ProfileTab {
+  const allowed = isAdmin ? ADMIN_TABS : MEMBER_TABS;
+  if (value && allowed.includes(value as ProfileTab)) {
+    return value as ProfileTab;
+  }
+  return "personal";
+}
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -39,7 +78,12 @@ function getErrorMessage(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-export default function ProfilePage() {
+const tabTriggerClass =
+  "gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-zinc-700 dark:data-[state=active]:text-white";
+
+function ProfilePageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, tenant, isLoading, refreshSession } = useTenant();
   const supabase = useMemo(() => createClient(), []);
 
@@ -47,6 +91,11 @@ export default function ProfilePage() {
   const profile = tenant?.profile;
   const subscription = tenant?.subscription;
   const isAdmin = profile?.role === "admin";
+  const activeTab = parseTab(searchParams.get("tab"), isAdmin);
+
+  const setActiveTab = (tab: string) => {
+    router.replace(`/profile?tab=${tab}`, { scroll: false });
+  };
 
   const [selectedOrgIndex, setSelectedOrgIndex] = useState(0);
   const [firstName, setFirstName] = useState("");
@@ -63,9 +112,18 @@ export default function ProfilePage() {
   const [isSavingOrg, setIsSavingOrg] = useState(false);
   const [isCancellingSubscription, setIsCancellingSubscription] =
     useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const avatarPreviewRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isAdmin && activeTab === "organization") {
+      setActiveTab("personal");
+    }
+  }, [isAdmin, activeTab]);
 
   useEffect(() => {
     if (profile) {
@@ -270,6 +328,36 @@ export default function ProfilePage() {
     }
   };
 
+  const handleChangePassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setIsSavingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+
+      setNewPassword("");
+      setConfirmPassword("");
+      toast.success("Password updated successfully");
+    } catch (error) {
+      toast.error("Failed to update password", {
+        description: getErrorMessage(error),
+      });
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
+
   const handleOrgChange = (index: number) => {
     setSelectedOrgIndex(index);
     const org = organizations[index];
@@ -318,129 +406,175 @@ export default function ProfilePage() {
           <p className="text-muted-foreground">
             {tenantName || "No organization linked"}
           </p>
-          <Button
-            size="sm"
-            className="mt-2"
-            onClick={openAvatarDialog}
-          >
+          <Button size="sm" className="mt-2" onClick={openAvatarDialog}>
             Change Photo
           </Button>
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Personal Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>First Name</Label>
-            <Input
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label>Last Name</Label>
-            <Input
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label>Email (read-only)</Label>
-            <Input value={user.email} disabled />
-          </div>
-        </CardContent>
-        <CardContent>
-          <Button
-            className="w-full"
-            onClick={handleSavePersonalInfo}
-            disabled={isSavingPersonal}
-          >
-            {isSavingPersonal ? "Saving..." : "Save Personal Info"}
-          </Button>
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
+          <TabsTrigger value="personal" className={tabTriggerClass}>
+            <User className="w-3.5 h-3.5" />
+            Personal Details
+          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="organization" className={tabTriggerClass}>
+              <Building2 className="w-3.5 h-3.5" />
+              Organization
+            </TabsTrigger>
+          )}
+          <TabsTrigger value="subscription" className={tabTriggerClass}>
+            <CreditCard className="w-3.5 h-3.5" />
+            Subscription
+          </TabsTrigger>
+          <TabsTrigger value="security" className={tabTriggerClass}>
+            <Lock className="w-3.5 h-3.5" />
+            Security
+          </TabsTrigger>
+          <TabsTrigger value="activity" className={tabTriggerClass}>
+            <Activity className="w-3.5 h-3.5" />
+            Activity Log
+          </TabsTrigger>
+        </TabsList>
 
-      {organizations.length > 1 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Organization / Branch</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <select
-              className="w-full border border-input rounded-md p-2"
-              value={selectedOrgIndex}
-              onChange={(e) => handleOrgChange(Number(e.target.value))}
-            >
-              {organizations.map((org, index) => (
-                <option key={org.id} value={index}>
-                  {org.name}
-                </option>
-              ))}
-            </select>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="personal" className="mt-0">
+          <Card>
+            <CardHeader>
+              <CardTitle>Personal Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>First Name</Label>
+                <Input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Last Name</Label>
+                <Input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>Email (read-only)</Label>
+                <Input value={user.email} disabled />
+              </div>
+              <Button
+                className="w-full"
+                onClick={handleSavePersonalInfo}
+                disabled={isSavingPersonal}
+              >
+                {isSavingPersonal ? "Saving..." : "Save Personal Info"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {tenant && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Organization Info</CardTitle>
-            {!isAdmin && (
-              <p className="text-sm text-muted-foreground">
-                Only organization admins can edit these details.
-              </p>
+        {isAdmin && (
+          <TabsContent value="organization" className="mt-0 space-y-4">
+            {organizations.length > 1 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Select Organization / Branch</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <select
+                    className="w-full border border-input rounded-md p-2"
+                    value={selectedOrgIndex}
+                    onChange={(e) => handleOrgChange(Number(e.target.value))}
+                  >
+                    {organizations.map((org, index) => (
+                      <option key={org.id} value={index}>
+                        {org.name}
+                      </option>
+                    ))}
+                  </select>
+                </CardContent>
+              </Card>
             )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Organization Name</Label>
-              <Input
-                value={tenantName}
-                onChange={(e) => setTenantName(e.target.value)}
-                disabled={!isAdmin}
-              />
-            </div>
-            <div>
-              <Label>Phone</Label>
-              <Input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                disabled={!isAdmin}
-              />
-            </div>
-            <div>
-              <Label>Address</Label>
-              <Input
-                value={orgAddress}
-                onChange={(e) => setOrgAddress(e.target.value)}
-                disabled={!isAdmin}
-              />
-            </div>
-          </CardContent>
-          <CardContent className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-            <div className="text-sm text-muted-foreground">
-              Plan: <strong>{plan}</strong> • Status: <strong>{status}</strong>{" "}
-              • Subscribed: <strong>{subscribedAt}</strong> • Expires:{" "}
-              <strong>{expiresAt}</strong>
+
+            {tenant && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Organization Info</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Organization Name</Label>
+                    <Input
+                      value={tenantName}
+                      onChange={(e) => setTenantName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Phone</Label>
+                    <Input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label>Address</Label>
+                    <Input
+                      value={orgAddress}
+                      onChange={(e) => setOrgAddress(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={handleSaveOrganization}
+                    disabled={isSavingOrg}
+                  >
+                    {isSavingOrg ? "Saving..." : "Save Organization"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        )}
+
+        <TabsContent value="subscription" className="mt-0">
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <dt className="text-sm text-muted-foreground">Plan</dt>
+                  <dd className="font-medium">{plan}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Status</dt>
+                  <dd className="font-medium">{status}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">Subscribed</dt>
+                  <dd className="font-medium">{subscribedAt}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm text-muted-foreground">
+                    Current period ends
+                  </dt>
+                  <dd className="font-medium">{expiresAt}</dd>
+                </div>
+              </dl>
+
               {subscriptionCancelling && (
-                <>
-                  {" "}
-                  • <strong className="text-amber-600">Cancels at period end</strong>
-                </>
+                <p className="text-sm text-amber-600 dark:text-amber-400">
+                  Your subscription is scheduled to cancel at the end of the
+                  current billing period.
+                </p>
               )}
-            </div>
-            {isAdmin && (
-              <div className="flex gap-2">
+
+              {isAdmin && (
                 <Button
                   variant="destructive"
-                  size="sm"
                   onClick={handleCancelSubscription}
-                  disabled={
-                    isCancellingSubscription || subscriptionCancelling
-                  }
+                  disabled={isCancellingSubscription || subscriptionCancelling}
                 >
                   {subscriptionCancelling
                     ? "Cancellation Scheduled"
@@ -448,33 +582,80 @@ export default function ProfilePage() {
                       ? "Cancelling..."
                       : "Cancel Subscription"}
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSaveOrganization}
-                  disabled={isSavingOrg}
-                >
-                  {isSavingOrg ? "Saving..." : "Save Organization"}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Activity</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm space-y-2">
-          <p>Last login: {lastLogin}</p>
-          <p>Member since: {memberSince}</p>
-          {profile?.role && (
-            <p>
-              Role: <span className="capitalize">{profile.role}</span>
-            </p>
-          )}
-        </CardContent>
-      </Card>
+        <TabsContent value="security" className="mt-0">
+          <Card>
+            <CardHeader>
+              <CardTitle>Change Password</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleChangePassword} className="space-y-4">
+                <div>
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="At least 8 characters"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter your new password"
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSavingPassword}
+                >
+                  {isSavingPassword ? "Updating..." : "Update Password"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="activity" className="mt-0">
+          <Card>
+            <CardHeader>
+              <CardTitle>Activity Log</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="divide-y divide-border text-sm">
+                <li className="flex items-center justify-between py-3 first:pt-0">
+                  <span className="text-muted-foreground">Last login</span>
+                  <span className="font-medium">{lastLogin}</span>
+                </li>
+                <li className="flex items-center justify-between py-3">
+                  <span className="text-muted-foreground">Member since</span>
+                  <span className="font-medium">{memberSince}</span>
+                </li>
+                {profile?.role && (
+                  <li className="flex items-center justify-between py-3 last:pb-0">
+                    <span className="text-muted-foreground">Role</span>
+                    <span className="font-medium capitalize">{profile.role}</span>
+                  </li>
+                )}
+              </ul>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={avatarDialogOpen} onOpenChange={handleAvatarDialogChange}>
         <DialogContent>
@@ -553,5 +734,13 @@ export default function ProfilePage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<PageLoader message="Loading your profile..." />}>
+      <ProfilePageContent />
+    </Suspense>
   );
 }

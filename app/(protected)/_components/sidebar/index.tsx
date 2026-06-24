@@ -17,7 +17,6 @@ import {
   LayoutDashboard,
   Users,
   Building2,
-  Eye,
   Home,
   Award,
   Shield,
@@ -47,6 +46,8 @@ import { useTheme } from "@/context/theme-context";
 import { usePeople } from "@/lib/people";
 import { useOrganizationSettingsOptional } from "@/lib/organization-settings";
 import { APP_NAME } from "@/lib/branding";
+import { BrandLogoIcon } from "@/components/brand-logo-icon";
+import { cn } from "@/lib/utils";
 
 type ViewRoute =
   | "dashboard"
@@ -103,6 +104,17 @@ export function Sidebar() {
     router.push(getPath(view));
   };
 
+  const sidebarItemClass = (active: boolean, disabled = false) =>
+    cn(
+      "w-full px-2.5 py-1.5 rounded-lg transition-all duration-200 text-sm",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+      disabled
+        ? "opacity-50 cursor-not-allowed text-muted-foreground"
+        : active
+          ? "bg-[var(--accent-color)] text-[var(--accent-color-foreground)]"
+          : "hover:bg-muted text-foreground",
+    );
+
   const menuGroups: {
     title: string;
     defaultOpen?: boolean;
@@ -151,6 +163,21 @@ export function Sidebar() {
       ],
     },
     {
+      title: "Attendance",
+      items: [
+        {
+          title: "Service Attendance",
+          icon: Church,
+          value: "service-attendance" as const,
+        },
+        {
+          title: "Event Attendance",
+          icon: Tent,
+          value: "event-attendance" as const,
+        },
+      ],
+    },
+    {
       title: "Development",
       items: [
         { title: "Training", icon: GraduationCap, value: "training" as const },
@@ -180,21 +207,6 @@ export function Sidebar() {
           title: "Growth Track",
           icon: GitBranch,
           value: "growth-track" as const,
-        },
-      ],
-    },
-    {
-      title: "Attendance",
-      items: [
-        {
-          title: "Service Attendance",
-          icon: Church,
-          value: "service-attendance" as const,
-        },
-        {
-          title: "Event Attendance",
-          icon: Tent,
-          value: "event-attendance" as const,
         },
       ],
     },
@@ -240,9 +252,7 @@ export function Sidebar() {
     <SidebarComponent className="w-52 shrink-0 border-r border-border/60 bg-card/80 backdrop-blur-sm text-sm">
       <SidebarHeader className="border-b border-border/60 px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 flex items-center justify-center">
-            <Eye className="w-3.5 h-3.5 text-white dark:text-slate-900" />
-          </div>
+          <BrandLogoIcon className="w-7 h-7" iconClassName="w-3.5 h-3.5" />
           <div className="min-w-0">
             <h2 className="text-foreground text-sm font-semibold truncate">
               {APP_NAME}
@@ -261,14 +271,7 @@ export function Sidebar() {
             <SidebarMenuButton
               onClick={() => navigateTo("dashboard")}
               isActive={isActive("dashboard")}
-              className={`
-                w-full px-2.5 py-1.5 rounded-lg transition-all duration-200 text-sm
-                ${
-                  isActive("dashboard")
-                    ? "bg-foreground text-background"
-                    : "hover:bg-muted text-foreground"
-                }
-              `}
+              className={sidebarItemClass(isActive("dashboard"))}
             >
               <LayoutDashboard className="w-4 h-4 mr-2" />
               <span>Dashboard</span>
@@ -305,16 +308,10 @@ export function Sidebar() {
                             tooltip={
                               item.disabled ? "Coming soon" : undefined
                             }
-                            className={`
-                              w-full px-2.5 py-1.5 rounded-lg transition-all duration-200 text-sm
-                              ${
-                                item.disabled
-                                  ? "opacity-50 cursor-not-allowed text-muted-foreground"
-                                  : isActive(item.value)
-                                    ? "bg-foreground text-background"
-                                    : "hover:bg-muted text-foreground"
-                              }
-                            `}
+                            className={sidebarItemClass(
+                              !item.disabled && isActive(item.value),
+                              item.disabled,
+                            )}
                           >
                             <item.icon className="w-4 h-4 mr-2" />
                             <span>{item.title}</span>
@@ -333,14 +330,7 @@ export function Sidebar() {
             <SidebarMenuButton
               onClick={() => navigateTo("settings")}
               isActive={isActive("settings")}
-              className={`
-                w-full px-2.5 py-1.5 rounded-lg transition-all duration-200 text-sm
-                ${
-                  isActive("settings")
-                    ? "bg-foreground text-background"
-                    : "hover:bg-muted text-foreground"
-                }
-              `}
+              className={sidebarItemClass(isActive("settings"))}
             >
               <Settings className="w-4 h-4 mr-2" />
               <span>Settings</span>

@@ -6,6 +6,7 @@ export type LifeGroup = {
   id: string;
   name: string;
   description: string;
+  schedule: string;
   category: LifeGroupCategory;
   color: string;
   sortOrder: number;
@@ -23,6 +24,7 @@ type DbLifeGroup = {
   id: string;
   name: string;
   description: string;
+  schedule: string;
   category: LifeGroupCategory;
   color: string;
   sort_order: number;
@@ -41,12 +43,16 @@ function toLifeGroup(row: DbLifeGroup): LifeGroup {
     id: row.id,
     name: row.name,
     description: row.description,
+    schedule: row.schedule ?? "",
     category: row.category,
     color: row.color,
     sortOrder: row.sort_order,
     isDefault: row.is_default,
   };
 }
+
+const LIFE_GROUP_SELECT =
+  "id, name, description, schedule, category, color, sort_order, is_default";
 
 function toLifeGroupMember(row: DbLifeGroupMember): LifeGroupMember {
   return {
@@ -75,7 +81,7 @@ export async function fetchLifeGroups(
 
   const { data, error } = await supabase
     .from("life_groups")
-    .select("id, name, description, category, color, sort_order, is_default")
+    .select(LIFE_GROUP_SELECT)
     .eq("organization_id", organizationId)
     .order("sort_order")
     .order("name");
@@ -121,7 +127,37 @@ export async function createLifeGroup(
       category: input.category,
       color: input.color ?? "purple",
     })
-    .select("id, name, description, category, color, sort_order, is_default")
+    .select(LIFE_GROUP_SELECT)
+    .single();
+
+  if (error) throw error;
+  return toLifeGroup(data as DbLifeGroup);
+}
+
+export type UpdateLifeGroupInput = {
+  name?: string;
+  description?: string;
+  schedule?: string;
+};
+
+export async function updateLifeGroup(
+  supabase: SupabaseClient,
+  lifeGroupId: string,
+  input: UpdateLifeGroupInput,
+): Promise<LifeGroup> {
+  const updates: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+  if (input.name !== undefined) updates.name = input.name.trim();
+  if (input.description !== undefined)
+    updates.description = input.description.trim();
+  if (input.schedule !== undefined) updates.schedule = input.schedule.trim();
+
+  const { data, error } = await supabase
+    .from("life_groups")
+    .update(updates)
+    .eq("id", lifeGroupId)
+    .select(LIFE_GROUP_SELECT)
     .single();
 
   if (error) throw error;

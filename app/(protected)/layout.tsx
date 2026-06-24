@@ -1,3 +1,4 @@
+import { PageTransition } from "@/components/page-transition";
 import { TopBar } from "./_components/topbar";
 import { ThemeProvider } from "@/context/theme-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -42,7 +43,7 @@ export default function ProtectedLayout({
                                 <TrainingProvider>
                                   <BibleStudyProvider>
                                     <LeadershipProvider>
-                                      {children}
+                                      <PageTransition>{children}</PageTransition>
                                     </LeadershipProvider>
                                   </BibleStudyProvider>
                                 </TrainingProvider>

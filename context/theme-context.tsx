@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { PageLoader } from "@/components/page-loader";
+import { applyAccentColorVariables } from "@/lib/accent-color";
 
 interface ThemeSettings {
   mode: "light" | "dark" | "system";
@@ -68,8 +69,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.remove("dark");
     }
 
-    // Apply accent color
-    document.documentElement.style.setProperty("--accent-color", settings.accentColor);
+    applyAccentColorVariables(settings.accentColor);
   }, [settings, mounted]);
 
   const updateSettings = (updates: Partial<ThemeSettings>) => {

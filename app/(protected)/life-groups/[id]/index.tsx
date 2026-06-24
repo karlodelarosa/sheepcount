@@ -4,14 +4,16 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, UserPlus, Search, ArrowLeft, Users } from "lucide-react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  X,
+  UserPlus,
+  Search,
+  ArrowLeft,
+  Users,
+  Clock,
+  ClipboardCheck,
+  Settings,
+} from "lucide-react";
 import { PersonSelect } from "@/components/person-select";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,6 +25,8 @@ import {
 } from "@/components/ui/card";
 import { usePeople } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { RecordLifeGroupAttendanceDialog } from "../_components/record-life-group-attendance-dialog";
+import { EditLifeGroupDialog } from "../_components/edit-life-group-dialog";
 
 interface LifeGroupDetailsProps {
   groupId: string;
@@ -38,9 +42,13 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
     isSaving,
     assignLifeGroupMember,
     removeLifeGroupMemberById,
+    updateLifeGroupById,
+    recordLifeGroupAttendance,
   } = useGroupsMinistry();
   const [searchTerm, setSearchTerm] = useState("");
   const [newPersonId, setNewPersonId] = useState("");
+  const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
   const group = lifeGroups.find(g => g.id === groupId);
 
@@ -56,6 +64,14 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
         person: people.find(p => p.id === m.personId),
       })),
     [memberships, people],
+  );
+
+  const memberPeople = useMemo(
+    () =>
+      members
+        .map(m => m.person)
+        .filter((p): p is NonNullable<typeof p> => p !== undefined),
+    [members],
   );
 
   const availablePeople = useMemo(
@@ -78,6 +94,22 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
 
   const handleRemoveMember = async (membershipId: string) => {
     await removeLifeGroupMemberById(membershipId);
+  };
+
+  const handleSaveDetails = async (updates: {
+    name: string;
+    description: string;
+    schedule: string;
+  }) => {
+    await updateLifeGroupById(groupId, updates);
+  };
+
+  const handleRecordAttendance = async (date: string, personIds: string[]) => {
+    await recordLifeGroupAttendance({
+      lifeGroupId: groupId,
+      date,
+      personIds,
+    });
   };
 
   const DualModePrimaryButtonClass =
@@ -134,14 +166,38 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
           </Button>
           <div>
             <h1 className="text-slate-900 dark:text-white">{group.name}</h1>
-            <p className="text-slate-600 dark:text-zinc-400">
-              {group.description}
+            {group.description && (
+              <p className="text-slate-600 dark:text-zinc-400 mt-0.5">
+                {group.description}
+              </p>
+            )}
+            <p className="text-slate-500 dark:text-zinc-500 flex items-center gap-2 mt-1 text-sm">
+              <Clock className="w-3.5 h-3.5" />
+              {group.schedule || "No schedule set"}
             </p>
           </div>
         </div>
-        <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
-          {group.category}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
+            {group.category}
+          </Badge>
+          <Button
+            variant="outline"
+            onClick={() => setDetailsDialogOpen(true)}
+            className="rounded-lg border-slate-200 dark:border-zinc-700"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Group Details
+          </Button>
+          <Button
+            onClick={() => setAttendanceDialogOpen(true)}
+            disabled={memberPeople.length === 0}
+            className={DualModePrimaryButtonClass}
+          >
+            <ClipboardCheck className="w-4 h-4 mr-2" />
+            Record Attendance
+          </Button>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -198,7 +254,7 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
           </CardHeader>
 
           <CardContent className="p-0">
-            <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60">
+            <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60 mx-6 mb-6">
               {filteredMembers.length === 0 ? (
                 <div className="p-8 text-center text-slate-500 dark:text-zinc-500">
                   {searchTerm
@@ -255,6 +311,23 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
           </CardContent>
         </Card>
       </div>
+
+      <EditLifeGroupDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        group={group}
+        isSaving={isSaving}
+        onSave={handleSaveDetails}
+      />
+
+      <RecordLifeGroupAttendanceDialog
+        open={attendanceDialogOpen}
+        onOpenChange={setAttendanceDialogOpen}
+        groupName={group.name}
+        members={memberPeople}
+        isSaving={isSaving}
+        onRecord={handleRecordAttendance}
+      />
     </div>
   );
 }

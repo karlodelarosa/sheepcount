@@ -29,10 +29,17 @@ import {
   fetchLifeGroupMembers,
   fetchLifeGroups,
   removeLifeGroupMember,
+  updateLifeGroup,
   type CreateLifeGroupInput,
   type LifeGroup,
   type LifeGroupMember,
+  type UpdateLifeGroupInput,
 } from "@/lib/supabase/life-groups";
+import {
+  fetchLifeGroupSessions,
+  recordLifeGroupAttendance,
+  type LifeGroupSession,
+} from "@/lib/supabase/life-group-attendance";
 import {
   addWorkMinistryMember,
   addWorkMinistryTeamRole,
@@ -60,6 +67,7 @@ import {
 type GroupsMinistryContextValue = {
   lifeGroups: LifeGroup[];
   lifeGroupMembers: LifeGroupMember[];
+  lifeGroupSessions: LifeGroupSession[];
   workMinistries: WorkMinistry[];
   workMinistryTeams: WorkMinistryTeam[];
   workMinistryTeamRoles: WorkMinistryTeamRole[];
@@ -70,11 +78,22 @@ type GroupsMinistryContextValue = {
   isSaving: boolean;
   refreshGroupsMinistry: () => Promise<void>;
   addLifeGroup: (input: CreateLifeGroupInput) => Promise<LifeGroup | null>;
+  updateLifeGroupById: (
+    lifeGroupId: string,
+    input: UpdateLifeGroupInput,
+  ) => Promise<LifeGroup | null>;
   assignLifeGroupMember: (
     lifeGroupId: string,
     personId: string,
   ) => Promise<LifeGroupMember | null>;
   removeLifeGroupMemberById: (membershipId: string) => Promise<boolean>;
+  recordLifeGroupAttendance: (input: {
+    lifeGroupId: string;
+    date: string;
+    personIds: string[];
+    notes?: string;
+  }) => Promise<boolean>;
+  getLifeGroupSessions: (lifeGroupId: string) => LifeGroupSession[];
   assignWorkMinistryMember: (
     ministryId: string,
     personId: string,
@@ -162,6 +181,9 @@ export function GroupsMinistryProvider({
   const [lifeGroupMembers, setLifeGroupMembers] = useState<LifeGroupMember[]>(
     [],
   );
+  const [lifeGroupSessions, setLifeGroupSessions] = useState<
+    LifeGroupSession[]
+  >([]);
   const [workMinistries, setWorkMinistries] = useState<WorkMinistry[]>([]);
   const [workMinistryTeams, setWorkMinistryTeams] = useState<WorkMinistryTeam[]>(
     [],
@@ -183,6 +205,7 @@ export function GroupsMinistryProvider({
     if (!organizationId) {
       setLifeGroups([]);
       setLifeGroupMembers([]);
+      setLifeGroupSessions([]);
       setWorkMinistries([]);
       setWorkMinistryTeams([]);
       setWorkMinistryTeamRoles([]);
@@ -197,6 +220,7 @@ export function GroupsMinistryProvider({
       const [
         groups,
         groupMembers,
+        groupSessions,
         ministries,
         ministryTeams,
         ministryTeamRoles,
@@ -206,6 +230,7 @@ export function GroupsMinistryProvider({
       ] = await Promise.all([
         fetchLifeGroups(supabase, organizationId),
         fetchLifeGroupMembers(supabase, organizationId),
+        fetchLifeGroupSessions(supabase, organizationId),
         fetchWorkMinistries(supabase, organizationId),
         fetchWorkMinistryTeams(supabase, organizationId),
         fetchWorkMinistryTeamRoles(supabase, organizationId),
@@ -216,6 +241,7 @@ export function GroupsMinistryProvider({
 
       setLifeGroups(groups);
       setLifeGroupMembers(groupMembers);
+      setLifeGroupSessions(groupSessions);
       setWorkMinistries(ministries);
       setWorkMinistryTeams(ministryTeams);
       setWorkMinistryTeamRoles(ministryTeamRoles);
@@ -263,6 +289,29 @@ export function GroupsMinistryProvider({
     [organizationId, refreshGroupsMinistry, supabase],
   );
 
+  const updateLifeGroupById = useCallback(
+    async (
+      lifeGroupId: string,
+      input: UpdateLifeGroupInput,
+    ): Promise<LifeGroup | null> => {
+      setIsSaving(true);
+      try {
+        const group = await updateLifeGroup(supabase, lifeGroupId, input);
+        await refreshGroupsMinistry();
+        toast.success("Life group updated");
+        return group;
+      } catch (error) {
+        toast.error("Failed to update life group", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshGroupsMinistry, supabase],
+  );
+
   const assignLifeGroupMember = useCallback(
     async (
       lifeGroupId: string,
@@ -304,6 +353,42 @@ export function GroupsMinistryProvider({
       }
     },
     [refreshGroupsMinistry, supabase],
+  );
+
+  const recordLifeGroupAttendanceHandler = useCallback(
+    async (input: {
+      lifeGroupId: string;
+      date: string;
+      personIds: string[];
+      notes?: string;
+    }): Promise<boolean> => {
+      if (!organizationId) {
+        toast.error("No organization found");
+        return false;
+      }
+
+      setIsSaving(true);
+      try {
+        await recordLifeGroupAttendance(supabase, organizationId, input);
+        await refreshGroupsMinistry();
+        toast.success("Attendance recorded");
+        return true;
+      } catch (error) {
+        toast.error("Failed to record attendance", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshGroupsMinistry, supabase],
+  );
+
+  const getLifeGroupSessions = useCallback(
+    (lifeGroupId: string) =>
+      lifeGroupSessions.filter(s => s.lifeGroupId === lifeGroupId),
+    [lifeGroupSessions],
   );
 
   const assignWorkMinistryMember = useCallback(
@@ -754,6 +839,7 @@ export function GroupsMinistryProvider({
       value={{
         lifeGroups,
         lifeGroupMembers,
+        lifeGroupSessions,
         workMinistries,
         workMinistryTeams,
         workMinistryTeamRoles,
@@ -764,8 +850,11 @@ export function GroupsMinistryProvider({
         isSaving,
         refreshGroupsMinistry,
         addLifeGroup,
+        updateLifeGroupById,
         assignLifeGroupMember,
         removeLifeGroupMemberById,
+        recordLifeGroupAttendance: recordLifeGroupAttendanceHandler,
+        getLifeGroupSessions,
         assignWorkMinistryMember,
         updateWorkMinistryMemberById,
         removeWorkMinistryMemberById,

@@ -1,5 +1,5 @@
-import { Eye } from "lucide-react";
 import { APP_NAME, APP_TAGLINE } from "@/lib/branding";
+import { BrandLogoIcon } from "@/components/brand-logo-icon";
 import { cn } from "@/lib/utils";
 
 export function AppBrand({
@@ -20,14 +20,7 @@ export function AppBrand({
 
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <div
-        className={cn(
-          s.icon,
-          "rounded-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-100 dark:via-slate-200 dark:to-slate-100 flex items-center justify-center shrink-0",
-        )}
-      >
-        <Eye className={cn(s.iconInner, "text-white dark:text-slate-900")} />
-      </div>
+      <BrandLogoIcon className={s.icon} iconClassName={s.iconInner} />
       <div className="min-w-0">
         <p className={cn(s.title, "font-semibold text-foreground leading-tight")}>
           {APP_NAME}

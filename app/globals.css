@@ -39,6 +39,11 @@
     --chart-5: 27 87% 67%;
     --radius: 0.625rem;
 
+    /* Brand accent (overridden by theme settings) */
+    --accent-color: #030213;
+    --accent-color-foreground: #ffffff;
+    --accent-color-muted: #02010d;
+
     /* Sidebar */
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
