@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTheme } from "@/context/theme-context";
-import { Moon, Sun, Palette, Building2, Upload } from "lucide-react";
+import { Moon, Sun, Palette, Building2, Upload, LayoutGrid } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
@@ -18,6 +20,19 @@ import {
   validateAvatarFile,
 } from "@/lib/supabase/profile";
 import { toast } from "sonner";
+import { NavigationVisibilitySettings } from "./_components/navigation-visibility";
+
+type SettingsTab = "general" | "menu";
+
+const tabTriggerClass =
+  "gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-zinc-700 dark:data-[state=active]:text-white";
+
+function parseTab(value: string | null, isAdmin: boolean): SettingsTab {
+  if (value === "menu" && isAdmin) {
+    return "menu";
+  }
+  return "general";
+}
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -28,11 +43,27 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function SettingsView() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { settings, updateSettings, toggleMode } = useTheme();
   const { tenant, refreshSession } = useTenant();
   const supabase = useMemo(() => createClient(), []);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
+  const isAdmin = tenant?.profile?.role === "admin";
+  const activeTab = parseTab(searchParams.get("tab"), isAdmin);
+
+  const setActiveTab = (tab: string) => {
+    const nextTab = tab === "menu" && isAdmin ? "menu" : "general";
+    router.replace(`/settings?tab=${nextTab}`, { scroll: false });
+  };
+
+  useEffect(() => {
+    if (!isAdmin && activeTab === "menu") {
+      setActiveTab("general");
+    }
+  }, [isAdmin, activeTab]);
 
   const organizationId = getOrganizationId(tenant);
 
@@ -102,10 +133,27 @@ export function SettingsView() {
     <div className="space-y-6">
       <div>
         <h1>Settings</h1>
-        <p className="text-muted-foreground">Customize your organization's appearance and branding</p>
+        <p className="text-muted-foreground">
+          Customize your organization&apos;s appearance and navigation
+        </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
+          <TabsTrigger value="general" className={tabTriggerClass}>
+            <Palette className="w-3.5 h-3.5" />
+            General
+          </TabsTrigger>
+          {isAdmin ? (
+            <TabsTrigger value="menu" className={tabTriggerClass}>
+              <LayoutGrid className="w-3.5 h-3.5" />
+              Menu Settings
+            </TabsTrigger>
+          ) : null}
+        </TabsList>
+
+        <TabsContent value="general" className="mt-0">
+          <div className="grid gap-6 lg:grid-cols-2">
         {/* Theme Mode */}
         <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
           <CardHeader>
@@ -263,7 +311,15 @@ export function SettingsView() {
             </div>
           </CardContent>
         </Card>
-      </div>
+          </div>
+        </TabsContent>
+
+        {isAdmin ? (
+          <TabsContent value="menu" className="mt-0">
+            <NavigationVisibilitySettings />
+          </TabsContent>
+        ) : null}
+      </Tabs>
     </div>
   );
 }

@@ -220,22 +220,35 @@ export async function updateOrganizationDetails(
   return data;
 }
 
+export async function verifyAccountPassword(
+  supabase: SupabaseClient,
+  email: string,
+  password: string,
+) {
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    throw new Error("Incorrect password. Please try again.");
+  }
+}
+
 export async function cancelOrganizationSubscription(
   supabase: SupabaseClient,
   organizationId: string,
+  reason: string,
 ) {
-  const { data, error } = await supabase
-    .from("subscriptions")
-    .update({
-      cancel_at_period_end: true,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("organization_id", organizationId)
-    .select(
-      "provider, plan, status, current_period_start, current_period_end, cancel_at_period_end",
-    )
-    .single();
+  const trimmedReason = reason.trim();
+  if (!trimmedReason) {
+    throw new Error("Cancellation reason is required.");
+  }
+
+  const { error } = await supabase.rpc("cancel_organization_subscription", {
+    p_organization_id: organizationId,
+    p_reason: trimmedReason,
+  });
 
   if (error) throw error;
-  return data;
 }

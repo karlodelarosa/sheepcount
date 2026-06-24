@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ScrollText } from "lucide-react";
+import { History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEntitlements } from "@/lib/subscription/use-entitlements";
 import { hasFeature } from "@/lib/subscription/entitlements";
@@ -26,7 +26,7 @@ export function AuditTrailButton() {
       asChild
     >
       <Link href="/audit-trail" aria-label="Audit trail">
-        <ScrollText className="h-3.5 w-3.5" />
+        <History className="h-3.5 w-3.5" />
       </Link>
     </Button>
   );

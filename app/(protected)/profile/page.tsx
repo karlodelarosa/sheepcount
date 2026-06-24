@@ -21,8 +21,10 @@ import { PageLoader } from "@/components/page-loader";
 import { getInitials } from "@/app/helpers";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
+import { normalizePlanKey } from "@/lib/subscription/plans";
+import { CancelSubscriptionDialog } from "@/app/(protected)/profile/_components/cancel-subscription-dialog";
+import { SubscriptionUpgrade } from "@/app/(protected)/profile/_components/subscription-upgrade";
 import {
-  cancelOrganizationSubscription,
   removeUserAvatar,
   updateOrganizationDetails,
   updateUserProfile,
@@ -110,8 +112,7 @@ function ProfilePageContent() {
   const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [isSavingPersonal, setIsSavingPersonal] = useState(false);
   const [isSavingOrg, setIsSavingOrg] = useState(false);
-  const [isCancellingSubscription, setIsCancellingSubscription] =
-    useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSavingPassword, setIsSavingPassword] = useState(false);
@@ -299,33 +300,8 @@ function ProfilePageContent() {
     }
   };
 
-  const handleCancelSubscription = async () => {
-    const orgId = getOrganizationId(tenant);
-    if (!orgId) {
-      toast.error("No organization found");
-      return;
-    }
-
-    if (
-      !window.confirm(
-        "Cancel your subscription at the end of the current billing period?",
-      )
-    ) {
-      return;
-    }
-
-    setIsCancellingSubscription(true);
-    try {
-      await cancelOrganizationSubscription(supabase, orgId);
-      await refreshSession();
-      toast.success("Subscription will cancel at period end");
-    } catch (error) {
-      toast.error("Failed to cancel subscription", {
-        description: getErrorMessage(error),
-      });
-    } finally {
-      setIsCancellingSubscription(false);
-    }
+  const handleCancelSubscription = () => {
+    setCancelDialogOpen(true);
   };
 
   const handleChangePassword = async (event: React.FormEvent) => {
@@ -374,10 +350,15 @@ function ProfilePageContent() {
   if (!user) return null;
 
   const selectedOrg = organizations[selectedOrgIndex] ?? organizations[0];
-  const plan = (selectedOrg?.plan || tenant?.tenant.plan || "basic").replace(
-    /^./,
-    c => c.toUpperCase(),
+  const currentPlanKey = normalizePlanKey(
+    tenant?.entitlements?.plan_key ??
+      selectedOrg?.plan ??
+      tenant?.tenant.plan ??
+      subscription?.plan ??
+      "basic",
   );
+  const plan = currentPlanKey.replace(/^./, c => c.toUpperCase());
+  const organizationId = getOrganizationId(tenant);
   const status = tenant?.status || "Active";
   const subscribedAt = subscription?.current_period_start
     ? dayjs(subscription.current_period_start).format("MMM D, YYYY")
@@ -573,17 +554,23 @@ function ProfilePageContent() {
                 </p>
               )}
 
+              {isAdmin && organizationId && (
+                <SubscriptionUpgrade
+                  organizationId={organizationId}
+                  currentPlanKey={currentPlanKey}
+                  onUpgraded={refreshSession}
+                />
+              )}
+
               {isAdmin && (
                 <Button
                   variant="destructive"
                   onClick={handleCancelSubscription}
-                  disabled={isCancellingSubscription || subscriptionCancelling}
+                  disabled={subscriptionCancelling}
                 >
                   {subscriptionCancelling
                     ? "Cancellation Scheduled"
-                    : isCancellingSubscription
-                      ? "Cancelling..."
-                      : "Cancel Subscription"}
+                    : "Cancel Subscription"}
                 </Button>
               )}
             </CardContent>
@@ -736,6 +723,16 @@ function ProfilePageContent() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {isAdmin && organizationId && user && (
+        <CancelSubscriptionDialog
+          open={cancelDialogOpen}
+          onOpenChange={setCancelDialogOpen}
+          organizationId={organizationId}
+          userEmail={user.email}
+          onCancelled={refreshSession}
+        />
+      )}
     </div>
   );
 }

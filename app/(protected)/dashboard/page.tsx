@@ -7,6 +7,11 @@ import { useTheme } from "@/context/theme-context";
 import { usePeople } from "@/lib/people";
 import { useGrowthTrack } from "@/lib/growth-track";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { useOrganizationSettings } from "@/lib/organization-settings";
+import { useEntitlements } from "@/lib/subscription/use-entitlements";
+import { isItemEnabled } from "@/lib/subscription/entitlements";
+import { isMenuItemVisibleInNav } from "@/lib/types/organization-settings";
+import type { ModuleItemKey } from "@/lib/subscription/plans";
 import { GROWTH_TRACK_STAGES } from "@/lib/growth-track/stage-config";
 import {
   Card,
@@ -43,12 +48,22 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const shortcuts = [
+const shortcuts: Array<{
+  href: string;
+  label: string;
+  icon: typeof Users;
+  description: string;
+  color: string;
+  iconBg: string;
+  moduleKey?: ModuleItemKey;
+  disabled?: boolean;
+}> = [
   {
     href: "/people",
     label: "People",
     icon: Users,
     description: "Directory",
+    moduleKey: "people",
     color: "border-blue-200/80 bg-blue-50/80 hover:bg-blue-100/80 text-blue-700 dark:border-blue-800/60 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 dark:text-blue-300",
     iconBg: "bg-blue-500 text-white dark:bg-blue-600",
   },
@@ -57,6 +72,7 @@ const shortcuts = [
     label: "Service",
     icon: Church,
     description: "Sunday worship",
+    moduleKey: "service_attendance",
     color: "border-violet-200/80 bg-violet-50/80 hover:bg-violet-100/80 text-violet-700 dark:border-violet-800/60 dark:bg-violet-950/40 dark:hover:bg-violet-900/50 dark:text-violet-300",
     iconBg: "bg-violet-500 text-white dark:bg-violet-600",
   },
@@ -65,6 +81,7 @@ const shortcuts = [
     label: "Events",
     icon: CalendarDays,
     description: "Camps & retreats",
+    moduleKey: "event_attendance",
     color: "border-orange-200/80 bg-orange-50/80 hover:bg-orange-100/80 text-orange-700 dark:border-orange-800/60 dark:bg-orange-950/40 dark:hover:bg-orange-900/50 dark:text-orange-300",
     iconBg: "bg-orange-500 text-white dark:bg-orange-600",
   },
@@ -73,6 +90,7 @@ const shortcuts = [
     label: "Households",
     icon: Home,
     description: "Families",
+    moduleKey: "households",
     color: "border-emerald-200/80 bg-emerald-50/80 hover:bg-emerald-100/80 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 dark:text-emerald-300",
     iconBg: "bg-emerald-500 text-white dark:bg-emerald-600",
   },
@@ -81,6 +99,7 @@ const shortcuts = [
     label: "Life Groups",
     icon: UserCircle,
     description: "Groups",
+    moduleKey: "life_groups",
     color: "border-cyan-200/80 bg-cyan-50/80 hover:bg-cyan-100/80 text-cyan-700 dark:border-cyan-800/60 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/50 dark:text-cyan-300",
     iconBg: "bg-cyan-500 text-white dark:bg-cyan-600",
   },
@@ -89,6 +108,7 @@ const shortcuts = [
     label: "Work Ministry",
     icon: Award,
     description: "Teams",
+    moduleKey: "work_ministry",
     color: "border-purple-200/80 bg-purple-50/80 hover:bg-purple-100/80 text-purple-700 dark:border-purple-800/60 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 dark:text-purple-300",
     iconBg: "bg-purple-500 text-white dark:bg-purple-600",
   },
@@ -97,6 +117,7 @@ const shortcuts = [
     label: "Growth Track",
     icon: TrendingUp,
     description: "Pipeline",
+    moduleKey: "growth_track",
     color: "border-rose-200/80 bg-rose-50/80 hover:bg-rose-100/80 text-rose-700 dark:border-rose-800/60 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:text-rose-300",
     iconBg: "bg-rose-500 text-white dark:bg-rose-600",
   },
@@ -105,6 +126,7 @@ const shortcuts = [
     label: "Financial",
     icon: DollarSign,
     description: "Coming soon",
+    moduleKey: "financial",
     disabled: true,
     color: "border-amber-200/80 bg-amber-50/80 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 opacity-50 cursor-not-allowed",
     iconBg: "bg-amber-500 text-white dark:bg-amber-600",
@@ -178,12 +200,30 @@ const avatarGradients = [
 export default function DashboardPage() {
   const { tenant } = useTenant();
   const { settings } = useTheme();
+  const { settings: orgSettings } = useOrganizationSettings();
+  const { entitlements } = useEntitlements();
   const { people, households, hydrated: peopleHydrated } = usePeople();
   const { overview, hydrated: growthHydrated } = useGrowthTrack();
   const { lifeGroups, lifeGroupMembers, hydrated: groupsHydrated } =
     useGroupsMinistry();
 
   const loading = !peopleHydrated || !growthHydrated || !groupsHydrated;
+
+  const visibleShortcuts = useMemo(() => {
+    const hiddenMenuItems = orgSettings.hiddenMenuItems ?? [];
+
+    return shortcuts.filter(item => {
+      if (!item.moduleKey) {
+        return true;
+      }
+
+      if (!isItemEnabled(entitlements.modules, item.moduleKey)) {
+        return false;
+      }
+
+      return isMenuItemVisibleInNav(item.moduleKey, hiddenMenuItems);
+    });
+  }, [entitlements.modules, orgSettings.hiddenMenuItems]);
 
   const stats = useMemo(() => {
     const activeMembers = people.filter(p => p.status === "Active").length;
@@ -253,7 +293,7 @@ export default function DashboardPage() {
     <div className="space-y-4">
       {/* Shortcut buttons */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-2">
-        {shortcuts.map(item =>
+        {visibleShortcuts.map(item =>
           item.disabled ? (
             <Button
               key={item.href}

@@ -269,6 +269,9 @@ export type Database = {
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean;
+          cancellation_reason: string | null;
+          cancelled_at: string | null;
+          cancelled_by_user_id: string | null;
           created_at: string;
           current_period_end: string;
           current_period_start: string;
@@ -288,6 +291,9 @@ export type Database = {
         };
         Insert: {
           cancel_at_period_end?: boolean;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by_user_id?: string | null;
           created_at?: string;
           current_period_end?: string;
           current_period_start?: string;
@@ -307,6 +313,9 @@ export type Database = {
         };
         Update: {
           cancel_at_period_end?: boolean;
+          cancellation_reason?: string | null;
+          cancelled_at?: string | null;
+          cancelled_by_user_id?: string | null;
           created_at?: string;
           current_period_end?: string;
           current_period_start?: string;
@@ -354,6 +363,7 @@ export type Database = {
           max_people: number;
           modules: Json;
           name: string;
+          sort_order: number;
           updated_at: string;
         };
         Insert: {
@@ -368,6 +378,7 @@ export type Database = {
           max_people?: number;
           modules?: Json;
           name: string;
+          sort_order?: number;
           updated_at?: string;
         };
         Update: {
@@ -382,6 +393,7 @@ export type Database = {
           max_people?: number;
           modules?: Json;
           name?: string;
+          sort_order?: number;
           updated_at?: string;
         };
         Relationships: [];
@@ -438,6 +450,14 @@ export type Database = {
       setup_organization: {
         Args: { org_name: string; org_slug?: string };
         Returns: string;
+      };
+      cancel_organization_subscription: {
+        Args: { p_organization_id: string; p_reason: string };
+        Returns: undefined;
+      };
+      upgrade_organization_subscription: {
+        Args: { p_organization_id: string; p_plan_key: string };
+        Returns: undefined;
       };
       seed_default_discipleship_tracks: {
         Args: { org_id: string };

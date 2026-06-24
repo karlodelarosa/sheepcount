@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, ScrollText, Search } from "lucide-react";
+import { Loader2, History, Search } from "lucide-react";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { useEntitlements } from "@/lib/subscription/use-entitlements";
 import { hasFeature } from "@/lib/subscription/entitlements";
@@ -148,7 +148,7 @@ export function AuditTrailView() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <ScrollText className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <History className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             <h1>Audit Trail</h1>
           </div>
           <p className="text-muted-foreground">

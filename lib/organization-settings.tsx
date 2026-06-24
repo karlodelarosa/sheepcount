@@ -16,6 +16,7 @@ import {
   updateOrganizationSettings,
 } from "@/lib/supabase/organization-settings";
 import { getOrganizationId } from "@/lib/supabase/tenant";
+import type { ModuleItemKey } from "@/lib/subscription/plans";
 import type { OrganizationSettings } from "@/lib/types/organization-settings";
 
 type OrganizationSettingsContextValue = {
@@ -24,6 +25,10 @@ type OrganizationSettingsContextValue = {
   isSaving: boolean;
   refreshSettings: () => Promise<void>;
   setWaterBaptismEnabled: (enabled: boolean) => Promise<boolean>;
+  setMenuItemHidden: (
+    itemKey: ModuleItemKey,
+    hidden: boolean,
+  ) => Promise<boolean>;
 };
 
 const OrganizationSettingsContext =
@@ -48,6 +53,7 @@ export function OrganizationSettingsProvider({
 
   const [settings, setSettings] = useState<OrganizationSettings>({
     waterBaptismEnabled: false,
+    hiddenMenuItems: [],
   });
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -98,6 +104,32 @@ export function OrganizationSettingsProvider({
     [organizationId, supabase],
   );
 
+  const setMenuItemHidden = useCallback(
+    async (itemKey: ModuleItemKey, hidden: boolean): Promise<boolean> => {
+      if (!organizationId) return false;
+
+      const current = settings.hiddenMenuItems ?? [];
+      const hiddenMenuItems = hidden
+        ? [...new Set([...current, itemKey])]
+        : current.filter(key => key !== itemKey);
+
+      setIsSaving(true);
+      try {
+        const next = await updateOrganizationSettings(supabase, organizationId, {
+          hiddenMenuItems,
+        });
+        setSettings(next);
+        return true;
+      } catch (error) {
+        toast.error(getErrorMessage(error));
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, settings.hiddenMenuItems, supabase],
+  );
+
   const value = useMemo(
     () => ({
       settings,
@@ -105,8 +137,16 @@ export function OrganizationSettingsProvider({
       isSaving,
       refreshSettings,
       setWaterBaptismEnabled,
+      setMenuItemHidden,
     }),
-    [settings, hydrated, isSaving, refreshSettings, setWaterBaptismEnabled],
+    [
+      settings,
+      hydrated,
+      isSaving,
+      refreshSettings,
+      setWaterBaptismEnabled,
+      setMenuItemHidden,
+    ],
   );
 
   return (

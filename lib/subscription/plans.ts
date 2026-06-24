@@ -111,6 +111,27 @@ export type Entitlements = {
   features: SubscriptionFeatures;
 };
 
+/** Known plan tiers — used when `subscription_plans.sort_order` is unset. */
+export const PLAN_TIER_ORDER: Record<string, number> = {
+  basic: 1,
+  pro: 2,
+};
+
+export function normalizePlanKey(planKey: string): string {
+  return planKey.trim().toLowerCase();
+}
+
+export function getPlanTier(
+  planKey: string,
+  sortOrder?: number | null,
+): number {
+  if (typeof sortOrder === "number" && sortOrder > 0) {
+    return sortOrder;
+  }
+
+  return PLAN_TIER_ORDER[normalizePlanKey(planKey)] ?? 0;
+}
+
 export const MODULE_ITEM_TO_GROUP: Record<ModuleItemKey, ModuleGroupKey | null> =
   {
     dashboard: "dashboard",
@@ -335,3 +356,10 @@ export const DASHBOARD_MENU_ITEM: SidebarMenuItemDef = {
   icon: LayoutDashboard,
   route: "dashboard",
 };
+
+export function getAllSidebarMenuItems(): SidebarMenuItemDef[] {
+  return [
+    DASHBOARD_MENU_ITEM,
+    ...SIDEBAR_MENU_REGISTRY.flatMap(group => group.items),
+  ];
+}
