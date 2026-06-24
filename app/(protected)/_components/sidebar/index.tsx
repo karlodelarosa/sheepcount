@@ -31,11 +31,27 @@ import {
   type ViewRoute,
 } from "@/lib/subscription/plans";
 import { isGroupEnabled, isItemEnabled } from "@/lib/subscription/entitlements";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function SidebarNavSkeleton() {
+  return (
+    <div className="space-y-3" aria-hidden>
+      <Skeleton className="h-7 w-full rounded-lg" />
+      {[0, 1, 2].map(group => (
+        <div key={group} className="space-y-1">
+          <Skeleton className="h-3.5 w-24" />
+          <Skeleton className="h-7 w-full rounded-lg" />
+          <Skeleton className="h-7 w-[88%] rounded-lg" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function Sidebar() {
   const { settings } = useTheme();
   const { people, hydrated } = usePeople();
-  const { entitlements } = useEntitlements();
+  const { entitlements, isLoading } = useEntitlements();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -103,70 +119,76 @@ export function Sidebar() {
 
       <SidebarContent className="p-2">
         <SidebarMenu className="space-y-0.5">
-          {showDashboard && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => navigateTo(DASHBOARD_MENU_ITEM.route)}
-                isActive={isActive(DASHBOARD_MENU_ITEM.route)}
-                className={sidebarItemClass(
-                  isActive(DASHBOARD_MENU_ITEM.route),
-                )}
-              >
-                <DASHBOARD_MENU_ITEM.icon className="w-4 h-4 mr-2" />
-                <span>{DASHBOARD_MENU_ITEM.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+          {isLoading ? (
+            <SidebarNavSkeleton />
+          ) : (
+            <>
+              {showDashboard && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => navigateTo(DASHBOARD_MENU_ITEM.route)}
+                    isActive={isActive(DASHBOARD_MENU_ITEM.route)}
+                    className={sidebarItemClass(
+                      isActive(DASHBOARD_MENU_ITEM.route),
+                    )}
+                  >
+                    <DASHBOARD_MENU_ITEM.icon className="w-4 h-4 mr-2" />
+                    <span>{DASHBOARD_MENU_ITEM.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+
+              {visibleGroups.map(group => (
+                <Collapsible
+                  key={group.key}
+                  defaultOpen={group.defaultOpen ?? true}
+                  className="group/collapsible"
+                >
+                  <SidebarGroup>
+                    <CollapsibleTrigger asChild>
+                      <SidebarGroupLabel className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-between group-data-[state=open]/collapsible:text-foreground">
+                        <span>{group.title}</span>
+                        <ChevronDown className="w-3 h-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                      </SidebarGroupLabel>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarGroupContent>
+                        <SidebarMenu className="space-y-1">
+                          {group.items.map(item => {
+                            const disabled = item.comingSoon ?? false;
+
+                            return (
+                              <SidebarMenuItem key={item.key}>
+                                <SidebarMenuButton
+                                  disabled={disabled}
+                                  onClick={
+                                    disabled
+                                      ? undefined
+                                      : () => navigateTo(item.route)
+                                  }
+                                  isActive={!disabled && isActive(item.route)}
+                                  tooltip={
+                                    disabled ? "Coming soon" : undefined
+                                  }
+                                  className={sidebarItemClass(
+                                    !disabled && isActive(item.route),
+                                    disabled,
+                                  )}
+                                >
+                                  <item.icon className="w-4 h-4 mr-2" />
+                                  <span>{item.title}</span>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </CollapsibleContent>
+                  </SidebarGroup>
+                </Collapsible>
+              ))}
+            </>
           )}
-
-          {visibleGroups.map(group => (
-            <Collapsible
-              key={group.key}
-              defaultOpen={group.defaultOpen ?? true}
-              className="group/collapsible"
-            >
-              <SidebarGroup>
-                <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-between group-data-[state=open]/collapsible:text-foreground">
-                    <span>{group.title}</span>
-                    <ChevronDown className="w-3 h-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
-                  </SidebarGroupLabel>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu className="space-y-1">
-                      {group.items.map(item => {
-                        const disabled = item.comingSoon ?? false;
-
-                        return (
-                          <SidebarMenuItem key={item.key}>
-                            <SidebarMenuButton
-                              disabled={disabled}
-                              onClick={
-                                disabled
-                                  ? undefined
-                                  : () => navigateTo(item.route)
-                              }
-                              isActive={!disabled && isActive(item.route)}
-                              tooltip={
-                                disabled ? "Coming soon" : undefined
-                              }
-                              className={sidebarItemClass(
-                                !disabled && isActive(item.route),
-                                disabled,
-                              )}
-                            >
-                              <item.icon className="w-4 h-4 mr-2" />
-                              <span>{item.title}</span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </CollapsibleContent>
-              </SidebarGroup>
-            </Collapsible>
-          ))}
 
           <SidebarMenuItem className="mt-2">
             <SidebarMenuButton

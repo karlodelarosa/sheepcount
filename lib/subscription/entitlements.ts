@@ -131,6 +131,17 @@ export function parseEntitlements(raw: unknown): Entitlements | null {
   };
 }
 
+function disableAllModules(modules: ModulesConfig): ModulesConfig {
+  return {
+    groups: Object.fromEntries(
+      Object.keys(modules.groups).map(key => [key, { enabled: false }]),
+    ) as ModulesConfig["groups"],
+    items: Object.fromEntries(
+      Object.keys(modules.items).map(key => [key, { enabled: false }]),
+    ) as ModulesConfig["items"],
+  };
+}
+
 export const BASIC_ENTITLEMENTS_FALLBACK: Entitlements = {
   plan_key: "basic",
   limits: DEFAULT_LIMITS,
@@ -171,6 +182,12 @@ export const BASIC_ENTITLEMENTS_FALLBACK: Entitlements = {
     },
   },
   features: { audit_trail: false },
+};
+
+/** Conservative defaults while tenant entitlements are loading — avoids disabled items flashing on screen. */
+export const LOADING_ENTITLEMENTS_FALLBACK: Entitlements = {
+  ...BASIC_ENTITLEMENTS_FALLBACK,
+  modules: disableAllModules(BASIC_ENTITLEMENTS_FALLBACK.modules),
 };
 
 export const PRO_ENTITLEMENTS_FALLBACK: Entitlements = {
