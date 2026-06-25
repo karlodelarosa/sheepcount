@@ -51,6 +51,21 @@ Review in **Storage → Policies** after applying migrations.
    - 30 requests per minute per IP (adjust for shared office networks)
    - Action: Block
 
+### Workers Builds (Git deploy)
+
+In **Workers & Pages → sheepcount → Settings → Builds**, use OpenNext commands — not `npm run build` + `wrangler deploy`:
+
+| Setting | Command |
+|---------|---------|
+| Build command | `npm run build:cf` |
+| Deploy command | `npx opennextjs-cloudflare deploy` |
+
+Or use a single deploy step: `npm run deploy` (builds and deploys in one command).
+
+`npm run build` only runs `next build` and does **not** produce `.open-next/`, so `opennextjs-cloudflare deploy` will fail with "Could not find compiled Open Next config".
+
+Copy env vars into **Build variables and secrets** (same as runtime variables below) so the Next.js build can inline `NEXT_PUBLIC_*` values.
+
 ### Workers variables
 
 Set in **Workers & Pages → sheepcount → Settings → Variables**:
