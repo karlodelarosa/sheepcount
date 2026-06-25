@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Building2, Car, MapPin, DollarSign, Calendar } from "lucide-react";
 import { mockProperties } from "@/components/mock-data";
+import { DEFAULT_CURRENCY, formatCurrency } from "@/lib/currency";
+import { useOrganizationSettings } from "@/lib/organization-settings";
 import { useEntitlements } from "@/lib/subscription/use-entitlements";
 import { isItemEnabled } from "@/lib/subscription/entitlements";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
@@ -14,6 +16,8 @@ import { AddPropertyDialog } from "./_components/add-property-dialog";
 export function PropertyManagementView() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { entitlements, isLoading } = useEntitlements();
+  const { settings: orgSettings } = useOrganizationSettings();
+  const currency = orgSettings.currency ?? DEFAULT_CURRENCY;
   const propertiesEnabled = isItemEnabled(entitlements.modules, "properties");
 
   const totalValue = mockProperties.reduce((sum, prop) => sum + prop.estimatedValue, 0);
@@ -96,7 +100,7 @@ export function PropertyManagementView() {
             <DollarSign className="h-5 w-5 text-slate-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-slate-900">${totalValue.toLocaleString()}</div>
+            <div className="text-slate-900">{formatCurrency(totalValue, currency)}</div>
             <p className="text-slate-600">Estimated worth</p>
           </CardContent>
         </Card>
@@ -172,7 +176,7 @@ export function PropertyManagementView() {
                             </div>
                           </TableCell>
                           <TableCell className="text-slate-900">
-                            ${property.estimatedValue.toLocaleString()}
+                            {formatCurrency(property.estimatedValue, currency)}
                           </TableCell>
                           <TableCell>
                             <Badge className="rounded-lg bg-green-500">

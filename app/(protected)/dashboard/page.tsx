@@ -124,10 +124,9 @@ const shortcuts: Array<{
     href: "/financial",
     label: "Financial",
     icon: DollarSign,
-    description: "Coming soon",
+    description: "Tithes & offerings",
     moduleKey: "financial",
-    disabled: true,
-    color: "border-amber-200/80 bg-amber-50/80 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 opacity-50 cursor-not-allowed",
+    color: "border-amber-200/80 bg-amber-50/80 hover:bg-amber-100/80 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 dark:text-amber-300",
     iconBg: "bg-amber-500 text-white dark:bg-amber-600",
   },
   {

@@ -5,11 +5,51 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Target, Calendar, BookOpen, Edit, Plus } from "lucide-react";
 import { mockChurchGoals } from "@/components/mock-data";
+import { useEntitlements } from "@/lib/subscription/use-entitlements";
+import { isItemEnabled } from "@/lib/subscription/entitlements";
 
 export function ChurchGoalsView() {
+  const { entitlements, isLoading } = useEntitlements();
+  const churchGoalsEnabled = isItemEnabled(entitlements.modules, "church_goals");
   const { yearlyGoal, monthlyThemes } = mockChurchGoals;
   const currentMonth = new Date().getMonth() + 1;
   const currentMonthTheme = monthlyThemes.find(t => t.month === currentMonth);
+
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!churchGoalsEnabled) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Church Goals & Themes
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Annual vision and monthly service themes
+          </p>
+        </div>
+
+        <Card className="border-border/60">
+          <CardContent className="py-16 text-center">
+            <Target className="w-12 h-12 mx-auto text-muted-foreground/40" />
+            <h2 className="mt-4 text-lg font-medium text-foreground">
+              Finance & Projects is not enabled
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+              Church goals and themes are available on the Pro plan. Contact support
+              to upgrade your subscription.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

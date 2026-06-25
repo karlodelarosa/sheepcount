@@ -1,14 +1,19 @@
+import type { SupportedCurrency } from "@/lib/currency";
+import { DEFAULT_CURRENCY, parseCurrency } from "@/lib/currency";
 import type { ModuleItemKey } from "@/lib/subscription/plans";
 
 export type OrganizationSettings = {
   waterBaptismEnabled?: boolean;
   /** Menu item keys hidden from navigation for all org members. */
   hiddenMenuItems?: ModuleItemKey[];
+  /** Display currency for financial modules. Defaults to PHP. */
+  currency?: SupportedCurrency;
 };
 
 export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
   waterBaptismEnabled: false,
   hiddenMenuItems: [],
+  currency: DEFAULT_CURRENCY,
 };
 
 const MODULE_ITEM_KEYS = new Set<ModuleItemKey>([
@@ -66,5 +71,6 @@ export function parseOrganizationSettings(
         ? value.waterBaptismEnabled
         : DEFAULT_ORGANIZATION_SETTINGS.waterBaptismEnabled,
     hiddenMenuItems: parseHiddenMenuItems(value.hiddenMenuItems),
+    currency: parseCurrency(value.currency),
   };
 }

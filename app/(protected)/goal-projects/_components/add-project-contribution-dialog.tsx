@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -5,6 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { mockGoalProjects } from "@/components/mock-data";
+import {
+  DEFAULT_CURRENCY,
+  formatCurrency,
+  getCurrencySymbol,
+} from "@/lib/currency";
+import { useOrganizationSettings } from "@/lib/organization-settings";
 
 interface AddProjectContributionDialogProps {
   open: boolean;
@@ -13,6 +21,9 @@ interface AddProjectContributionDialogProps {
 }
 
 export function AddProjectContributionDialog({ open, onOpenChange, projectId }: AddProjectContributionDialogProps) {
+  const { settings } = useOrganizationSettings();
+  const currency = settings.currency ?? DEFAULT_CURRENCY;
+  const symbol = getCurrencySymbol(currency);
   const [formData, setFormData] = useState({
     amount: "",
     date: "",
@@ -43,17 +54,22 @@ export function AddProjectContributionDialog({ open, onOpenChange, projectId }: 
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/60">
                 <p className="text-slate-600">Current Progress</p>
                 <p className="text-slate-900">
-                  ${project.raisedAmount.toLocaleString()} of ${project.goalAmount.toLocaleString()}
+                  {formatCurrency(project.raisedAmount, currency)} of{" "}
+                  {formatCurrency(project.goalAmount, currency)}
                 </p>
                 <p className="text-slate-600 mt-1">
-                  Remaining: ${(project.goalAmount - project.raisedAmount).toLocaleString()}
+                  Remaining:{" "}
+                  {formatCurrency(
+                    project.goalAmount - project.raisedAmount,
+                    currency,
+                  )}
                 </p>
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="contribution-amount">Amount ($)</Label>
+                <Label htmlFor="contribution-amount">Amount ({symbol})</Label>
                 <Input
                   id="contribution-amount"
                   type="number"

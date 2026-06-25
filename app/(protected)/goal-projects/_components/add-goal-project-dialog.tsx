@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -5,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DEFAULT_CURRENCY, getCurrencySymbol } from "@/lib/currency";
+import { useOrganizationSettings } from "@/lib/organization-settings";
 
 interface AddGoalProjectDialogProps {
   open: boolean;
@@ -12,6 +16,9 @@ interface AddGoalProjectDialogProps {
 }
 
 export function AddGoalProjectDialog({ open, onOpenChange }: AddGoalProjectDialogProps) {
+  const { settings } = useOrganizationSettings();
+  const currency = settings.currency ?? DEFAULT_CURRENCY;
+  const symbol = getCurrencySymbol(currency);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -65,7 +72,7 @@ export function AddGoalProjectDialog({ open, onOpenChange }: AddGoalProjectDialo
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="goal-amount">Goal Amount ($)</Label>
+                <Label htmlFor="goal-amount">Goal Amount ({symbol})</Label>
                 <Input
                   id="goal-amount"
                   type="number"

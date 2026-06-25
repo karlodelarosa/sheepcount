@@ -58,6 +58,7 @@ export function OrganizationSettingsProvider({
   const [settings, setSettings] = useState<OrganizationSettings>({
     waterBaptismEnabled: false,
     hiddenMenuItems: [],
+    currency: "PHP",
   });
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

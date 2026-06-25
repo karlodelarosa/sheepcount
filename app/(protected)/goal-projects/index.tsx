@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Target, TrendingUp, CheckCircle2, Calendar } from "lucide-react";
 import { mockGoalProjects } from "@/components/mock-data";
+import { DEFAULT_CURRENCY, formatCurrency } from "@/lib/currency";
+import { useOrganizationSettings } from "@/lib/organization-settings";
+import { useEntitlements } from "@/lib/subscription/use-entitlements";
+import { isItemEnabled } from "@/lib/subscription/entitlements";
 import { AddGoalProjectDialog } from "./_components/add-goal-project-dialog";
 import { AddProjectContributionDialog } from "./_components/add-project-contribution-dialog";
 
@@ -18,6 +22,10 @@ export function GoalProjectsView({ onViewProject }: GoalProjectsViewProps) {
   const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [isAddContributionOpen, setIsAddContributionOpen] = useState(false);
+  const { entitlements, isLoading } = useEntitlements();
+  const { settings: orgSettings } = useOrganizationSettings();
+  const currency = orgSettings.currency ?? DEFAULT_CURRENCY;
+  const goalProjectsEnabled = isItemEnabled(entitlements.modules, "goal_projects");
 
   const activeProjects = mockGoalProjects.filter(p => p.status === "Active");
   const completedProjects = mockGoalProjects.filter(p => p.status === "Completed");
@@ -67,8 +75,8 @@ export function GoalProjectsView({ onViewProject }: GoalProjectsViewProps) {
             </div>
             <Progress value={progress} className="h-3" />
             <div className="flex items-center justify-between mt-2">
-              <span className="text-slate-900">${project.raisedAmount.toLocaleString()}</span>
-              <span className="text-slate-600">of ${project.goalAmount.toLocaleString()}</span>
+              <span className="text-slate-900">{formatCurrency(project.raisedAmount, currency)}</span>
+              <span className="text-slate-600">of {formatCurrency(project.goalAmount, currency)}</span>
             </div>
           </div>
 
@@ -79,7 +87,7 @@ export function GoalProjectsView({ onViewProject }: GoalProjectsViewProps) {
             </div>
             <div className="flex items-center gap-2 text-slate-600">
               <TrendingUp className="w-4 h-4" />
-              <span>Remaining: ${(project.goalAmount - project.raisedAmount).toLocaleString()}</span>
+              <span>Remaining: {formatCurrency(project.goalAmount - project.raisedAmount, currency)}</span>
             </div>
           </div>
 
@@ -99,6 +107,42 @@ export function GoalProjectsView({ onViewProject }: GoalProjectsViewProps) {
       </Card>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!goalProjectsEnabled) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+            Goal Projects
+          </h1>
+          <p className="text-slate-600 dark:text-zinc-400 mt-1">
+            Track fundraising goals and project progress
+          </p>
+        </div>
+
+        <Card className="border-slate-200/70 dark:border-zinc-700/70">
+          <CardContent className="py-16 text-center">
+            <Target className="w-12 h-12 mx-auto text-slate-300 dark:text-zinc-600" />
+            <h2 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">
+              Finance & Projects is not enabled
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 max-w-md mx-auto">
+              Goal project tracking is available on the Pro plan. Contact support
+              to upgrade your subscription.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -133,7 +177,10 @@ export function GoalProjectsView({ onViewProject }: GoalProjectsViewProps) {
           </CardHeader>
           <CardContent>
             <div className="text-slate-900">
-              ${mockGoalProjects.reduce((sum, p) => sum + p.raisedAmount, 0).toLocaleString()}
+              {formatCurrency(
+                mockGoalProjects.reduce((sum, p) => sum + p.raisedAmount, 0),
+                currency,
+              )}
             </div>
             <p className="text-slate-600">All projects</p>
           </CardContent>
