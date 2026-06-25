@@ -12,7 +12,8 @@ const PLAN_GROUP_LABELS: Record<ModuleGroupKey, string> = {
   leadership: "Leadership",
   growth_track: "Growth Track",
   operations: "Operations",
-  finance_projects: "Finance & Projects",
+  ministry_planning: "Ministry Planning",
+  finance_projects: "Finance & Giving",
 };
 
 const PLAN_ITEM_LABELS: Partial<Record<ModuleItemKey, string>> = {
@@ -20,8 +21,8 @@ const PLAN_ITEM_LABELS: Partial<Record<ModuleItemKey, string>> = {
   growth_track: "Growth Track",
   properties: "Properties",
   financial: "Financial",
-  goal_projects: "Goal Projects",
-  church_goals: "Church Goals",
+  goal_projects: "Fundraising Campaigns",
+  church_goals: "Vision & Themes",
 };
 
 export function getPlanHighlights(plan: SubscriptionPlan): string[] {

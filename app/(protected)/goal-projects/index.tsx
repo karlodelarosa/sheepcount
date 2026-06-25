@@ -121,10 +121,10 @@ export function GoalProjectsView({ onViewProject }: GoalProjectsViewProps) {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-            Goal Projects
+            Fundraising Campaigns
           </h1>
           <p className="text-slate-600 dark:text-zinc-400 mt-1">
-            Track fundraising goals and project progress
+            Track fundraising goals and campaign progress
           </p>
         </div>
 
@@ -132,11 +132,11 @@ export function GoalProjectsView({ onViewProject }: GoalProjectsViewProps) {
           <CardContent className="py-16 text-center">
             <Target className="w-12 h-12 mx-auto text-slate-300 dark:text-zinc-600" />
             <h2 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">
-              Finance & Projects is not enabled
+              Finance & Giving is not enabled
             </h2>
             <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 max-w-md mx-auto">
-              Goal project tracking is available on the Pro plan. Contact support
-              to upgrade your subscription.
+              Fundraising campaigns are available on the Pro plan. Contact
+              support to upgrade your subscription.
             </p>
           </CardContent>
         </Card>
@@ -192,7 +192,7 @@ export function GoalProjectsView({ onViewProject }: GoalProjectsViewProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Active Goal Projects</CardTitle>
+              <CardTitle>Active Campaigns</CardTitle>
               <CardDescription>Track fundraising goals and progress</CardDescription>
             </div>
             <Button onClick={() => setIsAddProjectOpen(true)} className="rounded-xl bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20">

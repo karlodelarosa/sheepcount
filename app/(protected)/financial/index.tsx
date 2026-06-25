@@ -84,7 +84,7 @@ export function FinancialView() {
           <CardContent className="py-16 text-center">
             <DollarSign className="w-12 h-12 mx-auto text-slate-300 dark:text-zinc-600" />
             <h2 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">
-              Finance & Projects is not enabled
+              Finance & Giving is not enabled
             </h2>
             <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 max-w-md mx-auto">
               Financial management is available on the Pro plan. Contact support

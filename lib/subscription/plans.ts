@@ -18,7 +18,7 @@ import {
   GitBranch,
   Building2,
   DollarSign,
-  Target,
+  HandCoins,
   Lightbulb,
 } from "lucide-react";
 
@@ -31,6 +31,7 @@ export type ModuleGroupKey =
   | "leadership"
   | "growth_track"
   | "operations"
+  | "ministry_planning"
   | "finance_projects";
 
 export type ModuleItemKey =
@@ -153,7 +154,7 @@ export const MODULE_ITEM_TO_GROUP: Record<ModuleItemKey, ModuleGroupKey | null> 
     properties: "operations",
     financial: "finance_projects",
     goal_projects: "finance_projects",
-    church_goals: "finance_projects",
+    church_goals: "ministry_planning",
   };
 
 export const MODULE_ITEM_TO_ROUTE: Record<ModuleItemKey, ViewRoute> = {
@@ -194,6 +195,7 @@ export type SidebarMenuGroupDef = {
   items: SidebarMenuItemDef[];
 };
 
+/** Sidebar menu registry — also update entitlements fallbacks, plan-highlights, and subscription plan migrations. */
 export const SIDEBAR_MENU_REGISTRY: SidebarMenuGroupDef[] = [
   {
     key: "people_membership",
@@ -320,8 +322,21 @@ export const SIDEBAR_MENU_REGISTRY: SidebarMenuGroupDef[] = [
     ],
   },
   {
+    key: "ministry_planning",
+    title: "Ministry Planning",
+    defaultOpen: false,
+    items: [
+      {
+        key: "church_goals",
+        title: "Vision & Themes",
+        icon: Lightbulb,
+        route: "church-goals",
+      },
+    ],
+  },
+  {
     key: "finance_projects",
-    title: "Finance & Projects",
+    title: "Finance & Giving",
     defaultOpen: false,
     items: [
       {
@@ -332,15 +347,9 @@ export const SIDEBAR_MENU_REGISTRY: SidebarMenuGroupDef[] = [
       },
       {
         key: "goal_projects",
-        title: "Goal Projects",
-        icon: Target,
+        title: "Fundraising Campaigns",
+        icon: HandCoins,
         route: "goal-projects",
-      },
-      {
-        key: "church_goals",
-        title: "Church Goals",
-        icon: Lightbulb,
-        route: "church-goals",
       },
     ],
   },

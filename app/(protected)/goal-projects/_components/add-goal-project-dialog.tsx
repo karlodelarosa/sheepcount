@@ -38,7 +38,7 @@ export function AddGoalProjectDialog({ open, onOpenChange }: AddGoalProjectDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] border-slate-200/60">
         <DialogHeader>
-          <DialogTitle>Create Goal Project</DialogTitle>
+          <DialogTitle>Create Fundraising Campaign</DialogTitle>
           <DialogDescription>
             Set up a new fundraising goal for your church
           </DialogDescription>

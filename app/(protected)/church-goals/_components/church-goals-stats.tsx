@@ -208,7 +208,7 @@ export function ChurchGoalsPageHeader({
     <div>
       <div className="flex items-center gap-2 flex-wrap">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Church Goals & Themes
+          Vision & Themes
         </h1>
         {isCurrentYear && (
           <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">

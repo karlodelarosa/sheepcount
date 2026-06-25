@@ -156,6 +156,7 @@ export const BASIC_ENTITLEMENTS_FALLBACK: Entitlements = {
       leadership: { enabled: true },
       growth_track: { enabled: false },
       operations: { enabled: false },
+      ministry_planning: { enabled: false },
       finance_projects: { enabled: false },
     },
     items: {
@@ -203,6 +204,7 @@ export const PRO_ENTITLEMENTS_FALLBACK: Entitlements = {
       leadership: { enabled: true },
       growth_track: { enabled: true },
       operations: { enabled: true },
+      ministry_planning: { enabled: true },
       finance_projects: { enabled: true },
     },
     items: {

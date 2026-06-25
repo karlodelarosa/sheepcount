@@ -70,7 +70,7 @@ export function ChurchGoalsView() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Church Goals & Themes
+            Vision & Themes
           </h1>
           <p className="text-slate-600 dark:text-zinc-400 mt-1">
             Annual vision and monthly service themes
@@ -83,11 +83,11 @@ export function ChurchGoalsView() {
               <Target className="w-8 h-8 text-slate-400 dark:text-zinc-500" />
             </div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Finance & Projects is not enabled
+              Ministry Planning is not enabled
             </h2>
             <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 max-w-md mx-auto">
-              Church goals and themes are available on the Pro plan. Contact
-              support to upgrade your subscription.
+              Vision & Themes is available on the Pro plan. Contact support to
+              upgrade your subscription.
             </p>
           </CardContent>
         </Card>
