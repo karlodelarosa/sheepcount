@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,97 +23,99 @@ import {
 import { DEFAULT_CURRENCY, getCurrencySymbol } from "@/lib/currency";
 import { useOrganizationSettings } from "@/lib/organization-settings";
 import { useProperties } from "@/lib/properties";
-import type { CreatePropertyInput } from "@/lib/supabase/properties";
+import type {
+  ChurchProperty,
+  PropertyStatus,
+  UpdatePropertyInput,
+} from "@/lib/supabase/properties";
 import { PropertyImageField } from "./property-image-field";
 
-interface AddPropertyDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (input: CreatePropertyInput, imageFile?: File | null) => Promise<unknown>;
-  isAdmin: boolean;
-}
-
-export function AddPropertyDialog({
+export function EditPropertyDialog({
   open,
   onOpenChange,
+  property,
   onSubmit,
   isAdmin,
-}: AddPropertyDialogProps) {
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  property: ChurchProperty;
+  onSubmit: (input: UpdatePropertyInput, imageFile?: File | null) => Promise<unknown>;
+  isAdmin: boolean;
+}) {
   const { settings } = useOrganizationSettings();
   const { activePropertyTypes } = useProperties();
   const currency = settings.currency ?? DEFAULT_CURRENCY;
   const symbol = getCurrencySymbol(currency);
 
-  const defaultTypeId = activePropertyTypes[0]?.id ?? "";
-
   const [formData, setFormData] = useState({
     name: "",
-    propertyTypeId: defaultTypeId,
+    propertyTypeId: "",
     purchaseDate: "",
     estimatedValue: "",
+    status: "owned" as PropertyStatus,
     description: "",
     notes: "",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
-    if (!open || formData.propertyTypeId) return;
-    if (defaultTypeId) {
-      setFormData(prev => ({ ...prev, propertyTypeId: defaultTypeId }));
-    }
-  }, [open, defaultTypeId, formData.propertyTypeId]);
-
-  const typeOptions = useMemo(() => activePropertyTypes, [activePropertyTypes]);
+    if (!open) return;
+    setFormData({
+      name: property.name,
+      propertyTypeId: property.propertyTypeId,
+      purchaseDate: property.purchaseDate ?? "",
+      estimatedValue: String(property.estimatedValue),
+      status: property.status,
+      description: property.description,
+      notes: property.notes,
+    });
+    setImageFile(null);
+  }, [property, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isAdmin || !formData.propertyTypeId) return;
+    if (!isAdmin) return;
 
     const result = await onSubmit(
       {
+        id: property.id,
         name: formData.name.trim(),
         propertyTypeId: formData.propertyTypeId,
+        imageUrl: property.imageUrl,
         purchaseDate: formData.purchaseDate || null,
         estimatedValue: Number(formData.estimatedValue) || 0,
+        status: formData.status,
         description: formData.description.trim(),
         notes: formData.notes.trim(),
       },
       imageFile,
     );
 
-    if (result) {
-      onOpenChange(false);
-      setFormData({
-        name: "",
-        propertyTypeId: defaultTypeId,
-        purchaseDate: "",
-        estimatedValue: "",
-        description: "",
-        notes: "",
-      });
-      setImageFile(null);
-    }
+    if (result) onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] border-slate-200/60">
         <DialogHeader>
-          <DialogTitle>Add Church Property</DialogTitle>
-          <DialogDescription>
-            Register a new property or asset owned by the church
-          </DialogDescription>
+          <DialogTitle>Edit Property</DialogTitle>
+          <DialogDescription>Update property details and status</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <PropertyImageField onFileChange={setImageFile} disabled={!isAdmin} variant="large" />
+            <PropertyImageField
+              currentImageUrl={property.imageUrl}
+              onFileChange={setImageFile}
+              disabled={!isAdmin}
+              variant="large"
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="property-name">Property Name</Label>
+                <Label htmlFor="edit-property-name">Property Name</Label>
                 <Input
-                  id="property-name"
-                  placeholder="e.g., Main Church Building"
+                  id="edit-property-name"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                   className="rounded-lg"
@@ -122,7 +124,7 @@ export function AddPropertyDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="type">Property Type</Label>
+                <Label htmlFor="edit-type">Property Type</Label>
                 <Select
                   value={formData.propertyTypeId}
                   onValueChange={value =>
@@ -130,10 +132,10 @@ export function AddPropertyDialog({
                   }
                 >
                   <SelectTrigger className="rounded-lg">
-                    <SelectValue placeholder="Select type" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {typeOptions.map(type => (
+                    {activePropertyTypes.map(type => (
                       <SelectItem key={type.id} value={type.id}>
                         {type.name}
                       </SelectItem>
@@ -145,9 +147,9 @@ export function AddPropertyDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="purchase-date">Purchase Date</Label>
+                <Label htmlFor="edit-purchase-date">Purchase Date</Label>
                 <Input
-                  id="purchase-date"
+                  id="edit-purchase-date"
                   type="date"
                   value={formData.purchaseDate}
                   onChange={e =>
@@ -158,13 +160,12 @@ export function AddPropertyDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="value">Estimated Value ({symbol})</Label>
+                <Label htmlFor="edit-value">Estimated Value ({symbol})</Label>
                 <Input
-                  id="value"
+                  id="edit-value"
                   type="number"
                   min="0"
                   step="0.01"
-                  placeholder="0"
                   value={formData.estimatedValue}
                   onChange={e =>
                     setFormData({ ...formData, estimatedValue: e.target.value })
@@ -176,9 +177,28 @@ export function AddPropertyDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="edit-status">Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={value =>
+                  setFormData({ ...formData, status: value as PropertyStatus })
+                }
+              >
+                <SelectTrigger className="rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owned">Owned</SelectItem>
+                  <SelectItem value="borrowed">Borrowed</SelectItem>
+                  <SelectItem value="lost">Lost</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
               <Textarea
-                id="description"
+                id="edit-description"
                 placeholder="e.g. Electric guitar, Ibanez RG series"
                 value={formData.description}
                 onChange={e =>
@@ -190,9 +210,9 @@ export function AddPropertyDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="edit-notes">Notes</Label>
               <Textarea
-                id="notes"
+                id="edit-notes"
                 placeholder="Internal notes (condition, storage location, etc.)"
                 value={formData.notes}
                 onChange={e => setFormData({ ...formData, notes: e.target.value })}
@@ -213,9 +233,9 @@ export function AddPropertyDialog({
             <Button
               type="submit"
               className="rounded-lg bg-slate-900 hover:bg-slate-800"
-              disabled={!isAdmin || !formData.propertyTypeId}
+              disabled={!isAdmin}
             >
-              Add Property
+              Save Changes
             </Button>
           </DialogFooter>
         </form>

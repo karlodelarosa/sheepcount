@@ -15,6 +15,7 @@ import { OrganizationSettingsProvider } from "@/lib/organization-settings";
 import { BaptismProvider } from "@/lib/baptism";
 import { ChurchGoalsProvider } from "@/lib/church-goals";
 import { GoalProjectsProvider } from "@/lib/goal-projects";
+import { PropertiesProvider } from "@/lib/properties";
 import { PeopleProvider } from "@/lib/people";
 import { ServiceAttendanceProvider } from "@/lib/service-attendance";
 
@@ -31,7 +32,8 @@ export default function ProtectedLayout({
             <BaptismProvider>
               <ChurchGoalsProvider>
                 <GoalProjectsProvider>
-                  <GroupsMinistryProvider>
+                  <PropertiesProvider>
+                    <GroupsMinistryProvider>
                     <DiscipleshipProvider>
                       <ServiceAttendanceProvider>
                         <GrowthTrackProvider>
@@ -59,7 +61,8 @@ export default function ProtectedLayout({
                         </GrowthTrackProvider>
                       </ServiceAttendanceProvider>
                     </DiscipleshipProvider>
-                  </GroupsMinistryProvider>
+                    </GroupsMinistryProvider>
+                  </PropertiesProvider>
                 </GoalProjectsProvider>
               </ChurchGoalsProvider>
             </BaptismProvider>
