@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useState } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -61,6 +61,12 @@ export function SearchableSelect({
     if (!next) setSearch("");
   };
 
+  useEffect(() => {
+    if (open) {
+      searchInputRef.current?.focus();
+    }
+  }, [open]);
+
   const showEmptyState =
     filteredOptions.length === 0 && (!pinnedOptions || pinnedOptions.length === 0);
 
@@ -75,13 +81,7 @@ export function SearchableSelect({
       <SelectTrigger id={id} className={triggerClassName}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent
-        onCloseAutoFocus={event => event.preventDefault()}
-        onOpenAutoFocus={event => {
-          event.preventDefault();
-          searchInputRef.current?.focus();
-        }}
-      >
+      <SelectContent onCloseAutoFocus={event => event.preventDefault()}>
         <div
           className="border-b p-2"
           onPointerDown={event => event.stopPropagation()}

@@ -29,8 +29,8 @@ import {
   updateOrganizationDetails,
   updateUserProfile,
   uploadUserAvatar,
-  validateAvatarFile,
 } from "@/lib/supabase/profile";
+import { validateAvatarFile } from "@/lib/upload-validation";
 import dayjs from "dayjs";
 import { toast } from "sonner";
 import {

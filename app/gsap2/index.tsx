@@ -12,11 +12,13 @@ import { RocketIcon, StarIcon, SparklesIcon } from "lucide-react";
 
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const orbRefs = useRef<HTMLDivElement[]>([]);
+  const orbRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // === INITIALIZE ORBS AND ANIMATION ===
   useEffect(() => {
-    orbRefs.current.forEach((orb, i) => {
+    orbRefs.current
+      .filter((orb): orb is HTMLDivElement => orb !== null)
+      .forEach((orb, i) => {
       // 🌀 Random scattered start positions
       const startX = Math.random() * window.innerWidth - window.innerWidth / 2;
       const startY = Math.random() * window.innerHeight - window.innerHeight / 2;
@@ -69,7 +71,9 @@ export default function Hero() {
       {[...Array(7)].map((_, i) => (
         <div
           key={i}
-          ref={(el) => (orbRefs.current[i] = el!)}
+          ref={el => {
+            orbRefs.current[i] = el;
+          }}
           className="absolute rounded-full blur-3xl opacity-65"
           style={{
             // 🎨 Gradient color palette — elegant & consistent

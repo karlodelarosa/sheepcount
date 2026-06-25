@@ -1,15 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  getImageExtension,
+  validateImageFile,
+} from "@/lib/upload-validation";
 
 const PROPERTY_IMAGE_BUCKET = "property-images";
-
-const ALLOWED_IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 export type PropertyStatus = "owned" | "borrowed" | "lost";
 
@@ -206,30 +201,6 @@ const PROPERTY_SELECT = `
 const BORROW_SELECT =
   "id, property_id, borrower_person_id, borrower_name, borrowed_at, due_at, returned_at, notes, created_at, updated_at";
 
-function getImageExtension(file: File): string {
-  switch (file.type) {
-    case "image/jpeg":
-      return "jpg";
-    case "image/png":
-      return "png";
-    case "image/webp":
-      return "webp";
-    case "image/gif":
-      return "gif";
-    default:
-      return "jpg";
-  }
-}
-
-function validatePropertyImage(file: File): void {
-  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-    throw new Error("Image must be JPEG, PNG, WebP, or GIF");
-  }
-  if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error("Image must be 5 MB or smaller");
-  }
-}
-
 function getPropertyImagePath(
   organizationId: string,
   propertyId: string,
@@ -390,7 +361,7 @@ export async function uploadPropertyImage(
   propertyId: string,
   file: File,
 ): Promise<string> {
-  validatePropertyImage(file);
+  await validateImageFile(file, "Property image");
 
   const extension = getImageExtension(file);
   const path = getPropertyImagePath(organizationId, propertyId, extension);

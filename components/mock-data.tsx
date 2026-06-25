@@ -244,7 +244,12 @@ export const mockPeople = [
 
 // Generate attendance records for the last 30 days
 const generateAttendance = () => {
-  const records = [];
+  const records: Array<{
+    id: string;
+    personId: string;
+    date: string;
+    type: string;
+  }> = [];
   const types = ["Service", "Meeting", "Event", "Class"];
 
   for (let i = 0; i < 30; i++) {

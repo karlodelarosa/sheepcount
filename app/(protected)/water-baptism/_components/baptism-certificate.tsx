@@ -183,7 +183,6 @@ export async function downloadBaptismCertificateImage(
     cacheBust: true,
     pixelRatio: 2,
     backgroundColor: "#ffffff",
-    useCORS: true,
   });
 
   const link = document.createElement("a");

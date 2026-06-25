@@ -4,12 +4,16 @@ import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 
 export default function HeroBanner() {
-  const heroRef = useRef(null);
-  const lightsRef = useRef([]);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const lightsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     const hero = heroRef.current;
-    const lights = lightsRef.current;
+    const lights = lightsRef.current.filter(
+      (light): light is HTMLDivElement => light !== null,
+    );
+
+    if (!hero || lights.length === 0) return;
 
     // --- IDLE LIGHT MOVEMENT ---
     const idleTl = gsap.timeline({ repeat: -1, yoyo: true, ease: "sine.inOut" });
@@ -23,7 +27,7 @@ export default function HeroBanner() {
     });
 
     // --- MOUSE INTERACTIVITY (PARALLAX REACTION) ---
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent) => {
       const rect = hero.getBoundingClientRect();
       const x = e.clientX - rect.left - rect.width / 2;
       const y = e.clientY - rect.top - rect.height / 2;
@@ -65,7 +69,9 @@ export default function HeroBanner() {
         {[...Array(3)].map((_, i) => (
           <div
             key={i}
-            ref={(el) => (lightsRef.current[i] = el)}
+            ref={el => {
+              lightsRef.current[i] = el;
+            }}
             className="absolute w-[120%] h-[120%] rounded-full blur-[120px] opacity-60 mix-blend-screen"
             style={{
               background: `radial-gradient(circle at center, ${

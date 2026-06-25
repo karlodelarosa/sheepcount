@@ -49,9 +49,8 @@ function AnimatedMenu() {
           return (
             <motion.div
               key={item.label}
-              ref={(el) => {
+              ref={el => {
                 menuRefs.current[idx] = el;
-                return null;
               }}
               className="relative p-3 cursor-pointer text-white/90 rounded-lg outline-none select-none flex flex-col items-center justify-center"
               whileHover={{

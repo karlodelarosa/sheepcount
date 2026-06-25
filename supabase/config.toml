@@ -9,4 +9,20 @@ major_version = 15
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/auth/callback", "http://localhost:3000/auth/update-password"]
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3000/auth/update-password",
+]
+# Before production go-live, add your hosted URLs in the Supabase dashboard:
+# https://your-domain.com/auth/callback
+# https://your-domain.com/auth/update-password
+
+[auth.rate_limit]
+email_sent = 2
+sms_sent = 30
+anonymous_users = 30
+token_refresh = 150
+sign_in_sign_ups = 30
+token_verifications = 30
+web3 = 30
+

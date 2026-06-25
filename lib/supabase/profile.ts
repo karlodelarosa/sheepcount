@@ -1,15 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  getImageExtension,
+  validateImageFile,
+} from "@/lib/upload-validation";
 
 export const AVATAR_BUCKET = "avatars";
 export const ORGANIZATION_LOGO_BUCKET = "organization-logos";
-
-const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
-const AVATAR_MIME_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
 
 export type UpdateProfileInput = {
   first_name?: string;
@@ -23,37 +19,6 @@ export type UpdateOrganizationInput = {
   address?: string | null;
   image?: string | null;
 };
-
-function getAvatarExtension(file: File): string {
-  const fromName = file.name.split(".").pop()?.toLowerCase();
-  if (fromName === "jpeg" || fromName === "jpg") return "jpg";
-  if (fromName === "png") return "png";
-  if (fromName === "webp") return "webp";
-  if (fromName === "gif") return "gif";
-
-  switch (file.type) {
-    case "image/jpeg":
-      return "jpg";
-    case "image/png":
-      return "png";
-    case "image/webp":
-      return "webp";
-    case "image/gif":
-      return "gif";
-    default:
-      throw new Error("Invalid image type. Use JPEG, PNG, WebP, or GIF.");
-  }
-}
-
-export function validateAvatarFile(file: File): void {
-  if (!AVATAR_MIME_TYPES.has(file.type)) {
-    throw new Error("Invalid image type. Use JPEG, PNG, WebP, or GIF.");
-  }
-
-  if (file.size > AVATAR_MAX_BYTES) {
-    throw new Error("Image must be 5 MB or smaller.");
-  }
-}
 
 function getAvatarObjectPath(userId: string, extension: string): string {
   return `${userId}/avatar.${extension}`;
@@ -83,9 +48,9 @@ export async function uploadUserAvatar(
   userId: string,
   file: File,
 ) {
-  validateAvatarFile(file);
+  await validateImageFile(file, "Profile picture");
 
-  const extension = getAvatarExtension(file);
+  const extension = getImageExtension(file);
   const path = getAvatarObjectPath(userId, extension);
 
   await deleteUserAvatarFiles(supabase, userId);
@@ -164,9 +129,9 @@ export async function uploadOrganizationLogo(
   organizationId: string,
   file: File,
 ) {
-  validateAvatarFile(file);
+  await validateImageFile(file, "Organization logo");
 
-  const extension = getAvatarExtension(file);
+  const extension = getImageExtension(file);
   const path = getOrganizationLogoObjectPath(organizationId, extension);
 
   await deleteOrganizationLogoFiles(supabase, organizationId);

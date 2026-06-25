@@ -44,10 +44,22 @@ interface CosmicButtonProps
 
 export const CosmicButton = React.forwardRef<HTMLButtonElement, CosmicButtonProps>(
   ({ className, variant, size, asChild, icon, label, children, ...props }, ref) => {
-    const Comp = asChild ? Slot : motion.button;
+    const { onDrag, onDragStart, onDragEnd, ...buttonProps } = props;
+
+    if (asChild) {
+      return (
+        <Slot
+          ref={ref}
+          className={cn(buttonVariants({ variant, size, className }))}
+          {...buttonProps}
+        >
+          {children ?? label}
+        </Slot>
+      );
+    }
 
     return (
-      <Comp
+      <motion.button
         ref={ref}
         whileHover={{
           scale: 1.06,
@@ -56,7 +68,7 @@ export const CosmicButton = React.forwardRef<HTMLButtonElement, CosmicButtonProp
         whileTap={{ scale: 0.92 }}
         transition={{ type: "spring", stiffness: 300, damping: 15 }}
         className={cn(buttonVariants({ variant, size, className }))}
-        {...props}
+        {...(buttonProps as React.ComponentProps<typeof motion.button>)}
       >
         {/* ✴️ Animated gradient drift for “cosmic” variant */}
         {variant === "cosmic" && (
@@ -121,7 +133,7 @@ export const CosmicButton = React.forwardRef<HTMLButtonElement, CosmicButtonProp
           {icon && <span className="text-lg">{icon}</span>}
           {label || children}
         </span>
-      </Comp>
+      </motion.button>
     );
   }
 );

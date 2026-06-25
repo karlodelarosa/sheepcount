@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { CalendarDays, Target, TrendingUp } from "lucide-react";
 import type { FundraisingCampaign } from "@/lib/supabase/goal-projects";
-import { formatCurrency } from "@/lib/currency";
+import { formatCurrency, parseCurrency } from "@/lib/currency";
 
 const categoryAccent: Record<string, "blue" | "emerald" | "purple" | "orange"> =
   {
@@ -47,6 +47,7 @@ export function CampaignCard({
 
   const accent = categoryAccent[campaign.category] ?? "blue";
   const borderClass = categoryBorder[campaign.category] ?? categoryBorder.Other;
+  const resolvedCurrency = parseCurrency(currency);
 
   return (
     <div
@@ -81,10 +82,10 @@ export function CampaignCard({
         <Progress value={progress} className="h-2 mt-2" />
         <div className="mt-2 flex items-center justify-between text-sm">
           <span className="font-semibold text-foreground">
-            {formatCurrency(raisedAmount, currency)}
+            {formatCurrency(raisedAmount, resolvedCurrency)}
           </span>
           <span className="text-muted-foreground">
-            of {formatCurrency(goalAmount, currency)}
+            of {formatCurrency(goalAmount, resolvedCurrency)}
           </span>
         </div>
 
@@ -95,7 +96,7 @@ export function CampaignCard({
           </div>
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            <span>Remaining: {formatCurrency(remaining, currency)}</span>
+            <span>Remaining: {formatCurrency(remaining, resolvedCurrency)}</span>
           </div>
         </div>
       </div>

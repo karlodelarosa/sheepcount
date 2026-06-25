@@ -191,7 +191,9 @@ const HeroGridPhysics: React.FC = () => {
               return (
                 <div
                   key={index}
-                  ref={(el) => (cellRefs.current[index] = el)}
+                  ref={el => {
+                    cellRefs.current[index] = el;
+                  }}
                   className="cell"
                   data-x={rowIdx}
                   data-y={colIdx}

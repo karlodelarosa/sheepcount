@@ -17,8 +17,8 @@ import { getOrganizationId } from "@/lib/supabase/tenant";
 import {
   removeOrganizationLogo,
   uploadOrganizationLogo,
-  validateAvatarFile,
 } from "@/lib/supabase/profile";
+import { validateAvatarFile } from "@/lib/upload-validation";
 import { toast } from "sonner";
 import { NavigationVisibilitySettings } from "./_components/navigation-visibility";
 
