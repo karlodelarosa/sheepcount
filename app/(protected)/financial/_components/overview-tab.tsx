@@ -26,9 +26,13 @@ import {
 } from "recharts";
 import { OverviewStatCard } from "@/components/overview-stat-card";
 import { formatCurrency, type SupportedCurrency } from "@/lib/currency";
+import { useOrganizationSettings } from "@/lib/organization-settings";
+import type { FinancialGoalConfig } from "../_lib/goal-analysis";
+import { computeGoalProgress } from "../_lib/goal-analysis";
 import {
   computeFinancialOverview,
   fillMonthlyTrendForPeriod,
+  buildMonthlyTrend,
   type FinancialOverview,
 } from "../_lib/financial-overview";
 import {
@@ -47,6 +51,7 @@ import type {
 import { computeOverviewSidebarData } from "../_lib/overview-sidebar";
 import { ChartPanel, ChartEmpty } from "./chart-panel";
 import { GoalProgressCard } from "./goal-progress-card";
+import { TithesAverageCard } from "./tithes-average-card";
 import { OverviewPeriodFilterBar } from "./overview-period-filter";
 import { OverviewSidebar } from "./overview-sidebar";
 
@@ -113,8 +118,17 @@ export function OverviewTab({
   auditExpenses,
   currency,
 }: OverviewTabProps) {
+  const { settings } = useOrganizationSettings();
   const [period, setPeriod] = useState<OverviewPeriodFilter>(
     DEFAULT_OVERVIEW_PERIOD,
+  );
+
+  const goalConfig = useMemo<FinancialGoalConfig>(
+    () => ({
+      targetAmount: settings.financialSavingsGoal ?? null,
+      targetDate: settings.financialGoalTargetDate ?? null,
+    }),
+    [settings.financialGoalTargetDate, settings.financialSavingsGoal],
   );
 
   const overview = useMemo(() => {
@@ -124,13 +138,25 @@ export function OverviewTab({
       filteredIncome,
       filteredExpenses,
       currency,
+      goalConfig,
+    );
+
+    const allTimeNet =
+      income.reduce((sum, line) => sum + line.amount, 0) -
+      expenses.reduce((sum, line) => sum + line.amount, 0);
+    const allTimeMonthlyTrend = buildMonthlyTrend(income, expenses);
+    const goalProgress = computeGoalProgress(
+      allTimeNet,
+      allTimeMonthlyTrend,
+      goalConfig,
     );
 
     return {
       ...base,
       monthlyTrend: fillMonthlyTrendForPeriod(base.monthlyTrend, period),
+      goalProgress,
     };
-  }, [income, expenses, currency, period]);
+  }, [income, expenses, currency, period, goalConfig]);
 
   const sidebarData = useMemo(
     () =>
@@ -201,12 +227,11 @@ export function OverviewTab({
               icon={DollarSign}
               variant={overview.netBalance >= 0 ? "emerald" : "rose"}
             />
-            <OverviewStatCard
-              label="Tithes"
-              value={formatCurrency(overview.totalTithes, currency)}
-              hint="Weekly collections"
-              icon={TrendingUp}
-              variant="blue"
+            <TithesAverageCard
+              income={income}
+              period={period}
+              periodLabel={periodLabel}
+              currency={currency}
             />
           </div>
 

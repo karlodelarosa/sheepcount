@@ -8,6 +8,10 @@ export type OrganizationSettings = {
   hiddenMenuItems?: ModuleItemKey[];
   /** Display currency for financial modules. Defaults to PHP. */
   currency?: SupportedCurrency;
+  /** Target savings amount for the financial overview goal. */
+  financialSavingsGoal?: number | null;
+  /** Target date (YYYY-MM-DD) to reach the savings goal. */
+  financialGoalTargetDate?: string | null;
 };
 
 export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
@@ -72,5 +76,16 @@ export function parseOrganizationSettings(
         : DEFAULT_ORGANIZATION_SETTINGS.waterBaptismEnabled,
     hiddenMenuItems: parseHiddenMenuItems(value.hiddenMenuItems),
     currency: parseCurrency(value.currency),
+    financialSavingsGoal:
+      typeof value.financialSavingsGoal === "number" &&
+      Number.isFinite(value.financialSavingsGoal) &&
+      value.financialSavingsGoal > 0
+        ? value.financialSavingsGoal
+        : null,
+    financialGoalTargetDate:
+      typeof value.financialGoalTargetDate === "string" &&
+      /^\d{4}-\d{2}-\d{2}$/.test(value.financialGoalTargetDate)
+        ? value.financialGoalTargetDate
+        : null,
   };
 }

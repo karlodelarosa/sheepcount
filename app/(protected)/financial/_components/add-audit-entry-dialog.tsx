@@ -27,14 +27,14 @@ import {
 } from "@/lib/currency";
 import { todayDateString } from "../_lib/dates";
 import {
-  EXPENSE_CATEGORIES,
   PAYMENT_METHODS,
+  parseFinancialAmount,
   type FinancialEntryType,
-  type IncomeType,
   type PaymentMethod,
   type NewAuditExpenseEntry,
   type NewAuditIncomeEntry,
 } from "../_lib/types";
+import { useFinancialAudits } from "../financial-context";
 
 interface AddAuditEntryDialogProps {
   open: boolean;
@@ -53,13 +53,14 @@ export function AddAuditEntryDialog({
   onSubmitIncome,
   onSubmitExpense,
 }: AddAuditEntryDialogProps) {
+  const { activeReceiptTypes, activeExpenseCategories } = useFinancialAudits();
   const [entryType, setEntryType] = useState<FinancialEntryType>("income");
   const today = todayDateString();
   const symbol = getCurrencySymbol(currency);
 
   const [incomeForm, setIncomeForm] = useState({
     date: today,
-    type: "" as IncomeType | "",
+    type: "",
     source: "",
     amount: "",
     paymentMethod: "Cash" as PaymentMethod,
@@ -110,24 +111,29 @@ export function AddAuditEntryDialog({
 
     if (entryType === "income") {
       if (!incomeForm.type || !incomeForm.source.trim()) return;
+      const amount = parseFinancialAmount(incomeForm.amount);
+      if (amount === null) return;
       onSubmitIncome({
         auditId,
         date: incomeForm.date,
-        type: incomeForm.type as IncomeType,
+        type: incomeForm.type,
         source: incomeForm.source.trim(),
-        amount: Number(incomeForm.amount),
+        amount,
         paymentMethod: incomeForm.paymentMethod,
         notes: incomeForm.notes,
       });
     } else {
+      if (!expenseForm.category || !expenseForm.vendor.trim()) return;
+      const amount = parseFinancialAmount(expenseForm.amount);
+      if (amount === null) return;
       onSubmitExpense({
         auditId,
         date: expenseForm.date,
         category: expenseForm.category,
-        amount: Number(expenseForm.amount),
+        amount,
         paymentMethod: expenseForm.paymentMethod,
-        description: expenseForm.description,
-        vendor: expenseForm.vendor,
+        description: expenseForm.description.trim(),
+        vendor: expenseForm.vendor.trim(),
       });
     }
 
@@ -185,7 +191,7 @@ export function AddAuditEntryDialog({
                     onValueChange={value =>
                       setIncomeForm({
                         ...incomeForm,
-                        type: value as IncomeType,
+                        type: value,
                       })
                     }
                   >
@@ -193,9 +199,11 @@ export function AddAuditEntryDialog({
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Tithes">Tithes</SelectItem>
-                      <SelectItem value="Offering">Offering</SelectItem>
-                      <SelectItem value="Donation">Donation</SelectItem>
+                      {activeReceiptTypes.map(type => (
+                        <SelectItem key={type.id} value={type.name}>
+                          {type.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -222,7 +230,9 @@ export function AddAuditEntryDialog({
                     id="audit-income-amount"
                     type="number"
                     min="0"
-                    placeholder="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="0.00"
                     value={incomeForm.amount}
                     onChange={e =>
                       setIncomeForm({ ...incomeForm, amount: e.target.value })
@@ -291,7 +301,9 @@ export function AddAuditEntryDialog({
                     id="audit-expense-amount"
                     type="number"
                     min="0"
-                    placeholder="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="0.00"
                     value={expenseForm.amount}
                     onChange={e =>
                       setExpenseForm({
@@ -317,9 +329,9 @@ export function AddAuditEntryDialog({
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {EXPENSE_CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
+                    {activeExpenseCategories.map(category => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -365,7 +377,9 @@ export function AddAuditEntryDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="audit-expense-description">Description</Label>
+                <Label htmlFor="audit-expense-description">
+                  Description (optional)
+                </Label>
                 <Textarea
                   id="audit-expense-description"
                   placeholder="What was this expense for?"
@@ -378,7 +392,6 @@ export function AddAuditEntryDialog({
                   }
                   className="rounded-lg"
                   rows={2}
-                  required
                 />
               </div>
             </div>

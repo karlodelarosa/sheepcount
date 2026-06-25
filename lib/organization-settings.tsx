@@ -33,6 +33,10 @@ type OrganizationSettingsContextValue = {
     itemKey: ModuleItemKey,
     visible: boolean,
   ) => Promise<boolean>;
+  setFinancialGoal: (input: {
+    targetAmount: number | null;
+    targetDate: string | null;
+  }) => Promise<boolean>;
 };
 
 const OrganizationSettingsContext =
@@ -175,6 +179,32 @@ export function OrganizationSettingsProvider({
     [organizationId, settings.hiddenMenuItems, supabase],
   );
 
+  const setFinancialGoal = useCallback(
+    async (input: {
+      targetAmount: number | null;
+      targetDate: string | null;
+    }): Promise<boolean> => {
+      if (!organizationId) return false;
+
+      setIsSaving(true);
+      try {
+        const next = await updateOrganizationSettings(supabase, organizationId, {
+          financialSavingsGoal: input.targetAmount,
+          financialGoalTargetDate: input.targetDate,
+        });
+        setSettings(next);
+        toast.success("Savings goal updated");
+        return true;
+      } catch (error) {
+        toast.error(getErrorMessage(error));
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, supabase],
+  );
+
   const value = useMemo(
     () => ({
       settings,
@@ -184,6 +214,7 @@ export function OrganizationSettingsProvider({
       setWaterBaptismEnabled,
       setMenuItemHidden,
       setMenuItemVisibility,
+      setFinancialGoal,
     }),
     [
       settings,
@@ -193,6 +224,7 @@ export function OrganizationSettingsProvider({
       setWaterBaptismEnabled,
       setMenuItemHidden,
       setMenuItemVisibility,
+      setFinancialGoal,
     ],
   );
 

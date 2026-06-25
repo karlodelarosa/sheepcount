@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { BarChart3, ClipboardList, DollarSign } from "lucide-react";
+import { BarChart3, ClipboardList, DollarSign, Settings2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { DEFAULT_CURRENCY } from "@/lib/currency";
@@ -16,12 +16,15 @@ import {
 import { useFinancialAudits } from "./financial-context";
 import { OverviewTab } from "./_components/overview-tab";
 import { AuditsTab } from "./_components/audits-tab";
+import { ManageTab } from "./_components/manage-tab";
 import { CreateAuditDialog } from "./_components/create-audit-dialog";
 
-type FinancialTab = "overview" | "audits";
+type FinancialTab = "overview" | "audits" | "manage";
 
 function parseTab(value: string | null): FinancialTab {
-  return value === "audits" ? "audits" : "overview";
+  if (value === "audits") return "audits";
+  if (value === "manage") return "manage";
+  return "overview";
 }
 
 export function FinancialView() {
@@ -105,7 +108,7 @@ export function FinancialView() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-md grid-cols-2 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
+        <TabsList className="grid w-full max-w-xl grid-cols-3 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
           <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm">
             <BarChart3 className="w-4 h-4" />
             Overview
@@ -113,6 +116,10 @@ export function FinancialView() {
           <TabsTrigger value="audits" className="gap-1.5 text-xs sm:text-sm">
             <ClipboardList className="w-4 h-4" />
             Audits
+          </TabsTrigger>
+          <TabsTrigger value="manage" className="gap-1.5 text-xs sm:text-sm">
+            <Settings2 className="w-4 h-4" />
+            Manage
           </TabsTrigger>
         </TabsList>
 
@@ -135,6 +142,10 @@ export function FinancialView() {
             currency={currency}
             onCreateAudit={() => setIsCreateAuditOpen(true)}
           />
+        </TabsContent>
+
+        <TabsContent value="manage" className="mt-4">
+          <ManageTab currency={currency} />
         </TabsContent>
       </Tabs>
 

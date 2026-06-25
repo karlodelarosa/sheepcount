@@ -1,5 +1,3 @@
-export type IncomeType = "Tithes" | "Offering" | "Donation";
-
 export type PaymentMethod = "Cash" | "Online Bank" | "E-wallet";
 
 export const PAYMENT_METHODS: PaymentMethod[] = [
@@ -7,6 +5,16 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
   "Online Bank",
   "E-wallet",
 ];
+
+/** Receipt type label stored on income entries (org-configurable). */
+export type IncomeType = string;
+
+export type FinancialOption = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive: boolean;
+};
 
 export type IncomeLine = {
   id: string;
@@ -71,8 +79,15 @@ export type NewAuditSchedule = Omit<AuditSchedule, "id">;
 export type NewAuditIncomeEntry = Omit<AuditIncomeEntry, "id">;
 export type NewAuditExpenseEntry = Omit<AuditExpenseEntry, "id">;
 
-export const EXPENSE_CATEGORIES = [
+export const DEFAULT_RECEIPT_TYPES = [
+  "Tithes",
+  "Offering",
+  "Donation",
+] as const;
+
+export const DEFAULT_EXPENSE_CATEGORIES = [
   "Electricity",
+  "Water Meter",
   "Rent",
   "Resources (Food, Water)",
   "Salaries",
@@ -83,3 +98,14 @@ export const EXPENSE_CATEGORIES = [
   "Technology",
   "Other",
 ] as const;
+
+/** @deprecated Use org-configurable categories from financial context. */
+export const EXPENSE_CATEGORIES = DEFAULT_EXPENSE_CATEGORIES;
+
+export function parseFinancialAmount(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number.parseFloat(trimmed);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return Math.round(parsed * 100) / 100;
+}

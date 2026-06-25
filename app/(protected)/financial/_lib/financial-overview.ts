@@ -6,8 +6,13 @@ import {
   enumerateYearMonthKeys,
   type OverviewPeriodFilter,
 } from "./overview-period";
+import {
+  computeGoalProgress,
+  type FinancialGoalConfig,
+  type GoalProgress,
+} from "./goal-analysis";
 
-export const FINANCIAL_GOAL_AMOUNT = 1_000_000;
+export type { FinancialGoalConfig, GoalProgress, GoalReceiptScenario } from "./goal-analysis";
 
 export type TrendDirection = "up" | "down" | "flat";
 
@@ -23,14 +28,6 @@ export type IncomeBreakdownPoint = {
   name: string;
   value: number;
   fill: string;
-};
-
-export type GoalProgress = {
-  current: number;
-  target: number;
-  percent: number;
-  remaining: number;
-  monthsAtCurrentPace: number | null;
 };
 
 export type FinancialSuggestion = {
@@ -124,7 +121,7 @@ export function fillMonthlyTrendForPeriod(
   return trend;
 }
 
-function buildMonthlyTrend(
+export function buildMonthlyTrend(
   income: IncomeLine[],
   expenses: ExpenseLine[],
 ): MonthlyTrendPoint[] {
@@ -162,7 +159,7 @@ function computeTrend(
   income: IncomeLine[],
   expenses: ExpenseLine[],
 ): { direction: TrendDirection; percent: number } {
-  const now = new Date("2024-10-15");
+  const now = new Date();
   const fourWeeksAgo = new Date(now);
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
   const eightWeeksAgo = new Date(now);
@@ -199,32 +196,6 @@ function computeTrend(
   };
 }
 
-function computeGoalProgress(
-  netBalance: number,
-  monthlyTrend: MonthlyTrendPoint[],
-): GoalProgress {
-  const current = Math.max(netBalance, 0);
-  const percent = Math.min((current / FINANCIAL_GOAL_AMOUNT) * 100, 100);
-  const remaining = Math.max(FINANCIAL_GOAL_AMOUNT - current, 0);
-
-  const recentMonths = monthlyTrend.slice(-3);
-  const avgMonthlyNet =
-    recentMonths.length > 0
-      ? recentMonths.reduce((sum, m) => sum + m.net, 0) / recentMonths.length
-      : 0;
-
-  const monthsAtCurrentPace =
-    avgMonthlyNet > 0 ? Math.ceil(remaining / avgMonthlyNet) : null;
-
-  return {
-    current,
-    target: FINANCIAL_GOAL_AMOUNT,
-    percent,
-    remaining,
-    monthsAtCurrentPace,
-  };
-}
-
 function buildSuggestions(
   income: IncomeLine[],
   expenses: ExpenseLine[],
@@ -250,23 +221,31 @@ function buildSuggestions(
     }
   }
 
-  if (goalProgress.percent < 50 && goalProgress.monthsAtCurrentPace !== null) {
+  if (
+    goalProgress.isConfigured &&
+    goalProgress.percent < 50 &&
+    goalProgress.monthsAtCurrentPace !== null
+  ) {
     suggestions.push({
       id: "goal-campaign",
-      title: `Accelerate toward your ${formatCurrency(FINANCIAL_GOAL_AMOUNT, currency)} goal`,
+      title: `Accelerate toward your ${formatCurrency(goalProgress.target, currency)} goal`,
       description: `At the current pace, reaching the target may take ${goalProgress.monthsAtCurrentPace} months. Consider a building fund or special offering drive.`,
       severity: "warning",
     });
   }
 
   const titheLines = income.filter(l => l.type === "Tithes");
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
   const recentTithes = titheLines
-    .filter(l => new Date(l.date) >= new Date("2024-09-01"))
+    .filter(l => new Date(l.date) >= threeMonthsAgo)
     .reduce((s, l) => s + l.amount, 0);
   const priorTithes = titheLines
     .filter(l => {
       const d = new Date(l.date);
-      return d >= new Date("2024-07-01") && d < new Date("2024-09-01");
+      return d >= sixMonthsAgo && d < threeMonthsAgo;
     })
     .reduce((s, l) => s + l.amount, 0);
 
@@ -307,6 +286,7 @@ export function computeFinancialOverview(
   income: IncomeLine[],
   expenses: ExpenseLine[],
   currency: SupportedCurrency = DEFAULT_CURRENCY,
+  goal: FinancialGoalConfig = { targetAmount: null, targetDate: null },
 ): FinancialOverview {
   const totalIncome = income.reduce((sum, l) => sum + l.amount, 0);
   const totalExpenses = expenses.reduce((sum, l) => sum + l.amount, 0);
@@ -334,7 +314,7 @@ export function computeFinancialOverview(
     income,
     expenses,
   );
-  const goalProgress = computeGoalProgress(netBalance, monthlyTrend);
+  const goalProgress = computeGoalProgress(netBalance, monthlyTrend, goal);
   const suggestions = buildSuggestions(
     income,
     expenses,

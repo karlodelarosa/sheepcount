@@ -27,6 +27,7 @@ export type AuditExpenseBreakdown = {
 
 const EXPENSE_COLORS: Record<string, string> = {
   Electricity: "#f59e0b",
+  "Water Meter": "#0ea5e9",
   Rent: "#ef4444",
   "Resources (Food, Water)": "#10b981",
   Salaries: "#6366f1",

@@ -3,11 +3,15 @@ import type {
   AuditExpenseEntry,
   AuditIncomeEntry,
   AuditSchedule,
-  IncomeType,
+  FinancialOption,
   NewAuditExpenseEntry,
   NewAuditIncomeEntry,
   NewAuditSchedule,
   PaymentMethod,
+} from "@/app/(protected)/financial/_lib/types";
+import {
+  DEFAULT_EXPENSE_CATEGORIES,
+  DEFAULT_RECEIPT_TYPES,
 } from "@/app/(protected)/financial/_lib/types";
 
 type DbFinancialAudit = {
@@ -20,7 +24,7 @@ type DbFinancialAuditIncomeEntry = {
   id: string;
   audit_id: string;
   date: string;
-  type: IncomeType;
+  type: string;
   source: string;
   amount: number | string;
   payment_method: PaymentMethod;
@@ -187,4 +191,201 @@ export async function createFinancialAuditExpenseEntry(
 
   if (error) throw error;
   return toExpenseEntry(data as DbFinancialAuditExpenseEntry);
+}
+
+type DbFinancialOption = {
+  id: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+};
+
+function toFinancialOption(row: DbFinancialOption): FinancialOption {
+  return {
+    id: row.id,
+    name: row.name,
+    sortOrder: row.sort_order,
+    isActive: row.is_active,
+  };
+}
+
+export async function fetchFinancialReceiptTypes(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<FinancialOption[]> {
+  const { data, error } = await supabase
+    .from("financial_receipt_types")
+    .select("id, name, sort_order, is_active")
+    .eq("organization_id", organizationId)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return (data as DbFinancialOption[]).map(toFinancialOption);
+}
+
+export async function fetchFinancialExpenseCategories(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<FinancialOption[]> {
+  const { data, error } = await supabase
+    .from("financial_expense_categories")
+    .select("id, name, sort_order, is_active")
+    .eq("organization_id", organizationId)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return (data as DbFinancialOption[]).map(toFinancialOption);
+}
+
+export async function seedFinancialDefaults(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<void> {
+  const receiptRows = DEFAULT_RECEIPT_TYPES.map((name, index) => ({
+    organization_id: organizationId,
+    name,
+    sort_order: index + 1,
+  }));
+  const categoryRows = DEFAULT_EXPENSE_CATEGORIES.map((name, index) => ({
+    organization_id: organizationId,
+    name,
+    sort_order: index + 1,
+  }));
+
+  const [receiptError, categoryError] = await Promise.all([
+    supabase
+      .from("financial_receipt_types")
+      .upsert(receiptRows, { onConflict: "organization_id,name", ignoreDuplicates: true }),
+    supabase
+      .from("financial_expense_categories")
+      .upsert(categoryRows, { onConflict: "organization_id,name", ignoreDuplicates: true }),
+  ]).then(([receiptResult, categoryResult]) => [
+    receiptResult.error,
+    categoryResult.error,
+  ]);
+
+  if (receiptError) throw receiptError;
+  if (categoryError) throw categoryError;
+}
+
+export async function createFinancialReceiptType(
+  supabase: SupabaseClient,
+  organizationId: string,
+  name: string,
+): Promise<FinancialOption> {
+  const trimmed = name.trim();
+  const { data: existing } = await supabase
+    .from("financial_receipt_types")
+    .select("id, name, sort_order, is_active")
+    .eq("organization_id", organizationId)
+    .eq("name", trimmed)
+    .maybeSingle();
+
+  if (existing) {
+    if (existing.is_active) {
+      throw new Error("This receipt type already exists");
+    }
+
+    const { data, error } = await supabase
+      .from("financial_receipt_types")
+      .update({ is_active: true })
+      .eq("id", existing.id)
+      .select("id, name, sort_order, is_active")
+      .single();
+
+    if (error) throw error;
+    return toFinancialOption(data as DbFinancialOption);
+  }
+
+  const { count } = await supabase
+    .from("financial_receipt_types")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId);
+
+  const { data, error } = await supabase
+    .from("financial_receipt_types")
+    .insert({
+      organization_id: organizationId,
+      name: trimmed,
+      sort_order: (count ?? 0) + 1,
+    })
+    .select("id, name, sort_order, is_active")
+    .single();
+
+  if (error) throw error;
+  return toFinancialOption(data as DbFinancialOption);
+}
+
+export async function deactivateFinancialReceiptType(
+  supabase: SupabaseClient,
+  optionId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("financial_receipt_types")
+    .update({ is_active: false })
+    .eq("id", optionId);
+
+  if (error) throw error;
+}
+
+export async function createFinancialExpenseCategory(
+  supabase: SupabaseClient,
+  organizationId: string,
+  name: string,
+): Promise<FinancialOption> {
+  const trimmed = name.trim();
+  const { data: existing } = await supabase
+    .from("financial_expense_categories")
+    .select("id, name, sort_order, is_active")
+    .eq("organization_id", organizationId)
+    .eq("name", trimmed)
+    .maybeSingle();
+
+  if (existing) {
+    if (existing.is_active) {
+      throw new Error("This expense category already exists");
+    }
+
+    const { data, error } = await supabase
+      .from("financial_expense_categories")
+      .update({ is_active: true })
+      .eq("id", existing.id)
+      .select("id, name, sort_order, is_active")
+      .single();
+
+    if (error) throw error;
+    return toFinancialOption(data as DbFinancialOption);
+  }
+
+  const { count } = await supabase
+    .from("financial_expense_categories")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organizationId);
+
+  const { data, error } = await supabase
+    .from("financial_expense_categories")
+    .insert({
+      organization_id: organizationId,
+      name: trimmed,
+      sort_order: (count ?? 0) + 1,
+    })
+    .select("id, name, sort_order, is_active")
+    .single();
+
+  if (error) throw error;
+  return toFinancialOption(data as DbFinancialOption);
+}
+
+export async function deactivateFinancialExpenseCategory(
+  supabase: SupabaseClient,
+  optionId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("financial_expense_categories")
+    .update({ is_active: false })
+    .eq("id", optionId);
+
+  if (error) throw error;
 }

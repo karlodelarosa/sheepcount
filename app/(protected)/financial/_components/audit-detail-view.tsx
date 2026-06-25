@@ -362,9 +362,11 @@ export function AuditDetailView({ auditId }: AuditDetailViewProps) {
                       <Badge variant="secondary" className="rounded-lg">
                         {line.category}
                       </Badge>
-                      <span className="text-sm text-slate-700 dark:text-zinc-300 truncate">
-                        {line.description}
-                      </span>
+                      {line.description ? (
+                        <span className="text-sm text-slate-700 dark:text-zinc-300 truncate">
+                          {line.description}
+                        </span>
+                      ) : null}
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {new Date(line.date).toLocaleDateString("en-PH")} ·{" "}
