@@ -1,66 +1,147 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { mockGoalProjects } from "@/components/mock-data";
+import { PersonSelect } from "@/components/person-select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   DEFAULT_CURRENCY,
   formatCurrency,
   getCurrencySymbol,
 } from "@/lib/currency";
 import { useOrganizationSettings } from "@/lib/organization-settings";
+import { useGoalProjects } from "@/lib/goal-projects";
+import { usePeople } from "@/lib/people";
+import type { FundraisingContribution, PaymentMethod } from "@/lib/supabase/goal-projects";
 
 interface AddProjectContributionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: string | null;
+  campaignId: string | null;
+  contribution?: FundraisingContribution | null;
 }
 
-export function AddProjectContributionDialog({ open, onOpenChange, projectId }: AddProjectContributionDialogProps) {
+function todayIsoDate(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+export function AddProjectContributionDialog({
+  open,
+  onOpenChange,
+  campaignId,
+  contribution,
+}: AddProjectContributionDialogProps) {
   const { settings } = useOrganizationSettings();
   const currency = settings.currency ?? DEFAULT_CURRENCY;
   const symbol = getCurrencySymbol(currency);
+  const { people } = usePeople();
+  const { getCampaign, getRaisedAmount, addContribution, updateContribution } =
+    useGoalProjects();
+
+  const campaign = campaignId ? getCampaign(campaignId) : null;
+  const raisedAmount = campaignId ? getRaisedAmount(campaignId) : 0;
+
   const [formData, setFormData] = useState({
     amount: "",
     date: "",
     notes: "",
+    personId: "" as string | "",
+    paymentMethod: "Cash" as PaymentMethod,
   });
 
-  const project = mockGoalProjects.find(p => p.id === projectId);
+  const title = contribution ? "Edit Contribution" : "Add Contribution";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!open) return;
+    if (contribution) {
+      setFormData({
+        amount: String(contribution.amount),
+        date: contribution.contributedOn,
+        notes: contribution.notes ?? "",
+        personId: contribution.personId ?? "",
+        paymentMethod: contribution.paymentMethod,
+      });
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      date: prev.date || todayIsoDate(),
+      paymentMethod: prev.paymentMethod || "Cash",
+    }));
+  }, [open, contribution]);
+
+  const progressSummary = useMemo(() => {
+    if (!campaign) return null;
+    const remaining = Math.max(campaign.goalAmount - raisedAmount, 0);
+    return {
+      raised: raisedAmount,
+      goal: campaign.goalAmount,
+      remaining,
+    };
+  }, [campaign, raisedAmount]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Adding contribution to project:", { projectId, ...formData });
-    onOpenChange(false);
-    setFormData({ amount: "", date: "", notes: "" });
+    if (!campaignId) return;
+
+    const payload = {
+      campaignId,
+      personId: formData.personId || null,
+      amount: Number(formData.amount),
+      contributedOn: formData.date,
+      paymentMethod: formData.paymentMethod,
+      notes: formData.notes.trim(),
+    };
+
+    const saved = contribution
+      ? await updateContribution({ id: contribution.id, ...payload })
+      : await addContribution(payload);
+
+    if (saved) {
+      onOpenChange(false);
+      setFormData({
+        amount: "",
+        date: todayIsoDate(),
+        notes: "",
+        personId: "",
+        paymentMethod: "Cash",
+      });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] border-slate-200/60">
         <DialogHeader>
-          <DialogTitle>Add Contribution</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            {project ? `Record a contribution to ${project.name}` : "Add funds to a project"}
+            {campaign
+              ? `Record a contribution to ${campaign.title.trim() || "this campaign"}`
+              : "Add funds to a campaign"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            {project && (
+            {campaign && progressSummary && (
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/60">
                 <p className="text-slate-600">Current Progress</p>
                 <p className="text-slate-900">
-                  {formatCurrency(project.raisedAmount, currency)} of{" "}
-                  {formatCurrency(project.goalAmount, currency)}
+                  {formatCurrency(progressSummary.raised, currency)} of{" "}
+                  {formatCurrency(progressSummary.goal, currency)}
                 </p>
                 <p className="text-slate-600 mt-1">
                   Remaining:{" "}
                   {formatCurrency(
-                    project.goalAmount - project.raisedAmount,
+                    progressSummary.remaining,
                     currency,
                   )}
                 </p>
@@ -94,6 +175,42 @@ export function AddProjectContributionDialog({ open, onOpenChange, projectId }: 
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Donor (Optional)</Label>
+                <PersonSelect
+                  people={people}
+                  value={formData.personId}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, personId: value })
+                  }
+                  placeholder="Select person..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Payment method</Label>
+                <Select
+                  value={formData.paymentMethod}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      paymentMethod: value as PaymentMethod,
+                    })
+                  }
+                >
+                  <SelectTrigger className="rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cash">Cash</SelectItem>
+                    <SelectItem value="Online Bank">Online Bank</SelectItem>
+                    <SelectItem value="E-wallet">E-wallet</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="contribution-notes">Notes (Optional)</Label>
               <Textarea
@@ -111,7 +228,7 @@ export function AddProjectContributionDialog({ open, onOpenChange, projectId }: 
               Cancel
             </Button>
             <Button type="submit" className="rounded-lg bg-slate-900 hover:bg-slate-800">
-              Add Contribution
+              {contribution ? "Save Contribution" : "Add Contribution"}
             </Button>
           </DialogFooter>
         </form>

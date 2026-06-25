@@ -1,97 +1,113 @@
 "use client";
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DEFAULT_CURRENCY, getCurrencySymbol } from "@/lib/currency";
 import { useOrganizationSettings } from "@/lib/organization-settings";
 import type {
   CampaignCategory,
-  CreateFundraisingCampaignInput,
+  FundraisingCampaign,
+  UpdateFundraisingCampaignInput,
 } from "@/lib/supabase/goal-projects";
 
-interface AddGoalProjectDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (input: CreateFundraisingCampaignInput) => Promise<unknown>;
-  isAdmin: boolean;
-}
-
-export function AddGoalProjectDialog({
+export function EditGoalProjectDialog({
   open,
   onOpenChange,
+  campaign,
   onSubmit,
   isAdmin,
-}: AddGoalProjectDialogProps) {
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  campaign: FundraisingCampaign;
+  onSubmit: (input: UpdateFundraisingCampaignInput) => Promise<unknown>;
+  isAdmin: boolean;
+}) {
   const { settings } = useOrganizationSettings();
   const currency = settings.currency ?? DEFAULT_CURRENCY;
   const symbol = getCurrencySymbol(currency);
+
   const [formData, setFormData] = useState({
-    name: "",
+    title: "",
     description: "",
     goalAmount: "",
     targetDate: "",
-    category: "" as CampaignCategory | "",
+    category: "Other" as CampaignCategory,
   });
+
+  useEffect(() => {
+    if (!open) return;
+    setFormData({
+      title: campaign.title,
+      description: campaign.description,
+      goalAmount: String(campaign.goalAmount),
+      targetDate: campaign.targetDate ?? "",
+      category: campaign.category,
+    });
+  }, [campaign, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) return;
-
     const result = await onSubmit({
-      title: formData.name.trim(),
+      id: campaign.id,
+      title: formData.title.trim(),
       description: formData.description.trim(),
       goalAmount: Number(formData.goalAmount),
       targetDate: formData.targetDate || null,
-      category: (formData.category || "Other") as CampaignCategory,
+      category: formData.category,
     });
-
-    if (result) {
-      onOpenChange(false);
-      setFormData({
-        name: "",
-        description: "",
-        goalAmount: "",
-        targetDate: "",
-        category: "",
-      });
-    }
+    if (result) onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] border-slate-200/60">
         <DialogHeader>
-          <DialogTitle>Create Fundraising Campaign</DialogTitle>
-          <DialogDescription>
-            Set up a new fundraising goal for your church
-          </DialogDescription>
+          <DialogTitle>Edit Campaign</DialogTitle>
+          <DialogDescription>Update campaign details.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="project-name">Project Name</Label>
+              <Label htmlFor="campaign-title">Title</Label>
               <Input
-                id="project-name"
-                placeholder="e.g., New Sanctuary Renovation"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                id="campaign-title"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 className="rounded-lg"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="campaign-description">Description</Label>
               <Textarea
-                id="description"
-                placeholder="Describe the project and its purpose"
+                id="campaign-description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 className="rounded-lg"
                 rows={3}
                 required
@@ -100,33 +116,34 @@ export function AddGoalProjectDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="goal-amount">Goal Amount ({symbol})</Label>
+                <Label htmlFor="campaign-goal">Goal Amount ({symbol})</Label>
                 <Input
-                  id="goal-amount"
+                  id="campaign-goal"
                   type="number"
-                  placeholder="1000000"
                   value={formData.goalAmount}
-                  onChange={(e) => setFormData({ ...formData, goalAmount: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, goalAmount: e.target.value })
+                  }
                   className="rounded-lg"
                   required
                 />
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="target-date">Target Date</Label>
+                <Label htmlFor="campaign-target">Target Date</Label>
                 <Input
-                  id="target-date"
+                  id="campaign-target"
                   type="date"
                   value={formData.targetDate}
-                  onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, targetDate: e.target.value })
+                  }
                   className="rounded-lg"
-                  required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label>Category</Label>
               <Select
                 value={formData.category}
                 onValueChange={(value) =>
@@ -137,7 +154,7 @@ export function AddGoalProjectDialog({
                 }
               >
                 <SelectTrigger className="rounded-lg">
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Building">Building</SelectItem>
@@ -149,8 +166,14 @@ export function AddGoalProjectDialog({
               </Select>
             </div>
           </div>
+
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="rounded-lg"
+            >
               Cancel
             </Button>
             <Button
@@ -158,7 +181,7 @@ export function AddGoalProjectDialog({
               className="rounded-lg bg-slate-900 hover:bg-slate-800"
               disabled={!isAdmin}
             >
-              Create Campaign
+              Save Changes
             </Button>
           </DialogFooter>
         </form>
@@ -166,3 +189,4 @@ export function AddGoalProjectDialog({
     </Dialog>
   );
 }
+
