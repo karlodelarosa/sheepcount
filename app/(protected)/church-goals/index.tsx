@@ -1,49 +1,93 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Target, Calendar, BookOpen, Edit, Plus } from "lucide-react";
-import { mockChurchGoals } from "@/components/mock-data";
+import { useMemo, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Target } from "lucide-react";
 import { useEntitlements } from "@/lib/subscription/use-entitlements";
 import { isItemEnabled } from "@/lib/subscription/entitlements";
+import { useTenant } from "@/app/providers/tenant-provider";
+import { useChurchGoals } from "@/lib/church-goals";
+import { YearSelector } from "./_components/year-selector";
+import { PriorYearActionPointsBanner } from "./_components/prior-year-action-points-banner";
+import { YearlyGoalSection } from "./_components/yearly-goal-section";
+import {
+  EditYearlyGoalDialog,
+  type YearlyGoalFormData,
+} from "./_components/edit-yearly-goal-dialog";
+import { MonthlyThemesGrid } from "./_components/monthly-themes-grid";
+import { ChurchGoalsLoading } from "./_components/church-goals-loading";
+import {
+  ChurchGoalsPageHeader,
+  ChurchGoalsStats,
+} from "./_components/church-goals-stats";
+import { SectionLabel } from "./_components/section-label";
+import { EditMonthlyThemeDialog } from "./_components/edit-monthly-theme-dialog";
 
 export function ChurchGoalsView() {
-  const { entitlements, isLoading } = useEntitlements();
+  const { entitlements, isLoading: entitlementsLoading } = useEntitlements();
+  const { tenant } = useTenant();
   const churchGoalsEnabled = isItemEnabled(entitlements.modules, "church_goals");
-  const { yearlyGoal, monthlyThemes } = mockChurchGoals;
-  const currentMonth = new Date().getMonth() + 1;
-  const currentMonthTheme = monthlyThemes.find(t => t.month === currentMonth);
+  const isAdmin = tenant?.profile?.role === "admin";
 
-  if (isLoading) {
-    return (
-      <div className="p-8 text-center text-muted-foreground">
-        Loading...
-      </div>
-    );
+  const {
+    hydrated,
+    isSaving,
+    availableYears,
+    getYearlyGoal,
+    getMonthlyTheme,
+    getPriorYearActionPoints,
+    monthlyThemes,
+    saveYearlyGoal,
+    toggleObjective,
+    saveMonthlyTheme,
+    saveRetrospective,
+  } = useChurchGoals();
+
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [editGoalOpen, setEditGoalOpen] = useState(false);
+  const [editActiveMonthOpen, setEditActiveMonthOpen] = useState(false);
+
+  const selectedGoal = getYearlyGoal(selectedYear);
+  const priorYearActionPoints = getPriorYearActionPoints(selectedYear);
+  const activeMonthTheme = getMonthlyTheme(currentYear, currentMonth);
+  const themesForYear = useMemo(
+    () => monthlyThemes.filter(t => t.year === selectedYear),
+    [monthlyThemes, selectedYear],
+  );
+  const configuredMonthsCount = themesForYear.filter(
+    t => t.title.trim() || t.description.trim() || t.content.trim(),
+  ).length;
+
+  if (entitlementsLoading || !hydrated) {
+    return <ChurchGoalsLoading />;
   }
 
   if (!churchGoalsEnabled) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
             Church Goals & Themes
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-slate-600 dark:text-zinc-400 mt-1">
             Annual vision and monthly service themes
           </p>
         </div>
 
-        <Card className="border-border/60">
+        <Card className="border-slate-200/70 dark:border-zinc-700/70">
           <CardContent className="py-16 text-center">
-            <Target className="w-12 h-12 mx-auto text-muted-foreground/40" />
-            <h2 className="mt-4 text-lg font-medium text-foreground">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-slate-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+              <Target className="w-8 h-8 text-slate-400 dark:text-zinc-500" />
+            </div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               Finance & Projects is not enabled
             </h2>
-            <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-              Church goals and themes are available on the Pro plan. Contact support
-              to upgrade your subscription.
+            <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2 max-w-md mx-auto">
+              Church goals and themes are available on the Pro plan. Contact
+              support to upgrade your subscription.
             </p>
           </CardContent>
         </Card>
@@ -51,170 +95,128 @@ export function ChurchGoalsView() {
     );
   }
 
+  const handleSaveGoal = async (data: YearlyGoalFormData) => {
+    await saveYearlyGoal({
+      year: data.year,
+      theme: data.theme,
+      title: data.title,
+      description: data.description,
+      vision: data.vision,
+      objectives: data.objectives
+        .filter(o => o.text.trim())
+        .map(o => ({ text: o.text, isCompleted: o.isCompleted })),
+    });
+  };
+
+  const handleSaveRetrospective = async (data: {
+    wentWell: string[];
+    couldBeBetter: string[];
+    actionPoints: string[];
+  }) => {
+    await saveRetrospective({
+      year: selectedYear,
+      wentWell: data.wentWell,
+      couldBeBetter: data.couldBeBetter,
+      actionPoints: data.actionPoints,
+    });
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1>Church Goals & Themes</h1>
-          <p className="text-muted-foreground">
-            Annual vision and monthly service themes
-          </p>
-        </div>
-        <Button className="gap-2">
-          <Edit className="w-4 h-4" />
-          Edit Goals
-        </Button>
+    <div className="space-y-8 animate-in fade-in duration-300">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <ChurchGoalsPageHeader
+          selectedYear={selectedYear}
+          isCurrentYear={selectedYear === currentYear}
+        />
+        <YearSelector
+          selectedYear={selectedYear}
+          availableYears={availableYears}
+          hasGoalForYear={Boolean(selectedGoal)}
+          isAdmin={isAdmin}
+          currentYear={currentYear}
+          onYearChange={setSelectedYear}
+          onSetupYear={() => setEditGoalOpen(true)}
+        />
       </div>
 
-      {/* Current Month Theme - Highlighted */}
-      {currentMonthTheme && (
-        <Card className="border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-card shadow-lg">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-sm">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <CardTitle>Current Month Theme - {currentMonthTheme.name}</CardTitle>
-                  <Badge className="bg-blue-500">Active</Badge>
-                </div>
-                <CardDescription className="mt-1">Monthly focus for services and activities</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <h3 className="text-foreground mb-2">{currentMonthTheme.theme}</h3>
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-background/50 border border-border/60">
-                <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <p className="text-muted-foreground">{currentMonthTheme.scripture}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <section className="space-y-3">
+        <YearlyGoalSection
+          goal={selectedGoal}
+          year={selectedYear}
+          isAdmin={isAdmin}
+          isSaving={isSaving}
+          onEdit={() => setEditGoalOpen(true)}
+          onToggleObjective={(id, completed) =>
+            void toggleObjective(id, completed)
+          }
+          onSaveRetrospective={handleSaveRetrospective}
+        />
+      </section>
+
+      <ChurchGoalsStats
+        goal={selectedGoal}
+        year={selectedYear}
+        monthlyThemesCount={configuredMonthsCount}
+        activeMonthTheme={activeMonthTheme}
+        currentMonth={currentMonth}
+        currentYear={currentYear}
+        isAdmin={isAdmin}
+        onEditActiveMonth={() => setEditActiveMonthOpen(true)}
+      />
+
+      {priorYearActionPoints && (
+        <section className="space-y-3">
+          <SectionLabel>Planning context</SectionLabel>
+          <PriorYearActionPointsBanner
+            priorYear={selectedYear - 1}
+            actionPoints={priorYearActionPoints}
+          />
+        </section>
       )}
 
-      {/* Yearly Goal */}
-      <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-sm">
-              <Target className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <CardTitle>{yearlyGoal.year} Vision - {yearlyGoal.theme}</CardTitle>
-              <CardDescription>Overall church goal for the year</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 rounded-xl border border-border/60 bg-background/50">
-            <h4 className="text-foreground mb-2">Vision Statement</h4>
-            <p className="text-muted-foreground leading-relaxed">{yearlyGoal.vision}</p>
-          </div>
+      <section className="space-y-3">
+        <SectionLabel>Monthly themes</SectionLabel>
+        <MonthlyThemesGrid
+          year={selectedYear}
+          themes={themesForYear}
+          currentMonth={currentMonth}
+          currentYear={currentYear}
+          isAdmin={isAdmin}
+          isSaving={isSaving}
+          onSaveTheme={async (month, data) => {
+            await saveMonthlyTheme({
+              year: selectedYear,
+              month,
+              ...data,
+            });
+          }}
+        />
+      </section>
 
-          <div>
-            <h4 className="text-foreground mb-3">Key Objectives</h4>
-            <div className="space-y-2">
-              {yearlyGoal.objectives.map((objective, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-3 p-3 rounded-xl border border-border/60 bg-background/50"
-                >
-                  <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-purple-600 dark:text-purple-400">{index + 1}</span>
-                  </div>
-                  <p className="text-foreground flex-1">{objective}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <EditYearlyGoalDialog
+        open={editGoalOpen}
+        onOpenChange={setEditGoalOpen}
+        goal={selectedGoal}
+        year={selectedYear}
+        isSaving={isSaving}
+        onSave={handleSaveGoal}
+      />
 
-      {/* Monthly Themes Overview */}
-      <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Monthly Service Themes</CardTitle>
-              <CardDescription>Themes for each month of the year</CardDescription>
-            </div>
-            <Button variant="outline" className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add Theme
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {monthlyThemes.map((theme) => {
-              const isCurrent = theme.month === currentMonth;
-
-              return (
-                <Card
-                  key={theme.month}
-                  className={`
-                    border transition-all duration-200
-                    ${isCurrent 
-                      ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-200 dark:ring-blue-800 shadow-lg' 
-                      : 'border-border/60 hover:shadow-md'
-                    }
-                  `}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-foreground">{theme.name}</CardTitle>
-                      {isCurrent && <Badge className="bg-blue-500">Current</Badge>}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <p className="text-foreground mb-1">{theme.theme}</p>
-                      <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/50">
-                        <BookOpen className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <p className="text-muted-foreground">{theme.scripture}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quarterly Overview */}
-      <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>Quarterly Breakdown</CardTitle>
-          <CardDescription>Themes organized by quarter</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((quarter) => {
-              const startMonth = (quarter - 1) * 3 + 1;
-              const quarterThemes = monthlyThemes.filter(
-                t => t.month >= startMonth && t.month < startMonth + 3
-              );
-
-              return (
-                <div key={quarter} className="p-4 rounded-xl border border-border/60 bg-background/50">
-                  <h4 className="text-foreground mb-3">Q{quarter}</h4>
-                  <div className="space-y-2">
-                    {quarterThemes.map((theme) => (
-                      <div key={theme.month} className="text-muted-foreground">
-                        <span className="font-medium text-foreground">{theme.name}:</span> {theme.theme}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      <EditMonthlyThemeDialog
+        open={editActiveMonthOpen}
+        onOpenChange={setEditActiveMonthOpen}
+        theme={activeMonthTheme}
+        year={currentYear}
+        month={currentMonth}
+        isSaving={isSaving}
+        onSave={async data => {
+          await saveMonthlyTheme({
+            year: currentYear,
+            month: currentMonth,
+            ...data,
+          });
+        }}
+      />
     </div>
   );
 }

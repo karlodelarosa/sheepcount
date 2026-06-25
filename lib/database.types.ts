@@ -398,6 +398,167 @@ export type Database = {
         };
         Relationships: [];
       };
+      church_monthly_themes: {
+        Row: {
+          content: string;
+          created_at: string;
+          description: string;
+          id: string;
+          month: number;
+          organization_id: string;
+          title: string;
+          updated_at: string;
+          year: number;
+        };
+        Insert: {
+          content?: string;
+          created_at?: string;
+          description?: string;
+          id?: string;
+          month: number;
+          organization_id: string;
+          title?: string;
+          updated_at?: string;
+          year: number;
+        };
+        Update: {
+          content?: string;
+          created_at?: string;
+          description?: string;
+          id?: string;
+          month?: number;
+          organization_id?: string;
+          title?: string;
+          updated_at?: string;
+          year?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "church_monthly_themes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      church_yearly_goal_objectives: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          id: string;
+          is_completed: boolean;
+          sort_order: number;
+          text: string;
+          yearly_goal_id: string;
+        };
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          is_completed?: boolean;
+          sort_order?: number;
+          text: string;
+          yearly_goal_id: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          is_completed?: boolean;
+          sort_order?: number;
+          text?: string;
+          yearly_goal_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "church_yearly_goal_objectives_yearly_goal_id_fkey";
+            columns: ["yearly_goal_id"];
+            isOneToOne: false;
+            referencedRelation: "church_yearly_goals";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      church_yearly_goal_retrospective_items: {
+        Row: {
+          category: string;
+          created_at: string;
+          id: string;
+          sort_order: number;
+          text: string;
+          yearly_goal_id: string;
+        };
+        Insert: {
+          category: string;
+          created_at?: string;
+          id?: string;
+          sort_order?: number;
+          text: string;
+          yearly_goal_id: string;
+        };
+        Update: {
+          category?: string;
+          created_at?: string;
+          id?: string;
+          sort_order?: number;
+          text?: string;
+          yearly_goal_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "church_yearly_goal_retrospective_items_yearly_goal_id_fkey";
+            columns: ["yearly_goal_id"];
+            isOneToOne: false;
+            referencedRelation: "church_yearly_goals";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      church_yearly_goals: {
+        Row: {
+          created_at: string;
+          description: string;
+          id: string;
+          organization_id: string;
+          theme: string;
+          title: string;
+          updated_at: string;
+          vision: string;
+          year: number;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          organization_id: string;
+          theme?: string;
+          title?: string;
+          updated_at?: string;
+          vision?: string;
+          year: number;
+        };
+        Update: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          organization_id?: string;
+          theme?: string;
+          title?: string;
+          updated_at?: string;
+          vision?: string;
+          year?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "church_yearly_goals_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       organization_audit_logs: {
         Row: {
           action: string;
