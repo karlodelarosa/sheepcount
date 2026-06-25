@@ -81,6 +81,7 @@ export function AuditDetailView({ auditId }: AuditDetailViewProps) {
     auditExpenses,
     addAuditIncome,
     addAuditExpense,
+    hydrated,
   } = useFinancialAudits();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -118,7 +119,7 @@ export function AuditDetailView({ auditId }: AuditDetailViewProps) {
     setIsPrintDialogOpen(true);
   };
 
-  if (entitlementsLoading) {
+  if (entitlementsLoading || !hydrated) {
     return (
       <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
         Loading...

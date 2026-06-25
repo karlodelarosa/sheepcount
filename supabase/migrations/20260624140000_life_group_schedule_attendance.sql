@@ -3,7 +3,7 @@
 ALTER TABLE public.life_groups
   ADD COLUMN IF NOT EXISTS schedule TEXT NOT NULL DEFAULT '';
 
-CREATE TABLE public.life_group_sessions (
+CREATE TABLE IF NOT EXISTS public.life_group_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   life_group_id UUID NOT NULL REFERENCES public.life_groups(id) ON DELETE CASCADE,
@@ -14,7 +14,7 @@ CREATE TABLE public.life_group_sessions (
   UNIQUE (life_group_id, session_date)
 );
 
-CREATE TABLE public.life_group_session_attendees (
+CREATE TABLE IF NOT EXISTS public.life_group_session_attendees (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   session_id UUID NOT NULL REFERENCES public.life_group_sessions(id) ON DELETE CASCADE,
   person_id UUID NOT NULL REFERENCES public.people(id) ON DELETE CASCADE,
@@ -22,21 +22,22 @@ CREATE TABLE public.life_group_session_attendees (
   UNIQUE (session_id, person_id)
 );
 
-CREATE INDEX life_group_sessions_life_group_id_idx
+CREATE INDEX IF NOT EXISTS life_group_sessions_life_group_id_idx
   ON public.life_group_sessions(life_group_id);
-CREATE INDEX life_group_sessions_organization_id_idx
+CREATE INDEX IF NOT EXISTS life_group_sessions_organization_id_idx
   ON public.life_group_sessions(organization_id);
-CREATE INDEX life_group_sessions_session_date_idx
+CREATE INDEX IF NOT EXISTS life_group_sessions_session_date_idx
   ON public.life_group_sessions(organization_id, session_date DESC);
-CREATE INDEX life_group_session_attendees_session_id_idx
+CREATE INDEX IF NOT EXISTS life_group_session_attendees_session_id_idx
   ON public.life_group_session_attendees(session_id);
-CREATE INDEX life_group_session_attendees_person_id_idx
+CREATE INDEX IF NOT EXISTS life_group_session_attendees_person_id_idx
   ON public.life_group_session_attendees(person_id);
 
 ALTER TABLE public.life_group_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.life_group_session_attendees ENABLE ROW LEVEL SECURITY;
 
 -- life_group_sessions policies
+DROP POLICY IF EXISTS "Org members can view life group sessions" ON public.life_group_sessions;
 CREATE POLICY "Org members can view life group sessions"
   ON public.life_group_sessions FOR SELECT
   USING (
@@ -48,6 +49,7 @@ CREATE POLICY "Org members can view life group sessions"
     )
   );
 
+DROP POLICY IF EXISTS "Org members can insert life group sessions" ON public.life_group_sessions;
 CREATE POLICY "Org members can insert life group sessions"
   ON public.life_group_sessions FOR INSERT
   WITH CHECK (
@@ -59,6 +61,7 @@ CREATE POLICY "Org members can insert life group sessions"
     )
   );
 
+DROP POLICY IF EXISTS "Org members can update life group sessions" ON public.life_group_sessions;
 CREATE POLICY "Org members can update life group sessions"
   ON public.life_group_sessions FOR UPDATE
   USING (
@@ -78,6 +81,7 @@ CREATE POLICY "Org members can update life group sessions"
     )
   );
 
+DROP POLICY IF EXISTS "Org admins can delete life group sessions" ON public.life_group_sessions;
 CREATE POLICY "Org admins can delete life group sessions"
   ON public.life_group_sessions FOR DELETE
   USING (
@@ -91,6 +95,7 @@ CREATE POLICY "Org admins can delete life group sessions"
   );
 
 -- life_group_session_attendees policies
+DROP POLICY IF EXISTS "Org members can view life group session attendees" ON public.life_group_session_attendees;
 CREATE POLICY "Org members can view life group session attendees"
   ON public.life_group_session_attendees FOR SELECT
   USING (
@@ -104,6 +109,7 @@ CREATE POLICY "Org members can view life group session attendees"
     )
   );
 
+DROP POLICY IF EXISTS "Org members can insert life group session attendees" ON public.life_group_session_attendees;
 CREATE POLICY "Org members can insert life group session attendees"
   ON public.life_group_session_attendees FOR INSERT
   WITH CHECK (
@@ -117,6 +123,7 @@ CREATE POLICY "Org members can insert life group session attendees"
     )
   );
 
+DROP POLICY IF EXISTS "Org members can delete life group session attendees" ON public.life_group_session_attendees;
 CREATE POLICY "Org members can delete life group session attendees"
   ON public.life_group_session_attendees FOR DELETE
   USING (

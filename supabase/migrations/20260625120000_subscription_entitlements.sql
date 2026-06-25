@@ -4,7 +4,7 @@
 -- 1. subscription_plans
 -- ---------------------------------------------------------------------------
 
-CREATE TABLE public.subscription_plans (
+CREATE TABLE IF NOT EXISTS public.subscription_plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   key TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
@@ -21,6 +21,7 @@ CREATE TABLE public.subscription_plans (
 
 ALTER TABLE public.subscription_plans ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone authenticated can view active subscription plans" ON public.subscription_plans;
 CREATE POLICY "Anyone authenticated can view active subscription plans"
   ON public.subscription_plans FOR SELECT
   TO authenticated
@@ -33,6 +34,7 @@ CREATE POLICY "Anyone authenticated can view active subscription plans"
     )
   );
 
+DROP POLICY IF EXISTS "Platform admins can manage subscription plans" ON public.subscription_plans;
 CREATE POLICY "Platform admins can manage subscription plans"
   ON public.subscription_plans FOR ALL
   USING (
@@ -67,7 +69,7 @@ ALTER TABLE public.subscriptions
 -- 3. organization_audit_logs
 -- ---------------------------------------------------------------------------
 
-CREATE TABLE public.organization_audit_logs (
+CREATE TABLE IF NOT EXISTS public.organization_audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   actor_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -78,13 +80,14 @@ CREATE TABLE public.organization_audit_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX organization_audit_logs_organization_id_idx
+CREATE INDEX IF NOT EXISTS organization_audit_logs_organization_id_idx
   ON public.organization_audit_logs(organization_id, created_at DESC);
-CREATE INDEX organization_audit_logs_entity_id_idx
+CREATE INDEX IF NOT EXISTS organization_audit_logs_entity_id_idx
   ON public.organization_audit_logs(entity_id);
 
 ALTER TABLE public.organization_audit_logs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Platform admins can view all audit logs" ON public.organization_audit_logs;
 CREATE POLICY "Platform admins can view all audit logs"
   ON public.organization_audit_logs FOR SELECT
   USING (
@@ -188,7 +191,8 @@ VALUES
     }
   }'::jsonb,
   '{ "audit_trail": true }'::jsonb
-);
+)
+ON CONFLICT (key) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 5. Data migration
@@ -562,6 +566,7 @@ GRANT EXECUTE ON FUNCTION public.org_has_module(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.org_has_module_group(UUID, TEXT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.org_has_feature(UUID, TEXT) TO authenticated;
 
+DROP POLICY IF EXISTS "Org members can view audit logs when feature enabled" ON public.organization_audit_logs;
 CREATE POLICY "Org members can view audit logs when feature enabled"
   ON public.organization_audit_logs FOR SELECT
   USING (
@@ -587,6 +592,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS enforce_people_limit_before_insert ON public.people;
 CREATE TRIGGER enforce_people_limit_before_insert
   BEFORE INSERT ON public.people
   FOR EACH ROW
@@ -606,11 +612,13 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS enforce_service_session_limit_before_insert ON public.service_sessions;
 CREATE TRIGGER enforce_service_session_limit_before_insert
   BEFORE INSERT ON public.service_sessions
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_attendance_session_limit();
 
+DROP TRIGGER IF EXISTS enforce_life_group_session_limit_before_insert ON public.life_group_sessions;
 CREATE TRIGGER enforce_life_group_session_limit_before_insert
   BEFORE INSERT ON public.life_group_sessions
   FOR EACH ROW
@@ -727,6 +735,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS audit_people_changes_trigger ON public.people;
 CREATE TRIGGER audit_people_changes_trigger
   AFTER INSERT OR UPDATE OR DELETE ON public.people
   FOR EACH ROW

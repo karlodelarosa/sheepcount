@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { todayDateString } from "../_lib/audit-mock-data";
+import { todayDateString } from "../_lib/dates";
 import type { NewAuditSchedule } from "../_lib/types";
 
 interface CreateAuditDialogProps {

@@ -33,7 +33,7 @@ export function FinancialView() {
   const financialEnabled = isItemEnabled(entitlements.modules, "financial");
   const currency = orgSettings.currency ?? DEFAULT_CURRENCY;
 
-  const { audits, auditIncome, auditExpenses, createAudit } =
+  const { audits, auditIncome, auditExpenses, createAudit, hydrated } =
     useFinancialAudits();
   const [isCreateAuditOpen, setIsCreateAuditOpen] = useState(false);
 
@@ -50,12 +50,14 @@ export function FinancialView() {
     router.replace(`/financial?tab=${tab}`, { scroll: false });
   };
 
-  const handleCreateAudit = (schedule: Parameters<typeof createAudit>[0]) => {
-    const audit = createAudit(schedule);
-    router.push(`/financial/${audit.id}`);
+  const handleCreateAudit = async (
+    schedule: Parameters<typeof createAudit>[0],
+  ) => {
+    const audit = await createAudit(schedule);
+    if (audit) router.push(`/financial/${audit.id}`);
   };
 
-  if (isLoading) {
+  if (isLoading || !hydrated) {
     return (
       <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
         Loading...

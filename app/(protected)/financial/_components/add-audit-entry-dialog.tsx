@@ -25,7 +25,7 @@ import {
   getCurrencySymbol,
   type SupportedCurrency,
 } from "@/lib/currency";
-import { todayDateString } from "../_lib/audit-mock-data";
+import { todayDateString } from "../_lib/dates";
 import {
   EXPENSE_CATEGORIES,
   PAYMENT_METHODS,

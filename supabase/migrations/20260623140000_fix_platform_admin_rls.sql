@@ -13,6 +13,7 @@ DROP POLICY IF EXISTS "Platform admins can view all subscriptions" ON public.sub
 DROP POLICY IF EXISTS "Platform admins can insert subscriptions" ON public.subscriptions;
 DROP POLICY IF EXISTS "Platform admins can update all subscriptions" ON public.subscriptions;
 DROP POLICY IF EXISTS "Platform admins can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Users can view own platform admin row" ON public.platform_admins;
 
 CREATE POLICY "Users can view own platform admin row"
   ON public.platform_admins FOR SELECT
