@@ -29,6 +29,7 @@ export type RecordAttendanceInput = {
     personId: string;
     timeOfArrival?: string | null;
   }[];
+  successMessage?: string;
 };
 
 type ServiceAttendanceContextValue = {
@@ -139,7 +140,7 @@ export function ServiceAttendanceProvider({
           },
         );
         await refreshAttendance();
-        toast.success("Attendance recorded");
+        toast.success(input.successMessage ?? "Attendance recorded");
         return sessionId;
       } catch (error) {
         toast.error("Failed to record attendance", {

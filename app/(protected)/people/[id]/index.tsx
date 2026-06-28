@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
+  ArrowRight,
   Home,
   Award,
   Sparkles,
@@ -56,13 +57,19 @@ import { useOrganizationSettings } from "@/lib/organization-settings";
 import { useBaptism } from "@/lib/baptism";
 import { buildPersonAttendanceStats } from "../_lib/person-attendance";
 import { getPersonPastoralStatus } from "../_lib/person-pastoral-status";
+import { loadPeopleListNavigation } from "../_lib/list-state";
 
 interface PersonDetailsProps {
   personId: string;
   onBack: () => void;
+  onNavigateToPerson?: (personId: string) => void;
 }
 
-export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
+export function PersonDetails({
+  personId,
+  onBack,
+  onNavigateToPerson,
+}: PersonDetailsProps) {
   const {
     hydrated,
     getPerson,
@@ -127,6 +134,25 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
   const [editStatus, setEditStatus] = useState("");
 
   const person = getPerson(personId);
+
+  const listNavigation = useMemo(() => {
+    const nav = loadPeopleListNavigation();
+    if (!nav) return null;
+
+    const currentIndex = nav.personIds.indexOf(personId);
+    if (currentIndex === -1) return null;
+
+    return {
+      currentIndex,
+      total: nav.personIds.length,
+      previousPersonId:
+        currentIndex > 0 ? nav.personIds[currentIndex - 1] : null,
+      nextPersonId:
+        currentIndex < nav.personIds.length - 1
+          ? nav.personIds[currentIndex + 1]
+          : null,
+    };
+  }, [personId]);
   const ministriesList = getPersonMinistries(personId);
   const household = person?.householdId
     ? getHousehold(person.householdId)
@@ -314,6 +340,42 @@ export function PersonDetails({ personId, onBack }: PersonDetailsProps) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {listNavigation && onNavigateToPerson && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl gap-1.5"
+                disabled={!listNavigation.previousPersonId}
+                onClick={() => {
+                  if (listNavigation.previousPersonId) {
+                    onNavigateToPerson(listNavigation.previousPersonId);
+                  }
+                }}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Previous</span>
+              </Button>
+              <span className="text-xs text-muted-foreground tabular-nums px-1">
+                {listNavigation.currentIndex + 1} / {listNavigation.total}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl gap-1.5"
+                disabled={!listNavigation.nextPersonId}
+                onClick={() => {
+                  if (listNavigation.nextPersonId) {
+                    onNavigateToPerson(listNavigation.nextPersonId);
+                  }
+                }}
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+
           <Button
             onClick={() => (isEditing ? setIsEditing(false) : startEditing())}
             className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700"

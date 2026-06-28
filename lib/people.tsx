@@ -135,7 +135,7 @@ export type UpdatePersonInput = Partial<
   >
 >;
 
-export const PEOPLE_PAGE_SIZE = 10;
+export const PEOPLE_PAGE_SIZE = 50;
 
 type PeopleContextValue = {
   people: Person[];

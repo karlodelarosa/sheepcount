@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -27,6 +27,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Baby, Award, Cake, CalendarHeart, Users } from "lucide-react";
 import {
   getMembershipDisplayColor,
@@ -39,29 +46,62 @@ import {
   isBirthMonth,
 } from "@/lib/person-birthdate";
 import { isChildByAge } from "@/lib/person-age";
-import { usePeople, PEOPLE_PAGE_SIZE, type AddPersonInput } from "@/lib/people";
+import { usePeople, type AddPersonInput } from "@/lib/people";
 import { useDiscipleship } from "@/lib/discipleship";
 import { useTraining } from "@/lib/training";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { cn } from "@/lib/utils";
 import { AddPersonDialog } from "./add-person-dialog";
 import { PeopleFilterBar } from "./people-filter-bar";
 import { PersonAvatar } from "./person-detail-ui";
 import {
   buildPersonAchievementMap,
-  DEFAULT_PEOPLE_FILTERS,
   filterPeople,
   type PeopleFilters,
 } from "../_lib/filters";
-
+import {
+  buildPeopleListQuery,
+  filtersFromSearchParams,
+  parsePage,
+  parsePageSize,
+  PEOPLE_PAGE_SIZE_OPTIONS,
+  savePeopleListNavigation,
+  type PeoplePageSize,
+} from "../_lib/list-state";
 export function PeopleDirectory() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { people, hydrated, isSaving, addPerson } = usePeople();
   const { getPersonBadges } = useDiscipleship();
   const { getPersonTrainingBadges } = useTraining();
   const { lifeGroupMembers, lifeGroups } = useGroupsMinistry();
-  const [filters, setFilters] = useState<PeopleFilters>(DEFAULT_PEOPLE_FILTERS);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+
+  const page = parsePage(searchParams.get("page"));
+  const pageSize = parsePageSize(searchParams.get("size"));
+  const filters = useMemo(
+    () => filtersFromSearchParams(searchParams),
+    [searchParams],
+  );
+
+  const updateListState = useCallback(
+    (next: {
+      page?: number;
+      pageSize?: PeoplePageSize;
+      filters?: PeopleFilters;
+    }) => {
+      const query = buildPeopleListQuery(
+        next.page ?? page,
+        next.pageSize ?? pageSize,
+        next.filters ?? filters,
+      );
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    },
+    [router, pathname, page, pageSize, filters],
+  );
 
   const lifeGroupByPersonId = useMemo(() => {
     const map = new Map<string, string>();
@@ -89,19 +129,37 @@ export function PeopleDirectory() {
     [people, filters, achievementByPersonId],
   );
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredPeople.length / PEOPLE_PAGE_SIZE),
-  );
-  const safePage = Math.min(currentPage, totalPages);
+  const totalPages = Math.max(1, Math.ceil(filteredPeople.length / pageSize));
+  const safePage = Math.min(page, totalPages);
   const paginatedPeople = filteredPeople.slice(
-    (safePage - 1) * PEOPLE_PAGE_SIZE,
-    safePage * PEOPLE_PAGE_SIZE,
+    (safePage - 1) * pageSize,
+    safePage * pageSize,
   );
 
   const handleFiltersChange = (next: PeopleFilters) => {
-    setFilters(next);
-    setCurrentPage(1);
+    updateListState({ filters: next, page: 1 });
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    updateListState({ page: nextPage });
+  };
+
+  const handlePageSizeChange = (value: string) => {
+    updateListState({
+      pageSize: parsePageSize(value),
+      page: 1,
+    });
+  };
+
+  const navigateToPerson = (personId: string) => {
+    const returnQuery = buildPeopleListQuery(safePage, pageSize, filters);
+    savePeopleListNavigation({
+      personIds: filteredPeople.map(person => person.id),
+      page: safePage,
+      pageSize,
+      returnQuery,
+    });
+    router.push(`/people/${personId}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -115,6 +173,24 @@ export function PeopleDirectory() {
       default:
         return "bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
     }
+  };
+
+  const getRowClassName = (person: (typeof paginatedPeople)[number]) => {
+    const birthdayToday = isBirthdayToday(person.birthdate);
+
+    if (birthdayToday) {
+      return "bg-rose-50/70 hover:bg-rose-50 dark:bg-rose-950/25 dark:hover:bg-rose-950/40";
+    }
+
+    if (person.status === "Inactive") {
+      return "bg-amber-50/90 hover:bg-amber-100/80 dark:bg-amber-950/35 dark:hover:bg-amber-950/50";
+    }
+
+    if (person.status === "Exited") {
+      return "bg-slate-100/80 hover:bg-slate-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-800/80 opacity-75";
+    }
+
+    return "hover:bg-slate-50 dark:hover:bg-zinc-800/80";
   };
 
   const handleAdd = async (
@@ -179,6 +255,10 @@ export function PeopleDirectory() {
               <Users className="w-3.5 h-3.5 text-indigo-500" />
               Life group assigned
             </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block w-8 h-3 rounded bg-amber-100 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/50" />
+              Inactive
+            </span>
           </div>
 
           <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60">
@@ -226,16 +306,15 @@ export function PeopleDirectory() {
                     return (
                       <TableRow
                         key={person.id}
-                        className={`cursor-pointer text-slate-900 dark:text-white transition-colors ${
-                          birthdayToday
-                            ? "bg-rose-50/70 hover:bg-rose-50 dark:bg-rose-950/25 dark:hover:bg-rose-950/40"
-                            : "hover:bg-slate-50 dark:hover:bg-zinc-800/80"
-                        }`}
-                        onClick={() => router.push(`/people/${person.id}`)}
+                        className={cn(
+                          "cursor-pointer text-slate-900 dark:text-white transition-colors",
+                          getRowClassName(person),
+                        )}
+                        onClick={() => navigateToPerson(person.id)}
                         onKeyDown={e => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
-                            router.push(`/people/${person.id}`);
+                            navigateToPerson(person.id);
                           }
                         }}
                         tabIndex={0}
@@ -367,59 +446,82 @@ export function PeopleDirectory() {
             </Table>
           </div>
 
-          {filteredPeople.length > PEOPLE_PAGE_SIZE && (
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-sm text-muted-foreground">
-                Showing {(safePage - 1) * PEOPLE_PAGE_SIZE + 1}–
-                {Math.min(safePage * PEOPLE_PAGE_SIZE, filteredPeople.length)}{" "}
-                of {filteredPeople.length}
-              </p>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href="#"
-                      onClick={e => {
-                        e.preventDefault();
-                        setCurrentPage(p => Math.max(1, p - 1));
-                      }}
-                      className={
-                        safePage <= 1 ? "pointer-events-none opacity-50" : ""
-                      }
-                    />
-                  </PaginationItem>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    page => (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          href="#"
-                          isActive={page === safePage}
-                          onClick={e => {
-                            e.preventDefault();
-                            setCurrentPage(page);
-                          }}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ),
-                  )}
-                  <PaginationItem>
-                    <PaginationNext
-                      href="#"
-                      onClick={e => {
-                        e.preventDefault();
-                        setCurrentPage(p => Math.min(totalPages, p + 1));
-                      }}
-                      className={
-                        safePage >= totalPages
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+          {filteredPeople.length > 0 && (
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-sm text-muted-foreground">
+                  Showing {(safePage - 1) * pageSize + 1}–
+                  {Math.min(safePage * pageSize, filteredPeople.length)} of{" "}
+                  {filteredPeople.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Per page</span>
+                  <Select
+                    value={String(pageSize)}
+                    onValueChange={handlePageSizeChange}
+                  >
+                    <SelectTrigger size="sm" className="w-[4.5rem]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PEOPLE_PAGE_SIZE_OPTIONS.map(size => (
+                        <SelectItem key={size} value={String(size)}>
+                          {size}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {totalPages > 1 && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={e => {
+                          e.preventDefault();
+                          handlePageChange(Math.max(1, safePage - 1));
+                        }}
+                        className={
+                          safePage <= 1 ? "pointer-events-none opacity-50" : ""
+                        }
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      pageNumber => (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                            href="#"
+                            isActive={pageNumber === safePage}
+                            onClick={e => {
+                              e.preventDefault();
+                              handlePageChange(pageNumber);
+                            }}
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ),
+                    )}
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={e => {
+                          e.preventDefault();
+                          handlePageChange(Math.min(totalPages, safePage + 1));
+                        }}
+                        className={
+                          safePage >= totalPages
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
           )}
         </CardContent>

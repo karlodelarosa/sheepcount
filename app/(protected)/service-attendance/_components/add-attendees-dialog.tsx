@@ -5,35 +5,20 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Calendar,
-  Check,
-  Clock,
-} from "lucide-react";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, ArrowRight, Check, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AttendanceSelectionStep } from "./attendance-selection-step";
 import { AttendanceTimestampStep } from "./attendance-timestamp-step";
-import { AttendanceOverviewStep } from "./attendance-overview-step";
 import {
   buildSelectedAttendeesFromSelection,
-  computeOverviewStats,
   createGuestKey,
   DEFAULT_SERVICE_START_TIME,
   getToggleTime,
@@ -46,37 +31,22 @@ import {
   type WorkflowStep,
 } from "../_lib/attendance-workflow";
 
-interface ServiceType {
-  id: string;
-  name: string;
-  color: string;
-}
-
-interface Person {
+interface PersonOption {
   id: string;
   name: string;
   householdName: string;
-  membershipType: string;
 }
 
-export interface NewAttendanceRecord {
-  serviceId: string;
-  date: string;
-  serviceStartTime: string;
-  attendees: NewAttendanceAttendee[];
-}
-
-interface RecordAttendanceDialogProps {
+interface AddAttendeesDialogProps {
   children?: React.ReactNode;
-  serviceTypes: ServiceType[];
-  people: Person[];
-  onRecordAttendance: (
-    record: NewAttendanceRecord,
-  ) => void | Promise<void> | Promise<boolean>;
-  defaultServiceId?: string;
-  isSaving?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  serviceType: string;
+  date: string;
+  existingAttendeeIds: string[];
+  people: PersonOption[];
+  isSaving?: boolean;
+  onAddAttendees: (attendees: NewAttendanceAttendee[]) => Promise<boolean>;
 }
 
 const STEP_LABELS: Record<WorkflowStep, string> = {
@@ -86,7 +56,7 @@ const STEP_LABELS: Record<WorkflowStep, string> = {
 };
 
 function WorkflowStepper({ currentStep }: { currentStep: WorkflowStep }) {
-  const steps: WorkflowStep[] = [1, 2, 3];
+  const steps: WorkflowStep[] = [1, 2];
 
   return (
     <div className="flex items-center gap-2">
@@ -123,27 +93,24 @@ function WorkflowStepper({ currentStep }: { currentStep: WorkflowStep }) {
   );
 }
 
-export function RecordAttendanceDialog({
+export function AddAttendeesDialog({
   children,
-  serviceTypes,
-  people,
-  onRecordAttendance,
-  defaultServiceId,
-  isSaving = false,
   open,
   onOpenChange,
-}: RecordAttendanceDialogProps) {
-  const [isOpenLocal, setIsOpenLocal] = useState<boolean>(false);
+  serviceType,
+  date,
+  existingAttendeeIds,
+  people,
+  isSaving = false,
+  onAddAttendees,
+}: AddAttendeesDialogProps) {
+  const [isOpenLocal, setIsOpenLocal] = useState(false);
   const isControlled =
     typeof open === "boolean" && typeof onOpenChange === "function";
   const isOpen = isControlled ? open : isOpenLocal;
   const setIsOpen = isControlled ? onOpenChange! : setIsOpenLocal;
 
   const [step, setStep] = useState<WorkflowStep>(1);
-  const [selectedServiceId, setSelectedServiceId] = useState("");
-  const [attendanceDate, setAttendanceDate] = useState(
-    new Date().toISOString().split("T")[0],
-  );
   const [serviceStartTime, setServiceStartTime] = useState(
     DEFAULT_SERVICE_START_TIME,
   );
@@ -156,6 +123,31 @@ export function RecordAttendanceDialog({
   const [attendees, setAttendees] = useState<SelectedAttendee[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitInFlight = useRef(false);
+
+  const existingIds = useMemo(
+    () => new Set(existingAttendeeIds),
+    [existingAttendeeIds],
+  );
+
+  const availablePeople = useMemo(
+    () => people.filter((person) => !existingIds.has(person.id)),
+    [people, existingIds],
+  );
+
+  const peopleById = useMemo(
+    () =>
+      new Map(
+        availablePeople.map((person) => [
+          person.id,
+          {
+            id: person.id,
+            name: person.name,
+            householdName: person.householdName,
+          },
+        ]),
+      ),
+    [availablePeople],
+  );
 
   const resetWorkflow = () => {
     setStep(1);
@@ -170,42 +162,8 @@ export function RecordAttendanceDialog({
   useEffect(() => {
     if (!isOpen) {
       resetWorkflow();
-      return;
     }
-
-    if (!serviceTypes?.length) return;
-
-    const preferred =
-      defaultServiceId && serviceTypes.some((s) => s.id === defaultServiceId)
-        ? defaultServiceId
-        : serviceTypes[0].id;
-
-    setSelectedServiceId(preferred);
-  }, [serviceTypes, defaultServiceId, isOpen]);
-
-  const peopleById = useMemo(
-    () =>
-      new Map(
-        people.map((person) => [
-          person.id,
-          {
-            id: person.id,
-            name: person.name,
-            householdName: person.householdName,
-          },
-        ]),
-      ),
-    [people],
-  );
-
-  const selectedServiceName =
-    serviceTypes.find((service) => service.id === selectedServiceId)?.name ??
-    "Service";
-
-  const overviewStats = useMemo(
-    () => computeOverviewStats(attendees, serviceStartTime),
-    [attendees, serviceStartTime],
-  );
+  }, [isOpen]);
 
   const togglePerson = (personId: string) => {
     setSelectedKeys((prev) =>
@@ -276,26 +234,13 @@ export function RecordAttendanceDialog({
   };
 
   const handleSubmit = async () => {
-    if (
-      !selectedServiceId ||
-      !attendanceDate ||
-      attendees.length === 0 ||
-      submitInFlight.current
-    ) {
-      return;
-    }
+    if (attendees.length === 0 || submitInFlight.current) return;
 
     submitInFlight.current = true;
     setIsSubmitting(true);
     try {
-      const result = await onRecordAttendance({
-        serviceId: selectedServiceId,
-        date: attendanceDate,
-        serviceStartTime,
-        attendees: toNewAttendanceAttendees(attendees),
-      });
-
-      if (result === false) return;
+      const ok = await onAddAttendees(toNewAttendanceAttendees(attendees));
+      if (!ok) return;
 
       resetWorkflow();
       setIsOpen(false);
@@ -307,11 +252,14 @@ export function RecordAttendanceDialog({
 
   const isBusy = isSaving || isSubmitting;
 
-  const canProceedFromStep1 =
-    Boolean(selectedServiceId && attendanceDate && selectedKeys.length > 0);
+  const formattedDate = new Date(date).toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
-  const dialogWidth =
-    step === 1 ? "sm:max-w-xl" : "sm:max-w-4xl";
+  const canProceedFromStep1 = selectedKeys.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -319,79 +267,37 @@ export function RecordAttendanceDialog({
 
       <DialogContent
         className={cn(
-          dialogWidth,
+          step === 1 ? "sm:max-w-xl" : "sm:max-w-4xl",
           "max-h-[90vh] overflow-y-auto",
         )}
       >
         <DialogHeader className="space-y-3">
-          <DialogTitle>Record Attendance</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Add Attendees
+          </DialogTitle>
           <DialogDescription>
-            {step === 1 && "Select members and add any guests."}
-            {step === 2 && "Set or adjust arrival times for each person."}
-            {step === 3 && "Review headcount before saving."}
+            {step === 1 &&
+              `Add people to ${serviceType} on ${formattedDate}. Already recorded attendees are hidden.`}
+            {step === 2 && "Set arrival times for the new attendees."}
           </DialogDescription>
           <WorkflowStepper currentStep={step} />
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <Label>Service</Label>
-              <Select
-                value={selectedServiceId}
-                onValueChange={setSelectedServiceId}
-                disabled={!serviceTypes?.length || step > 1}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select service type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {serviceTypes?.length ? (
-                    serviceTypes.map((svc) => (
-                      <SelectItem key={svc.id} value={svc.id}>
-                        <div className="flex items-center gap-2">
-                          {svc.name.includes("Worship") ? (
-                            <Clock className="h-4 w-4" />
-                          ) : (
-                            <Calendar className="h-4 w-4" />
-                          )}
-                          {svc.name}
-                        </div>
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-2 text-sm text-muted-foreground">
-                      No service types available
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Date</Label>
-              <Input
-                type="date"
-                value={attendanceDate}
-                onChange={(e) => setAttendanceDate(e.target.value)}
-                disabled={step > 1}
-              />
-            </div>
-
-            <div>
-              <Label>Service start time</Label>
-              <Input
-                type="time"
-                value={serviceStartTime}
-                onChange={(e) => setServiceStartTime(e.target.value)}
-                disabled={step === 3}
-              />
-            </div>
+          <div>
+            <Label>Service start time</Label>
+            <Input
+              type="time"
+              value={serviceStartTime}
+              onChange={(e) => setServiceStartTime(e.target.value)}
+              disabled={step === 2}
+            />
           </div>
 
           {step === 1 && (
             <AttendanceSelectionStep
-              people={people}
+              people={availablePeople}
               selectedKeys={selectedKeys}
               guestNames={guestNames}
               guestInput={guestInput}
@@ -413,16 +319,6 @@ export function RecordAttendanceDialog({
               onApplyToggleToAll={applyToggleToAll}
             />
           )}
-
-          {step === 3 && (
-            <AttendanceOverviewStep
-              attendees={attendees}
-              serviceStartTime={serviceStartTime}
-              stats={overviewStats}
-              serviceName={selectedServiceName}
-              attendanceDate={attendanceDate}
-            />
-          )}
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
@@ -432,7 +328,7 @@ export function RecordAttendanceDialog({
               variant="outline"
               className="gap-1.5"
               disabled={isBusy}
-              onClick={() => setStep((prev) => (prev - 1) as WorkflowStep)}
+              onClick={() => setStep(1)}
             >
               <ArrowLeft className="h-4 w-4" />
               Back
@@ -455,18 +351,6 @@ export function RecordAttendanceDialog({
             <Button
               type="button"
               className="gap-1.5"
-              disabled={attendees.length === 0}
-              onClick={() => setStep(3)}
-            >
-              Review
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          )}
-
-          {step === 3 && (
-            <Button
-              type="button"
-              className="gap-1.5"
               disabled={attendees.length === 0 || isBusy}
               onClick={() => void handleSubmit()}
             >
@@ -475,7 +359,8 @@ export function RecordAttendanceDialog({
               ) : (
                 <>
                   <Check className="h-4 w-4" />
-                  Save attendance
+                  Add {attendees.length} attendee
+                  {attendees.length === 1 ? "" : "s"}
                 </>
               )}
             </Button>

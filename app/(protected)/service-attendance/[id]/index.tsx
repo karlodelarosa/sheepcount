@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, ArrowLeft, Users, Trash, Clock, X } from "lucide-react";
+import { Calendar, ArrowLeft, Users, Trash, Clock, X, UserPlus } from "lucide-react";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
@@ -29,6 +29,8 @@ import {
   getPersonVisitDate,
 } from "@/lib/membership-path";
 import { SessionAttendanceBreakdown } from "../_components/session-attendance-breakdown";
+import { AddAttendeesDialog } from "../_components/add-attendees-dialog";
+import type { NewAttendanceAttendee } from "../_lib/attendance-workflow";
 import {
   ATTENDANCE_STATUS_LABELS,
   attendeeMatchesStatusFilter,
@@ -53,14 +55,15 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
   const router = useRouter();
   const { tenant } = useTenant();
   const organizationId = getOrganizationId(tenant);
-  const { removeAttendee, isSaving } = useServiceAttendance();
-  const { people } = usePeople();
+  const { removeAttendee, recordAttendance, isSaving } = useServiceAttendance();
+  const { people, addPerson } = usePeople();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [statusFilter, setStatusFilter] = useState<AttendanceStatusKey | null>(
     null,
   );
+  const addAttendeesInFlight = useRef(false);
 
   const parsed = parseSessionPath(attendanceId);
 
@@ -119,6 +122,76 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
     const ok = await removeAttendee(attendanceRowId);
     if (ok) await reloadSession();
   };
+
+  const handleAddAttendees = async (attendees: NewAttendanceAttendee[]) => {
+    if (!session || !parsed || addAttendeesInFlight.current) return false;
+
+    addAttendeesInFlight.current = true;
+    try {
+      const existingIds = new Set(session.attendees.map(a => a.personId));
+      const resolvedAttendees: {
+        personId: string;
+        timeOfArrival: string | null;
+      }[] = [];
+
+      for (const attendee of attendees) {
+        if (attendee.status === "new" && attendee.guestName) {
+          const person = await addPerson(
+            {
+              firstName: attendee.guestName.firstName,
+              lastName: attendee.guestName.lastName,
+              membershipType: "Prospect",
+            },
+            { quiet: true },
+          );
+          if (!person) return false;
+
+          if (!existingIds.has(person.id)) {
+            resolvedAttendees.push({
+              personId: person.id,
+              timeOfArrival: attendee.timeOfArrival,
+            });
+            existingIds.add(person.id);
+          }
+          continue;
+        }
+
+        if (attendee.personId && !existingIds.has(attendee.personId)) {
+          resolvedAttendees.push({
+            personId: attendee.personId,
+            timeOfArrival: attendee.timeOfArrival,
+          });
+          existingIds.add(attendee.personId);
+        }
+      }
+
+      if (resolvedAttendees.length === 0) return true;
+
+      const sessionId = await recordAttendance({
+        serviceId: parsed.serviceId,
+        date: parsed.date,
+        attendees: resolvedAttendees,
+        successMessage: "Attendees added",
+      });
+
+      if (!sessionId) return false;
+
+      await reloadSession();
+      return true;
+    } finally {
+      addAttendeesInFlight.current = false;
+    }
+  };
+
+  const peopleOptions = useMemo(
+    () =>
+      people.map((person) => ({
+        id: person.id,
+        name: person.name,
+        householdName: person.householdName,
+      })),
+    [people],
+  );
 
   const breakdownAttendees = useMemo(
     () =>
@@ -230,12 +303,27 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
                 : "Recorded attendees"}
             </CardDescription>
           </div>
-          <Badge variant="outline" className="gap-1 text-[10px]">
-            <Users className="w-3 h-3" />
-            {statusFilter
-              ? `${filteredAttendees.length} / ${session.attendees.length}`
-              : session.attendees.length}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <AddAttendeesDialog
+              serviceType={session.serviceType}
+              date={session.date}
+              existingAttendeeIds={session.attendees.map((a) => a.personId)}
+              people={peopleOptions}
+              isSaving={isSaving}
+              onAddAttendees={handleAddAttendees}
+            >
+              <Button size="sm" variant="outline" className="h-7 gap-1 text-xs">
+                <UserPlus className="w-3.5 h-3.5" />
+                Add
+              </Button>
+            </AddAttendeesDialog>
+            <Badge variant="outline" className="gap-1 text-[10px]">
+              <Users className="w-3 h-3" />
+              {statusFilter
+                ? `${filteredAttendees.length} / ${session.attendees.length}`
+                : session.attendees.length}
+            </Badge>
+          </div>
         </CardHeader>
 
         <CardContent className="px-4 pb-4 pt-0 space-y-3">
