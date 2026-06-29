@@ -43,6 +43,7 @@ interface AddAttendeesDialogProps {
   onOpenChange?: (open: boolean) => void;
   serviceType: string;
   date: string;
+  serviceStartTime?: string;
   existingAttendeeIds: string[];
   people: PersonOption[];
   isSaving?: boolean;
@@ -99,6 +100,7 @@ export function AddAttendeesDialog({
   onOpenChange,
   serviceType,
   date,
+  serviceStartTime: sessionServiceStartTime = DEFAULT_SERVICE_START_TIME,
   existingAttendeeIds,
   people,
   isSaving = false,
@@ -112,7 +114,7 @@ export function AddAttendeesDialog({
 
   const [step, setStep] = useState<WorkflowStep>(1);
   const [serviceStartTime, setServiceStartTime] = useState(
-    DEFAULT_SERVICE_START_TIME,
+    sessionServiceStartTime,
   );
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [guestNames, setGuestNames] = useState<Map<string, GuestName>>(
@@ -156,14 +158,17 @@ export function AddAttendeesDialog({
     setGuestInput("");
     setSearchTerm("");
     setAttendees([]);
-    setServiceStartTime(DEFAULT_SERVICE_START_TIME);
+    setServiceStartTime(sessionServiceStartTime);
   };
 
   useEffect(() => {
     if (!isOpen) {
       resetWorkflow();
+      return;
     }
-  }, [isOpen]);
+
+    setServiceStartTime(sessionServiceStartTime);
+  }, [isOpen, sessionServiceStartTime]);
 
   const togglePerson = (personId: string) => {
     setSelectedKeys((prev) =>

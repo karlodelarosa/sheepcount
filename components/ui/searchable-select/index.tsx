@@ -81,9 +81,12 @@ export function SearchableSelect({
       <SelectTrigger id={id} className={triggerClassName}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent onCloseAutoFocus={event => event.preventDefault()}>
+      <SelectContent
+        className="overflow-hidden p-0"
+        onCloseAutoFocus={event => event.preventDefault()}
+      >
         <div
-          className="border-b p-2"
+          className="shrink-0 border-b bg-popover p-2"
           onPointerDown={event => event.stopPropagation()}
         >
           <Input
@@ -95,21 +98,8 @@ export function SearchableSelect({
             onKeyDown={event => event.stopPropagation()}
           />
         </div>
-        {pinnedOptions?.map(option => (
-          <SelectItem
-            key={option.value}
-            value={option.value}
-            disabled={option.disabled}
-          >
-            {option.label}
-          </SelectItem>
-        ))}
-        {showEmptyState ? (
-          <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-            {emptyMessage}
-          </div>
-        ) : (
-          filteredOptions.map(option => (
+        <div className="max-h-[300px] overflow-y-auto p-1">
+          {pinnedOptions?.map(option => (
             <SelectItem
               key={option.value}
               value={option.value}
@@ -117,8 +107,23 @@ export function SearchableSelect({
             >
               {option.label}
             </SelectItem>
-          ))
-        )}
+          ))}
+          {showEmptyState ? (
+            <div className="px-2 py-6 text-center text-sm text-muted-foreground">
+              {emptyMessage}
+            </div>
+          ) : (
+            filteredOptions.map(option => (
+              <SelectItem
+                key={option.value}
+                value={option.value}
+                disabled={option.disabled}
+              >
+                {option.label}
+              </SelectItem>
+            ))
+          )}
+        </div>
       </SelectContent>
     </Select>
   );

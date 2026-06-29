@@ -1,23 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Calendar,
-  Users,
-  ChevronRight,
   Plus,
   Search,
   Church,
@@ -28,7 +20,6 @@ import {
 import { usePeople } from "@/lib/people";
 import { useServiceAttendance } from "@/lib/service-attendance";
 import { buildSessionPath } from "@/lib/supabase/service-attendance";
-import { getMembershipDisplayLabel } from "@/lib/membership-path";
 import {
   RecordAttendanceDialog,
   NewAttendanceRecord,
@@ -43,16 +34,13 @@ import {
 } from "./_lib/group-attendance";
 import { AttendanceDashboardTab } from "./_components/attendance-dashboard-tab";
 import { BirthdaysTab } from "./_components/birthdays-tab";
+import { LifeGroupsTab } from "./_components/life-groups-tab";
 import { StatCard } from "./_components/stat-card";
-
-function formatLongDate(date: string) {
-  return new Date(date).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import {
+  AttendanceDetailsPanel,
+  AttendanceRecordCard,
+  formatLongDate,
+} from "./_components/attendance-session-card";
 
 function toGroupedRows(
   rows: ReturnType<typeof useServiceAttendance>["attendanceRows"],
@@ -69,140 +57,6 @@ function toGroupedRows(
   );
 }
 
-function AttendanceRecordCard({
-  record,
-  isSelected,
-  onSelect,
-  compact = false,
-}: {
-  record: GroupedAttendanceRecord;
-  isSelected?: boolean;
-  onSelect?: () => void;
-  compact?: boolean;
-}) {
-  const sunday = isSundayRecord(record);
-
-  return (
-    <Card
-      className={`
-        border transition-all duration-150
-        ${sunday ? "border-violet-200/60 dark:border-violet-800/40 bg-violet-50/30 dark:bg-violet-950/10" : "border-border/60 bg-card/50"}
-        ${onSelect ? "cursor-pointer hover:shadow-md" : ""}
-        ${isSelected ? "ring-2 ring-violet-500 shadow-md" : ""}
-      `}
-      onClick={onSelect}
-    >
-      <CardContent className={compact ? "p-2.5" : "p-3"}>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div
-              className={`${compact ? "w-8 h-8" : "w-9 h-9"} rounded-lg flex items-center justify-center shrink-0 ${
-                sunday
-                  ? "bg-violet-500 text-white"
-                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200"
-              }`}
-            >
-              <Calendar className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{record.serviceType}</p>
-              <p className="text-[11px] text-muted-foreground truncate">
-                {formatLongDate(record.date)}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Badge variant="outline" className="gap-1 text-[10px] h-5 px-1.5">
-              <Users className="w-3 h-3" />
-              {record.attendees.length}
-            </Badge>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function AttendanceDetailsPanel({
-  record,
-  people,
-  onOpenFullView,
-}: {
-  record: GroupedAttendanceRecord;
-  people: ReturnType<typeof usePeople>["people"];
-  onOpenFullView: () => void;
-}) {
-  const attendees = record.attendees
-    .map((id) => people.find((p) => p.id === id))
-    .filter(Boolean);
-  const evangelismCount = attendees.filter(
-    (p) => p?.membershipType === "For Evangelism",
-  ).length;
-
-  return (
-    <Card className="border-violet-200/60 dark:border-violet-800/40 bg-card/50">
-      <CardHeader className="py-3 px-4">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <CardTitle className="text-sm truncate">{record.serviceType}</CardTitle>
-            <CardDescription className="text-xs">
-              {formatLongDate(record.date)}
-            </CardDescription>
-          </div>
-          <Badge variant="outline" className="gap-1 text-[10px] shrink-0">
-            <Users className="w-3 h-3" />
-            {attendees.length}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="px-4 pb-4 pt-0 space-y-3">
-        {evangelismCount > 0 && (
-          <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-100">
-            {evangelismCount} for evangelism follow-up
-          </div>
-        )}
-
-        <div className="space-y-1.5 max-h-64 overflow-y-auto">
-          {attendees.map((person) => (
-            <div
-              key={person!.id}
-              className="flex items-center gap-2 p-2 rounded-lg border border-border/50 bg-background/50 text-sm"
-            >
-              <div className="w-7 h-7 rounded-md bg-violet-500 text-white flex items-center justify-center text-xs shrink-0">
-                {person!.name.charAt(0)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <Link
-                  href={`/people/${person!.id}`}
-                  className="truncate text-sm font-medium hover:text-violet-600 dark:hover:text-violet-400 hover:underline"
-                  onClick={e => e.stopPropagation()}
-                >
-                  {person!.name}
-                </Link>
-                <p className="text-[10px] text-muted-foreground truncate">
-                  {person!.householdName}
-                </p>
-              </div>
-              <Badge variant="outline" className="text-[10px] shrink-0">
-                {getMembershipDisplayLabel(
-                  person!.membershipType,
-                  person!.joinDate,
-                )}
-              </Badge>
-            </div>
-          ))}
-        </div>
-
-        <Button size="sm" className="w-full gap-1.5" onClick={onOpenFullView}>
-          <Users className="w-3.5 h-3.5" />
-          Open full view
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
 function getInitialDateRange(): DateRangeValue {
   return getCurrentMonthRange();
 }
@@ -212,7 +66,7 @@ export function ServiceAttendanceView() {
   const { people, hydrated: peopleHydrated, addPerson } = usePeople();
   const {
     attendanceRows,
-    sundayServiceTypes,
+    serviceTypes,
     lifeGroupServiceTypes,
     primarySundayServiceId,
     hydrated,
@@ -485,42 +339,13 @@ export function ServiceAttendanceView() {
           </TabsContent>
 
           <TabsContent value="other" className="mt-3">
-            <Card className="border-blue-200/50 dark:border-blue-800/40 bg-blue-50/20 dark:bg-blue-950/10">
-              <CardHeader className="py-3 px-4">
-                <CardTitle className="text-sm">Life groups &amp; other</CardTitle>
-                <CardDescription className="text-xs">
-                  Fellowships, Sunday school, prayer meetings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-4 pb-4 pt-0">
-                {otherRecords.length === 0 ? (
-                  <div className="text-center py-8">
-                    <UsersRound className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mb-3">
-                      No records yet
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setIsDialogOpen(true)}
-                    >
-                      Record attendance
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {otherRecords.map((record) => (
-                      <AttendanceRecordCard
-                        key={`${record.serviceId}-${record.date}`}
-                        record={record}
-                        compact
-                        onSelect={() => openSession(record)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <LifeGroupsTab
+              records={otherRecords}
+              lifeGroupServiceTypes={lifeGroupServiceTypes}
+              people={people}
+              onOpenSession={openSession}
+              onRecordAttendance={() => setIsDialogOpen(true)}
+            />
           </TabsContent>
 
           <TabsContent value="birthdays" className="mt-3">
@@ -530,15 +355,12 @@ export function ServiceAttendanceView() {
       )}
 
       <RecordAttendanceDialog
-        serviceTypes={(activeTab === "other"
-          ? lifeGroupServiceTypes
-          : sundayServiceTypes
-        ).map((s) => ({ id: s.id, name: s.name, color: "violet" }))}
-        defaultServiceId={
-          activeTab === "other"
-            ? lifeGroupServiceTypes[0]?.id
-            : primarySundayServiceId
-        }
+        serviceTypes={serviceTypes.map((s) => ({
+          id: s.id,
+          name: s.name,
+          color: "violet",
+        }))}
+        defaultServiceId={primarySundayServiceId}
         people={people}
         onRecordAttendance={handleRecordAttendance}
         isSaving={isSaving}

@@ -3,8 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-
-type Accent = "purple" | "blue" | "emerald" | "orange";
+import {
+  type CampaignAccent,
+  statAccentThemes,
+} from "../_lib/campaign-themes";
 
 export function FundraisingStatCard({
   icon: Icon,
@@ -17,57 +19,69 @@ export function FundraisingStatCard({
   showEdit,
   editLabel,
   className,
+  featured,
+  variant = "default",
 }: {
   icon: React.ElementType;
   label: string;
   value: string;
   subtext?: string;
-  accent: Accent;
+  accent: CampaignAccent;
   progress?: number;
   onEdit?: () => void;
   showEdit?: boolean;
   editLabel?: string;
   className?: string;
+  featured?: boolean;
+  variant?: "default" | "hero";
 }) {
-  const accentStyles = {
-    purple: {
-      icon: "bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400",
-      border: "border-purple-200/60 dark:border-purple-800/40",
-      bg: "from-purple-50/80 to-white dark:from-purple-950/20 dark:to-card",
-    },
-    blue: {
-      icon: "bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400",
-      border: "border-blue-200/60 dark:border-blue-800/40",
-      bg: "from-blue-50/80 to-white dark:from-blue-950/20 dark:to-card",
-    },
-    emerald: {
-      icon: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400",
-      border: "border-emerald-200/60 dark:border-emerald-800/40",
-      bg: "from-emerald-50/80 to-white dark:from-emerald-950/20 dark:to-card",
-    },
-    orange: {
-      icon: "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
-      border: "border-orange-200/60 dark:border-orange-800/40",
-      bg: "from-orange-50/80 to-white dark:from-orange-950/20 dark:to-card",
-    },
-  }[accent];
+  const theme = statAccentThemes[accent];
+  const isHero = variant === "hero";
 
   return (
     <div
       className={cn(
-        "rounded-xl border bg-gradient-to-br p-4 transition-shadow hover:shadow-sm",
-        accentStyles.border,
-        accentStyles.bg,
+        "group relative overflow-hidden rounded-2xl border transition-all duration-300",
+        isHero
+          ? "border-white/10 bg-white/10 p-4 backdrop-blur-md hover:bg-white/[0.14]"
+          : cn(
+              "p-4 hover:-translate-y-0.5 hover:shadow-lg",
+              theme.card,
+              theme.glow,
+            ),
+        featured && "p-5 sm:p-6",
         className,
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className={cn("rounded-lg p-2 shrink-0", accentStyles.icon)}>
-          <Icon className="w-4 h-4" />
+      {!isHero && (
+        <div
+          className={cn(
+            "pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full blur-2xl transition-opacity duration-300 group-hover:opacity-100 opacity-60",
+            theme.orb,
+          )}
+        />
+      )}
+
+      <div className="relative flex items-start gap-3">
+        <div
+          className={cn(
+            "shrink-0 rounded-xl p-2.5 shadow-sm",
+            isHero
+              ? "bg-white/15 text-white ring-1 ring-white/20"
+              : cn("ring-1 ring-black/5 dark:ring-white/10", theme.icon),
+            featured && "p-3",
+          )}
+        >
+          <Icon className={cn("w-4 h-4", featured && "w-5 h-5")} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p
+              className={cn(
+                "text-[11px] font-semibold uppercase tracking-[0.14em]",
+                isHero ? "text-white/60" : "text-muted-foreground",
+              )}
+            >
               {label}
             </p>
             {showEdit && onEdit && (
@@ -81,20 +95,32 @@ export function FundraisingStatCard({
               </Button>
             )}
           </div>
-          <p className="text-lg font-semibold text-foreground mt-0.5 line-clamp-2 leading-snug">
+          <p
+            className={cn(
+              "font-semibold mt-1 line-clamp-2 leading-snug tabular-nums",
+              isHero ? "text-white" : theme.value,
+              featured
+                ? "text-3xl sm:text-4xl tracking-tight"
+                : "text-lg",
+            )}
+          >
             {value}
           </p>
           {subtext && (
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+            <p
+              className={cn(
+                "text-xs mt-1 line-clamp-2",
+                isHero ? "text-white/55" : "text-muted-foreground",
+              )}
+            >
               {subtext}
             </p>
           )}
           {progress !== undefined && (
-            <Progress value={progress} className="h-1.5 mt-2.5" />
+            <Progress value={progress} className="h-1.5 mt-3" />
           )}
         </div>
       </div>
     </div>
   );
 }
-

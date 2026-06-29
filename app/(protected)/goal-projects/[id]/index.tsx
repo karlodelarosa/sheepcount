@@ -19,7 +19,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/index";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  CalendarDays,
+  TrendingUp,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -34,6 +37,7 @@ import { useTenant } from "@/app/providers/tenant-provider";
 import { useGoalProjects } from "@/lib/goal-projects";
 import { usePeople } from "@/lib/people";
 import { FundraisingStatCard } from "../_components/fundraising-stat-card";
+import { CampaignDetailHero } from "../_components/campaign-detail-hero";
 import { AddProjectContributionDialog } from "../_components/add-project-contribution-dialog";
 import { EditGoalProjectDialog } from "../_components/edit-goal-project-dialog";
 import { DeleteCampaignDialog } from "../_components/delete-campaign-dialog";
@@ -114,101 +118,80 @@ export function GoalProjectDetails({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onBack}
-            className="rounded-xl"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                {campaign.title.trim() || "Untitled campaign"}
-              </h1>
-              <Badge
-                variant={campaign.status === "completed" ? "default" : "secondary"}
-                className="rounded-lg"
-              >
-                {campaign.status === "completed" ? "Completed" : "Active"}
-              </Badge>
-            </div>
-            {campaign.description.trim() && (
-              <p className="text-slate-600 dark:text-zinc-400 mt-1 max-w-2xl">
-                {campaign.description}
-              </p>
+      <CampaignDetailHero
+        campaign={campaign}
+        raisedAmount={raisedAmount}
+        currency={currency}
+        progress={progress}
+        remaining={remaining}
+        onBack={onBack}
+        actions={
+          <>
+            <Button
+              onClick={() => setIsAddContributionOpen(true)}
+              className="rounded-xl border border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Contribution
+            </Button>
+
+            {isAdmin && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-xl border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
+                    disabled={isSaving}
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                    <span className="sr-only">Campaign actions</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-52 rounded-xl border-slate-200/60 dark:border-zinc-700/60"
+                >
+                  <DropdownMenuItem
+                    className="cursor-pointer rounded-lg"
+                    onClick={() => setIsEditCampaignOpen(true)}
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Edit campaign
+                  </DropdownMenuItem>
+                  {campaign.status === "active" ? (
+                    <DropdownMenuItem
+                      className="cursor-pointer rounded-lg"
+                      onClick={() => void markCompleted(campaign.id)}
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Mark complete
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      className="cursor-pointer rounded-lg"
+                      onClick={() => void reopen(campaign.id)}
+                    >
+                      <RefreshCcw className="w-4 h-4 mr-2" />
+                      Reopen campaign
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"
+                    onClick={() => setIsDeleteCampaignOpen(true)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete campaign
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-          </div>
-        </div>
+          </>
+        }
+      />
 
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          <Button
-            onClick={() => setIsAddContributionOpen(true)}
-            className="rounded-xl bg-slate-900 hover:bg-slate-800"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Contribution
-          </Button>
-
-          {isAdmin && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-xl"
-                  disabled={isSaving}
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                  <span className="sr-only">Campaign actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-52 rounded-xl border-slate-200/60 dark:border-zinc-700/60"
-              >
-                <DropdownMenuItem
-                  className="cursor-pointer rounded-lg"
-                  onClick={() => setIsEditCampaignOpen(true)}
-                >
-                  <Pencil className="w-4 h-4 mr-2" />
-                  Edit campaign
-                </DropdownMenuItem>
-                {campaign.status === "active" ? (
-                  <DropdownMenuItem
-                    className="cursor-pointer rounded-lg"
-                    onClick={() => void markCompleted(campaign.id)}
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Mark complete
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem
-                    className="cursor-pointer rounded-lg"
-                    onClick={() => void reopen(campaign.id)}
-                  >
-                    <RefreshCcw className="w-4 h-4 mr-2" />
-                    Reopen campaign
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="cursor-pointer rounded-lg text-red-600 focus:text-red-600"
-                  onClick={() => setIsDeleteCampaignOpen(true)}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete campaign
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-3">
         <FundraisingStatCard
           icon={CheckCircle2}
           label="Progress"
@@ -218,21 +201,14 @@ export function GoalProjectDetails({
           progress={progress}
         />
         <FundraisingStatCard
-          icon={Plus}
-          label="Raised"
-          value={formatCurrency(raisedAmount, currency)}
-          subtext="Total contributions"
-          accent="blue"
-        />
-        <FundraisingStatCard
-          icon={Plus}
+          icon={TrendingUp}
           label="Remaining"
           value={formatCurrency(remaining, currency)}
           subtext={`Goal: ${formatCurrency(campaign.goalAmount, currency)}`}
           accent="purple"
         />
         <FundraisingStatCard
-          icon={Plus}
+          icon={CalendarDays}
           label="Target date"
           value={
             campaign.targetDate
@@ -244,7 +220,7 @@ export function GoalProjectDetails({
         />
       </div>
 
-      <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm">
+      <Card className="overflow-hidden rounded-2xl border-slate-200/60 bg-white/80 shadow-sm backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-900/50">
         <CardContent className="p-0">
           <div className="px-6 py-4 border-b border-border/60">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">

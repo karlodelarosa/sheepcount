@@ -13,11 +13,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, ArrowLeft, Users, Trash, Clock, X, UserPlus } from "lucide-react";
+import { Calendar, ArrowLeft, Users, Trash, Clock, X, UserPlus, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown";
+import { ConfirmDeleteDialog } from "@/app/(protected)/work-ministry/_components/confirm-delete-dialog";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
 import {
+  buildSessionPath,
   fetchSessionDetail,
   parseSessionPath,
   type SessionDetail,
@@ -30,6 +39,10 @@ import {
 } from "@/lib/membership-path";
 import { SessionAttendanceBreakdown } from "../_components/session-attendance-breakdown";
 import { AddAttendeesDialog } from "../_components/add-attendees-dialog";
+import {
+  EditSessionDetailsDialog,
+  type EditSessionDetailsInput,
+} from "../_components/edit-session-details-dialog";
 import type { NewAttendanceAttendee } from "../_lib/attendance-workflow";
 import {
   ATTENDANCE_STATUS_LABELS,
@@ -55,11 +68,14 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
   const router = useRouter();
   const { tenant } = useTenant();
   const organizationId = getOrganizationId(tenant);
-  const { removeAttendee, recordAttendance, isSaving } = useServiceAttendance();
+  const { removeAttendee, recordAttendance, updateSessionDetails, deleteSession, serviceTypes, isSaving } =
+    useServiceAttendance();
   const { people, addPerson } = usePeople();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<AttendanceStatusKey | null>(
     null,
   );
@@ -121,6 +137,31 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
   const handleRemovePerson = async (attendanceRowId: string) => {
     const ok = await removeAttendee(attendanceRowId);
     if (ok) await reloadSession();
+  };
+
+  const handleEditSessionDetails = async (input: EditSessionDetailsInput) => {
+    if (!session) return false;
+
+    const result = await updateSessionDetails({
+      sessionId: session.sessionId,
+      ...input,
+    });
+    if (!result) return false;
+
+    router.replace(
+      `/service-attendance/${buildSessionPath(result.serviceId, result.date)}`,
+    );
+    return true;
+  };
+
+  const handleDeleteSession = async () => {
+    if (!session) return;
+
+    const ok = await deleteSession(session.sessionId);
+    if (!ok) return;
+
+    setDeleteOpen(false);
+    router.push("/service-attendance");
   };
 
   const handleAddAttendees = async (attendees: NewAttendanceAttendee[]) => {
@@ -254,26 +295,57 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => router.push("/service-attendance")}
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div>
-          <h1 className="text-lg font-semibold">{session.serviceType}</h1>
-          <p className="text-sm text-muted-foreground">
-            {new Date(session.date).toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 shrink-0"
+            onClick={() => router.push("/service-attendance")}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold truncate">{session.serviceType}</h1>
+            <p className="text-sm text-muted-foreground">
+              {new Date(session.date).toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+              {" · "}
+              {formatArrivalTime(session.serviceStartTime)} start
+            </p>
+          </div>
         </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 shrink-0"
+              aria-label="Session options"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setEditOpen(true)}>
+              <Pencil className="w-4 h-4" />
+              Edit details
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete session
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {session.attendees.length > 0 && (
@@ -307,6 +379,7 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
             <AddAttendeesDialog
               serviceType={session.serviceType}
               date={session.date}
+              serviceStartTime={session.serviceStartTime}
               existingAttendeeIds={session.attendees.map((a) => a.personId)}
               people={peopleOptions}
               isSaving={isSaving}
@@ -433,6 +506,31 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmDeleteDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete attendance session?"
+        description={`This will permanently remove ${session.serviceType} on ${new Date(session.date).toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        })} and all ${session.attendees.length} recorded attendee${session.attendees.length === 1 ? "" : "s"}. This cannot be undone.`}
+        confirmLabel="Delete session"
+        onConfirm={handleDeleteSession}
+        isLoading={isSaving}
+      />
+
+      <EditSessionDetailsDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        serviceId={session.serviceId}
+        date={session.date}
+        serviceStartTime={session.serviceStartTime}
+        serviceTypes={serviceTypes}
+        isSaving={isSaving}
+        onSave={handleEditSessionDetails}
+      />
     </div>
   );
 }

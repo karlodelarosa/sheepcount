@@ -49,23 +49,35 @@ export function groupAttendanceBySession(
   );
 }
 
-export function getSundayStats(records: GroupedAttendanceRecord[]) {
-  const sundayRecords = records.filter(isSundayRecord);
-  const totalAttendance = sundayRecords.reduce(
+export function getSessionStats(records: GroupedAttendanceRecord[]) {
+  const totalAttendance = records.reduce(
     (sum, r) => sum + r.attendees.length,
     0,
   );
-  const lastRecord = sundayRecords[0];
+  const lastRecord = records[0];
 
   return {
-    sessionCount: sundayRecords.length,
+    sessionCount: records.length,
     totalAttendance,
     averageAttendance:
-      sundayRecords.length > 0
-        ? Math.round(totalAttendance / sundayRecords.length)
+      records.length > 0
+        ? Math.round(totalAttendance / records.length)
         : 0,
-    lastSundayDate: lastRecord?.date ?? null,
-    lastSundayCount: lastRecord?.attendees.length ?? 0,
+    lastSessionDate: lastRecord?.date ?? null,
+    lastSessionCount: lastRecord?.attendees.length ?? 0,
+  };
+}
+
+export function getSundayStats(records: GroupedAttendanceRecord[]) {
+  const sundayRecords = records.filter(isSundayRecord);
+  const stats = getSessionStats(sundayRecords);
+
+  return {
+    sessionCount: stats.sessionCount,
+    totalAttendance: stats.totalAttendance,
+    averageAttendance: stats.averageAttendance,
+    lastSundayDate: stats.lastSessionDate,
+    lastSundayCount: stats.lastSessionCount,
   };
 }
 

@@ -13,10 +13,13 @@ import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
 import {
+  deleteSession as deleteSessionDb,
   fetchAttendanceRows,
   fetchServiceTypes,
   recordAttendance as recordAttendanceDb,
   removeSessionAttendee,
+  updateSessionServiceType as updateSessionServiceTypeDb,
+  updateSessionDetails as updateSessionDetailsDb,
   type ServiceAttendanceRow,
   type ServiceCategory,
   type ServiceType,
@@ -42,6 +45,22 @@ type ServiceAttendanceContextValue = {
   primarySundayServiceId: string | undefined;
   recordAttendance: (input: RecordAttendanceInput) => Promise<string | null>;
   removeAttendee: (attendanceId: string) => Promise<boolean>;
+  changeSessionServiceType: (
+    sessionId: string,
+    newServiceId: string,
+  ) => Promise<{ serviceId: string; sessionId: string; merged: boolean } | null>;
+  updateSessionDetails: (input: {
+    sessionId: string;
+    serviceId: string;
+    date: string;
+    serviceStartTime: string;
+  }) => Promise<{
+    serviceId: string;
+    sessionId: string;
+    date: string;
+    merged: boolean;
+  } | null>;
+  deleteSession: (sessionId: string) => Promise<boolean>;
   refreshAttendance: () => Promise<void>;
   getServiceCategory: (serviceId: string) => ServiceCategory | undefined;
 };
@@ -83,7 +102,9 @@ export function ServiceAttendanceProvider({
     [serviceTypes],
   );
 
-  const primarySundayServiceId = sundayServiceTypes[0]?.id;
+  const primarySundayServiceId =
+    sundayServiceTypes.find((s) => s.name === "Sunday Service")?.id ??
+    sundayServiceTypes[0]?.id;
 
   const getServiceCategory = useCallback(
     (serviceId: string) =>
@@ -174,6 +195,119 @@ export function ServiceAttendanceProvider({
     [supabase, refreshAttendance],
   );
 
+  const changeSessionServiceType = useCallback(
+    async (
+      sessionId: string,
+      newServiceId: string,
+    ): Promise<{
+      serviceId: string;
+      sessionId: string;
+      merged: boolean;
+    } | null> => {
+      if (!organizationId) return null;
+
+      const category = getServiceCategory(newServiceId);
+      if (!category) {
+        toast.error("Unknown service type");
+        return null;
+      }
+
+      setIsSaving(true);
+      try {
+        const result = await updateSessionServiceTypeDb(
+          supabase,
+          organizationId,
+          {
+            sessionId,
+            newServiceId,
+            newServiceCategory: category,
+          },
+        );
+        await refreshAttendance();
+        toast.success(
+          result.merged
+            ? "Service type updated and merged with an existing session"
+            : "Service type updated",
+        );
+        return result;
+      } catch (error) {
+        toast.error("Failed to update service type", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, supabase, getServiceCategory, refreshAttendance],
+  );
+
+  const updateSessionDetails = useCallback(
+    async (input: {
+      sessionId: string;
+      serviceId: string;
+      date: string;
+      serviceStartTime: string;
+    }) => {
+      if (!organizationId) return null;
+
+      const category = getServiceCategory(input.serviceId);
+      if (!category) {
+        toast.error("Unknown service type");
+        return null;
+      }
+
+      setIsSaving(true);
+      try {
+        const result = await updateSessionDetailsDb(
+          supabase,
+          organizationId,
+          {
+            ...input,
+            serviceCategory: category,
+          },
+        );
+        await refreshAttendance();
+        toast.success(
+          result.merged
+            ? "Session updated and merged with an existing record"
+            : "Session details updated",
+        );
+        return result;
+      } catch (error) {
+        toast.error("Failed to update session details", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, supabase, getServiceCategory, refreshAttendance],
+  );
+
+  const deleteSession = useCallback(
+    async (sessionId: string): Promise<boolean> => {
+      if (!organizationId) return false;
+
+      setIsSaving(true);
+      try {
+        await deleteSessionDb(supabase, organizationId, sessionId);
+        await refreshAttendance();
+        toast.success("Attendance session deleted");
+        return true;
+      } catch (error) {
+        toast.error("Failed to delete attendance session", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, supabase, refreshAttendance],
+  );
+
   const value = useMemo(
     () => ({
       serviceTypes,
@@ -185,6 +319,9 @@ export function ServiceAttendanceProvider({
       primarySundayServiceId,
       recordAttendance,
       removeAttendee,
+      changeSessionServiceType,
+      updateSessionDetails,
+      deleteSession,
       refreshAttendance,
       getServiceCategory,
     }),
@@ -198,6 +335,9 @@ export function ServiceAttendanceProvider({
       primarySundayServiceId,
       recordAttendance,
       removeAttendee,
+      changeSessionServiceType,
+      updateSessionDetails,
+      deleteSession,
       refreshAttendance,
       getServiceCategory,
     ],

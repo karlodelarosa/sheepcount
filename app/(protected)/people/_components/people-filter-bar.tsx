@@ -59,12 +59,16 @@ const ACHIEVEMENT_OPTIONS = [
 
 interface PeopleFilterBarProps {
   filters: PeopleFilters;
+  search: string;
+  onSearchChange: (search: string) => void;
   onFiltersChange: (filters: PeopleFilters) => void;
   resultCount?: number;
 }
 
 export function PeopleFilterBar({
   filters,
+  search,
+  onSearchChange,
   onFiltersChange,
   resultCount,
 }: PeopleFilterBarProps) {
@@ -78,10 +82,8 @@ export function PeopleFilterBar({
           <Search className="w-4 h-4 text-slate-400 dark:text-zinc-400 shrink-0" />
           <Input
             placeholder="Search by name, phone, household, or email..."
-            value={filters.search}
-            onChange={e =>
-              onFiltersChange({ ...filters, search: e.target.value })
-            }
+            value={search}
+            onChange={e => onSearchChange(e.target.value)}
             className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400 text-slate-900 dark:placeholder:text-zinc-400 dark:text-white"
           />
         </div>
@@ -260,7 +262,7 @@ export function PeopleFilterBar({
               onClick={() =>
                 onFiltersChange({
                   ...DEFAULT_PEOPLE_FILTERS,
-                  search: filters.search,
+                  search,
                 })
               }
             >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
@@ -50,6 +50,7 @@ import { usePeople, type AddPersonInput } from "@/lib/people";
 import { useDiscipleship } from "@/lib/discipleship";
 import { useTraining } from "@/lib/training";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { cn } from "@/lib/utils";
 import { AddPersonDialog } from "./add-person-dialog";
 import { PeopleFilterBar } from "./people-filter-bar";
@@ -68,6 +69,9 @@ import {
   savePeopleListNavigation,
   type PeoplePageSize,
 } from "../_lib/list-state";
+
+const SEARCH_DEBOUNCE_MS = 250;
+
 export function PeopleDirectory() {
   const router = useRouter();
   const pathname = usePathname();
@@ -80,9 +84,44 @@ export function PeopleDirectory() {
 
   const page = parsePage(searchParams.get("page"));
   const pageSize = parsePageSize(searchParams.get("size"));
-  const filters = useMemo(
+  const filtersFromUrl = useMemo(
     () => filtersFromSearchParams(searchParams),
     [searchParams],
+  );
+
+  const [searchInput, setSearchInput] = useState(filtersFromUrl.search);
+  const debouncedSearch = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS);
+  const isInternalSearchUrlUpdate = useRef(false);
+
+  useEffect(() => {
+    if (isInternalSearchUrlUpdate.current) {
+      isInternalSearchUrlUpdate.current = false;
+      return;
+    }
+    setSearchInput(filtersFromUrl.search);
+  }, [filtersFromUrl.search]);
+
+  useEffect(() => {
+    if (debouncedSearch === filtersFromUrl.search) return;
+    isInternalSearchUrlUpdate.current = true;
+    const query = buildPeopleListQuery(1, pageSize, {
+      ...filtersFromUrl,
+      search: debouncedSearch,
+    });
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  }, [
+    debouncedSearch,
+    filtersFromUrl,
+    pageSize,
+    pathname,
+    router,
+  ]);
+
+  const filters = useMemo(
+    () => ({ ...filtersFromUrl, search: debouncedSearch }),
+    [filtersFromUrl, debouncedSearch],
   );
 
   const updateListState = useCallback(
@@ -137,6 +176,7 @@ export function PeopleDirectory() {
   );
 
   const handleFiltersChange = (next: PeopleFilters) => {
+    setSearchInput(next.search);
     updateListState({ filters: next, page: 1 });
   };
 
@@ -228,7 +268,9 @@ export function PeopleDirectory() {
         </CardHeader>
         <CardContent className="space-y-4">
           <PeopleFilterBar
-            filters={filters}
+            filters={{ ...filtersFromUrl, search: searchInput }}
+            search={searchInput}
+            onSearchChange={setSearchInput}
             onFiltersChange={handleFiltersChange}
             resultCount={filteredPeople.length}
           />

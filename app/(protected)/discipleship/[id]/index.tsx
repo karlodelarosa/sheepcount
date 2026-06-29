@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PersonSelect } from "@/components/person-select";
+import { PersonMultiSelect } from "@/components/person-multi-select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
   Card,
@@ -49,6 +50,7 @@ import type {
   DiscipleshipTrackStatus,
 } from "@/lib/supabase/discipleship";
 import { ConfirmDeleteDialog } from "@/app/(protected)/work-ministry/_components/confirm-delete-dialog";
+import { getCurrentMilestone } from "@/app/(protected)/discipleship/_lib/milestone-progress";
 
 const CATEGORIES: DiscipleshipCategory[] = [
   "Foundation",
@@ -77,7 +79,7 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
     isSaving,
     updateTrack,
     removeTrack,
-    enrollPerson,
+    enrollPeople,
     removeEnrollmentById,
     toggleMilestone,
     addMilestone,
@@ -89,7 +91,7 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
   } = useDiscipleship();
 
   const [activeTab, setActiveTab] = useState("overview");
-  const [newPersonId, setNewPersonId] = useState("");
+  const [newPersonIds, setNewPersonIds] = useState<string[]>([]);
   const [newRole, setNewRole] = useState<DiscipleshipRole>("Learner");
   const [newMentorId, setNewMentorId] = useState("");
   const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<string>("");
@@ -121,8 +123,19 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
         person: people.find(p => p.id === enrollment.personId),
         mentor: people.find(p => p.id === enrollment.mentorPersonId),
         progress: getEnrollmentProgress(enrollment.id),
+        currentMilestone: getCurrentMilestone(
+          enrollment.id,
+          trackMilestones,
+          milestoneCompletions,
+        ),
       })),
-    [trackEnrollments, people, getEnrollmentProgress],
+    [
+      trackEnrollments,
+      people,
+      getEnrollmentProgress,
+      trackMilestones,
+      milestoneCompletions,
+    ],
   );
 
   const activeEnrollmentId =
@@ -143,10 +156,21 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
     [people, enrolledPersonIds],
   );
 
-  const mentorCandidates = useMemo(
-    () => people.filter(p => p.id !== newPersonId),
-    [people, newPersonId],
+  const selectedPersonIdSet = useMemo(
+    () => new Set(newPersonIds),
+    [newPersonIds],
   );
+
+  const mentorCandidates = useMemo(
+    () => people.filter(p => !selectedPersonIdSet.has(p.id)),
+    [people, selectedPersonIdSet],
+  );
+
+  useEffect(() => {
+    if (newMentorId && selectedPersonIdSet.has(newMentorId)) {
+      setNewMentorId("");
+    }
+  }, [newMentorId, selectedPersonIdSet]);
 
   const leader = people.find(p => p.id === track?.leaderPersonId);
 
@@ -156,36 +180,33 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
   };
 
   const handleEnroll = async () => {
-    if (!newPersonId) return;
+    if (newPersonIds.length === 0) return;
     if (track?.category === "Mentorship" && newRole === "Learner" && !newMentorId) {
       return;
     }
 
-    const result = await enrollPerson({
+    const results = await enrollPeople(
       trackId,
-      personId: newPersonId,
-      role: newRole,
-      mentorPersonId:
-        newRole === "Learner" && newMentorId ? newMentorId : undefined,
-    });
+      newPersonIds,
+      newRole,
+      newRole === "Learner" && newMentorId ? newMentorId : undefined,
+    );
 
-    if (result) {
-      setNewPersonId("");
+    if (results.length > 0) {
+      setNewPersonIds([]);
       setNewRole("Learner");
       setNewMentorId("");
-      setSelectedEnrollmentId(result.id);
+      setSelectedEnrollmentId(results[0].id);
       setActiveTab("progress");
     }
   };
 
-  const handleToggleMilestone = async (milestoneId: string) => {
-    if (!activeEnrollmentId) return;
-
-    await toggleMilestone(
-      activeEnrollmentId,
-      milestoneId,
-      activeEnrollment?.personId ?? null,
-    );
+  const handleToggleMilestone = async (
+    enrollmentId: string,
+    milestoneId: string,
+    personId: string | null,
+  ) => {
+    await toggleMilestone(enrollmentId, milestoneId, personId);
   };
 
   const handleAddMilestone = async () => {
@@ -330,24 +351,21 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
         <Card className="lg:col-span-1 border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 h-fit">
           <CardHeader>
             <CardTitle className="text-slate-900 dark:text-white">
-              Enroll Participant
+              Enroll Participants
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-zinc-400">
-              Add a learner or guide to this track. Learners can be assigned a
+              Select one or more learners or guides. Learners can share the same
               mentor for 1-on-1 discipleship.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Select Person</Label>
-              <PersonSelect
-                people={availablePeople}
-                value={newPersonId}
-                onValueChange={setNewPersonId}
-                placeholder="Choose a person"
-                triggerClassName={DualModeInputClass}
-              />
-            </div>
+            <PersonMultiSelect
+              people={availablePeople}
+              selectedIds={newPersonIds}
+              onSelectedIdsChange={setNewPersonIds}
+              inputClassName={DualModeInputClass}
+              listClassName="border-slate-200 dark:border-zinc-700"
+            />
             <div className="space-y-2">
               <Label>Role</Label>
               <Select
@@ -381,7 +399,7 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
             <Button
               onClick={() => void handleEnroll()}
               disabled={
-                !newPersonId ||
+                newPersonIds.length === 0 ||
                 isSaving ||
                 (newRole === "Learner" &&
                   track.category === "Mentorship" &&
@@ -389,7 +407,9 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
               }
               className={`w-full ${DualModePrimaryButtonClass}`}
             >
-              Enroll
+              {newPersonIds.length > 1
+                ? `Enroll ${newPersonIds.length} People`
+                : "Enroll"}
             </Button>
           </CardContent>
         </Card>
@@ -416,90 +436,6 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6 mt-0">
-              <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
-                <CardHeader>
-                  <CardTitle className="text-slate-900 dark:text-white">
-                    Enrollments
-                  </CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-zinc-400">
-                    People on this track — click to open their progress
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {enrollmentRows.length === 0 ? (
-                    <p className="text-center text-slate-500 dark:text-zinc-400 py-8">
-                      No enrollments yet. Add a participant to get started.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {enrollmentRows.map(row => (
-                        <div
-                          key={row.id}
-                          className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800/80 cursor-pointer transition-colors"
-                          onClick={() => openProgressForEnrollment(row.id)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-9 h-9 rounded-lg bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center`}
-                            >
-                              <span className="text-white text-sm">
-                                {row.person?.name.charAt(0) ?? "?"}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="text-slate-900 dark:text-white font-medium">
-                                {row.person?.name ?? "Unknown"}
-                              </p>
-                              <p className="text-sm text-slate-500 dark:text-zinc-500">
-                                {row.role}
-                                {row.mentor && ` · Mentor: ${row.mentor.name}`}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="text-right">
-                              {row.status === "completed" ? (
-                                <>
-                                  <Badge className="rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 mb-1">
-                                    <Award className="w-3 h-3 mr-1 inline" />
-                                    Badge earned
-                                  </Badge>
-                                  <p className="text-xs text-slate-500 dark:text-zinc-500">
-                                    {row.completedAt
-                                      ? new Date(row.completedAt).toLocaleDateString()
-                                      : "Completed"}
-                                  </p>
-                                </>
-                              ) : (
-                                <>
-                                  <p className="text-sm text-slate-900 dark:text-white font-medium">
-                                    {row.progress.percent}%
-                                  </p>
-                                  <p className="text-xs text-slate-500 dark:text-zinc-500">
-                                    {row.progress.completed}/{row.progress.total} milestones
-                                  </p>
-                                </>
-                              )}
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-400 hover:text-red-500"
-                              onClick={e => {
-                                e.stopPropagation();
-                                void removeEnrollmentById(row.id);
-                              }}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
               <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
                 <CardHeader>
                   <div className="flex items-center justify-between gap-4">
@@ -558,6 +494,112 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                         </li>
                       ))}
                     </ol>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
+                <CardHeader>
+                  <CardTitle className="text-slate-900 dark:text-white">
+                    Enrollments
+                  </CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-zinc-400">
+                    New participants start on the first milestone — check off
+                    their current step here or click a row for full progress
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {enrollmentRows.length === 0 ? (
+                    <p className="text-center text-slate-500 dark:text-zinc-400 py-8">
+                      No enrollments yet. Add a participant to get started.
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {enrollmentRows.map(row => (
+                        <div
+                          key={row.id}
+                          className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-50 dark:hover:bg-zinc-800/80 cursor-pointer transition-colors"
+                          onClick={() => openProgressForEnrollment(row.id)}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {row.status !== "completed" && row.currentMilestone && (
+                              <Checkbox
+                                checked={false}
+                                disabled={isSaving}
+                                onClick={e => e.stopPropagation()}
+                                onCheckedChange={() =>
+                                  void handleToggleMilestone(
+                                    row.id,
+                                    row.currentMilestone!.id,
+                                    row.personId,
+                                  )
+                                }
+                                className="shrink-0"
+                                aria-label={`Complete ${row.currentMilestone.name} for ${row.person?.name ?? "participant"}`}
+                              />
+                            )}
+                            <div
+                              className={`w-9 h-9 shrink-0 rounded-lg bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center`}
+                            >
+                              <span className="text-white text-sm">
+                                {row.person?.name.charAt(0) ?? "?"}
+                              </span>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-slate-900 dark:text-white font-medium">
+                                {row.person?.name ?? "Unknown"}
+                              </p>
+                              <p className="text-sm text-slate-500 dark:text-zinc-500">
+                                {row.role}
+                                {row.mentor && ` · Mentor: ${row.mentor.name}`}
+                              </p>
+                              {row.status !== "completed" && row.currentMilestone && (
+                                <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5 truncate">
+                                  Current: {row.currentMilestone.name}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <div className="text-right">
+                              {row.status === "completed" ? (
+                                <>
+                                  <Badge className="rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 mb-1">
+                                    <Award className="w-3 h-3 mr-1 inline" />
+                                    Badge earned
+                                  </Badge>
+                                  <p className="text-xs text-slate-500 dark:text-zinc-500">
+                                    {row.completedAt
+                                      ? new Date(row.completedAt).toLocaleDateString()
+                                      : "Completed"}
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-sm text-slate-900 dark:text-white font-medium">
+                                    {row.progress.percent}%
+                                  </p>
+                                  <p className="text-xs text-slate-500 dark:text-zinc-500">
+                                    {row.progress.completed}/{row.progress.total} milestones
+                                  </p>
+                                </>
+                              )}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400 hover:text-red-500"
+                              onClick={e => {
+                                e.stopPropagation();
+                                void removeEnrollmentById(row.id);
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -806,7 +848,11 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                                   checked={isComplete}
                                   disabled={isSaving}
                                   onCheckedChange={() =>
-                                    void handleToggleMilestone(milestone.id)
+                                    void handleToggleMilestone(
+                                      activeEnrollmentId,
+                                      milestone.id,
+                                      activeEnrollment?.personId ?? null,
+                                    )
                                   }
                                   className="mt-0.5"
                                 />

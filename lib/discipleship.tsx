@@ -56,6 +56,12 @@ type DiscipleshipContextValue = {
   ) => Promise<DiscipleshipTrack | null>;
   removeTrack: (trackId: string) => Promise<boolean>;
   enrollPerson: (input: EnrollInTrackInput) => Promise<DiscipleshipEnrollment | null>;
+  enrollPeople: (
+    trackId: string,
+    personIds: string[],
+    role: DiscipleshipRole,
+    mentorPersonId?: string,
+  ) => Promise<DiscipleshipEnrollment[]>;
   removeEnrollmentById: (enrollmentId: string) => Promise<boolean>;
   toggleMilestone: (
     enrollmentId: string,
@@ -229,6 +235,49 @@ export function DiscipleshipProvider({
           description: getErrorMessage(error),
         });
         return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase],
+  );
+
+  const enrollPeople = useCallback(
+    async (
+      trackId: string,
+      personIds: string[],
+      role: DiscipleshipRole,
+      mentorPersonId?: string,
+    ): Promise<DiscipleshipEnrollment[]> => {
+      if (personIds.length === 0) return [];
+
+      setIsSaving(true);
+      try {
+        const enrollments: DiscipleshipEnrollment[] = [];
+
+        for (const personId of personIds) {
+          const enrollment = await enrollInTrack(supabase, {
+            trackId,
+            personId,
+            role,
+            mentorPersonId:
+              role === "Learner" && mentorPersonId ? mentorPersonId : undefined,
+          });
+          enrollments.push(enrollment);
+        }
+
+        await refreshDiscipleship();
+        toast.success(
+          personIds.length === 1
+            ? "Person enrolled in track"
+            : `${personIds.length} people enrolled in track`,
+        );
+        return enrollments;
+      } catch (error) {
+        toast.error("Failed to enroll people", {
+          description: getErrorMessage(error),
+        });
+        return [];
       } finally {
         setIsSaving(false);
       }
@@ -518,6 +567,7 @@ export function DiscipleshipProvider({
         updateTrack,
         removeTrack,
         enrollPerson,
+        enrollPeople,
         removeEnrollmentById,
         toggleMilestone,
         addMilestone,
