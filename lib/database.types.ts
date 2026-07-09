@@ -158,6 +158,90 @@ export type Database = {
         };
         Relationships: [];
       };
+      discipleship_group_meetings: {
+        Row: {
+          created_at: string;
+          group_id: string;
+          id: string;
+          meeting_date: string;
+          notes: string;
+          topic: string;
+        };
+        Insert: {
+          created_at?: string;
+          group_id: string;
+          id?: string;
+          meeting_date?: string;
+          notes?: string;
+          topic: string;
+        };
+        Update: {
+          created_at?: string;
+          group_id?: string;
+          id?: string;
+          meeting_date?: string;
+          notes?: string;
+          topic?: string;
+        };
+        Relationships: [];
+      };
+      discipleship_group_members: {
+        Row: {
+          created_at: string;
+          group_id: string;
+          id: string;
+          joined_date: string;
+          person_id: string;
+          role: string;
+        };
+        Insert: {
+          created_at?: string;
+          group_id: string;
+          id?: string;
+          joined_date?: string;
+          person_id: string;
+          role?: string;
+        };
+        Update: {
+          created_at?: string;
+          group_id?: string;
+          id?: string;
+          joined_date?: string;
+          person_id?: string;
+          role?: string;
+        };
+        Relationships: [];
+      };
+      discipleship_groups: {
+        Row: {
+          created_at: string;
+          description: string;
+          id: string;
+          is_active: boolean;
+          name: string;
+          organization_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          is_active?: boolean;
+          name: string;
+          organization_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string;
+          id?: string;
+          is_active?: boolean;
+          name?: string;
+          organization_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       discipleship_milestone_completions: {
         Row: {
           completed_at: string;

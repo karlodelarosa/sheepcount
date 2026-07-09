@@ -39,6 +39,23 @@ import {
   type DiscipleshipTrackStatus,
   type EnrollInTrackInput,
 } from "@/lib/supabase/discipleship";
+import {
+  addDiscipleshipGroupMember,
+  createDiscipleshipGroup,
+  createDiscipleshipGroupMeeting,
+  deleteDiscipleshipGroup,
+  deleteDiscipleshipGroupMeeting,
+  fetchDiscipleshipGroupMeetings,
+  fetchDiscipleshipGroupMembers,
+  fetchDiscipleshipGroups,
+  removeDiscipleshipGroupMember,
+  type AddDiscipleshipGroupMemberInput,
+  type CreateDiscipleshipGroupInput,
+  type CreateDiscipleshipGroupMeetingInput,
+  type DiscipleshipGroup,
+  type DiscipleshipGroupMeeting,
+  type DiscipleshipGroupMember,
+} from "@/lib/supabase/discipleship-groups";
 
 export type PersonDiscipleshipRole = "Learner" | "Guide" | "Both" | null;
 
@@ -80,6 +97,21 @@ type DiscipleshipContextValue = {
   };
   getPersonDiscipleshipRoles: (personId: string) => PersonDiscipleshipRole;
   getPersonBadges: (personId: string) => DiscipleshipBadge[];
+  groups: DiscipleshipGroup[];
+  groupMembers: DiscipleshipGroupMember[];
+  groupMeetings: DiscipleshipGroupMeeting[];
+  addGroup: (input: CreateDiscipleshipGroupInput) => Promise<DiscipleshipGroup | null>;
+  removeGroup: (groupId: string) => Promise<boolean>;
+  addGroupMember: (
+    input: AddDiscipleshipGroupMemberInput,
+  ) => Promise<DiscipleshipGroupMember | null>;
+  removeGroupMemberById: (membershipId: string) => Promise<boolean>;
+  addGroupMeeting: (
+    input: CreateDiscipleshipGroupMeetingInput,
+  ) => Promise<DiscipleshipGroupMeeting | null>;
+  removeGroupMeetingById: (meetingId: string) => Promise<boolean>;
+  getGroupMembers: (groupId: string) => DiscipleshipGroupMember[];
+  getGroupMeetings: (groupId: string) => DiscipleshipGroupMeeting[];
 };
 
 const DiscipleshipContext = createContext<DiscipleshipContextValue | null>(null);
@@ -107,6 +139,9 @@ export function DiscipleshipProvider({
   const [milestoneCompletions, setMilestoneCompletions] = useState<
     DiscipleshipMilestoneCompletion[]
   >([]);
+  const [groups, setGroups] = useState<DiscipleshipGroup[]>([]);
+  const [groupMembers, setGroupMembers] = useState<DiscipleshipGroupMember[]>([]);
+  const [groupMeetings, setGroupMeetings] = useState<DiscipleshipGroupMeeting[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -116,23 +151,39 @@ export function DiscipleshipProvider({
       setEnrollments([]);
       setMilestones([]);
       setMilestoneCompletions([]);
+      setGroups([]);
+      setGroupMembers([]);
+      setGroupMeetings([]);
       setHydrated(!tenantLoading);
       return;
     }
 
     try {
-      const [trackData, enrollmentData, milestoneData, completionData] =
-        await Promise.all([
-          fetchDiscipleshipTracks(supabase, organizationId),
-          fetchDiscipleshipEnrollments(supabase, organizationId),
-          fetchDiscipleshipMilestones(supabase, organizationId),
-          fetchDiscipleshipMilestoneCompletions(supabase, organizationId),
-        ]);
+      const [
+        trackData,
+        enrollmentData,
+        milestoneData,
+        completionData,
+        groupData,
+        groupMemberData,
+        groupMeetingData,
+      ] = await Promise.all([
+        fetchDiscipleshipTracks(supabase, organizationId),
+        fetchDiscipleshipEnrollments(supabase, organizationId),
+        fetchDiscipleshipMilestones(supabase, organizationId),
+        fetchDiscipleshipMilestoneCompletions(supabase, organizationId),
+        fetchDiscipleshipGroups(supabase, organizationId),
+        fetchDiscipleshipGroupMembers(supabase, organizationId),
+        fetchDiscipleshipGroupMeetings(supabase, organizationId),
+      ]);
 
       setTracks(trackData);
       setEnrollments(enrollmentData);
       setMilestones(milestoneData);
       setMilestoneCompletions(completionData);
+      setGroups(groupData);
+      setGroupMembers(groupMemberData);
+      setGroupMeetings(groupMeetingData);
     } catch (error) {
       toast.error("Failed to load discipleship data", {
         description: getErrorMessage(error),
@@ -553,6 +604,153 @@ export function DiscipleshipProvider({
     [enrollments, tracks],
   );
 
+  const addGroup = useCallback(
+    async (input: CreateDiscipleshipGroupInput): Promise<DiscipleshipGroup | null> => {
+      if (!organizationId) {
+        toast.error("No organization found");
+        return null;
+      }
+
+      setIsSaving(true);
+      try {
+        const group = await createDiscipleshipGroup(supabase, organizationId, input);
+        await refreshDiscipleship();
+        toast.success("Group created", {
+          description: `${group.name} was added.`,
+        });
+        return group;
+      } catch (error) {
+        toast.error("Failed to create group", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshDiscipleship, supabase],
+  );
+
+  const removeGroup = useCallback(
+    async (groupId: string): Promise<boolean> => {
+      setIsSaving(true);
+      try {
+        await deleteDiscipleshipGroup(supabase, groupId);
+        await refreshDiscipleship();
+        toast.success("Group removed");
+        return true;
+      } catch (error) {
+        toast.error("Failed to remove group", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase],
+  );
+
+  const addGroupMember = useCallback(
+    async (
+      input: AddDiscipleshipGroupMemberInput,
+    ): Promise<DiscipleshipGroupMember | null> => {
+      setIsSaving(true);
+      try {
+        const member = await addDiscipleshipGroupMember(supabase, input);
+        await refreshDiscipleship();
+        toast.success("Person added to group");
+        return member;
+      } catch (error) {
+        toast.error("Failed to add person to group", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase],
+  );
+
+  const removeGroupMemberById = useCallback(
+    async (membershipId: string): Promise<boolean> => {
+      setIsSaving(true);
+      try {
+        await removeDiscipleshipGroupMember(supabase, membershipId);
+        await refreshDiscipleship();
+        toast.success("Person removed from group");
+        return true;
+      } catch (error) {
+        toast.error("Failed to remove person from group", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase],
+  );
+
+  const addGroupMeeting = useCallback(
+    async (
+      input: CreateDiscipleshipGroupMeetingInput,
+    ): Promise<DiscipleshipGroupMeeting | null> => {
+      setIsSaving(true);
+      try {
+        const meeting = await createDiscipleshipGroupMeeting(supabase, input);
+        await refreshDiscipleship();
+        toast.success("Meeting logged");
+        return meeting;
+      } catch (error) {
+        toast.error("Failed to log meeting", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase],
+  );
+
+  const removeGroupMeetingById = useCallback(
+    async (meetingId: string): Promise<boolean> => {
+      setIsSaving(true);
+      try {
+        await deleteDiscipleshipGroupMeeting(supabase, meetingId);
+        await refreshDiscipleship();
+        toast.success("Meeting removed");
+        return true;
+      } catch (error) {
+        toast.error("Failed to remove meeting", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase],
+  );
+
+  const getGroupMembers = useCallback(
+    (groupId: string) => groupMembers.filter(m => m.groupId === groupId),
+    [groupMembers],
+  );
+
+  const getGroupMeetings = useCallback(
+    (groupId: string) =>
+      groupMeetings
+        .filter(m => m.groupId === groupId)
+        .sort(
+          (a, b) =>
+            new Date(b.meetingDate).getTime() - new Date(a.meetingDate).getTime(),
+        ),
+    [groupMeetings],
+  );
+
   return (
     <DiscipleshipContext.Provider
       value={{
@@ -578,6 +776,17 @@ export function DiscipleshipProvider({
         getEnrollmentProgress,
         getPersonDiscipleshipRoles,
         getPersonBadges,
+        groups,
+        groupMembers,
+        groupMeetings,
+        addGroup,
+        removeGroup,
+        addGroupMember,
+        removeGroupMemberById,
+        addGroupMeeting,
+        removeGroupMeetingById,
+        getGroupMembers,
+        getGroupMeetings,
       }}
     >
       {children}
@@ -596,3 +805,4 @@ export function useDiscipleship() {
 }
 
 export type { DiscipleshipRole, DiscipleshipTrack, DiscipleshipEnrollment, DiscipleshipBadge, DiscipleshipTrackStatus };
+export type { DiscipleshipGroup, DiscipleshipGroupMember, DiscipleshipGroupMeeting, DiscipleshipGroupRole } from "@/lib/supabase/discipleship-groups";
