@@ -129,6 +129,39 @@
   100% { background-position: 0% 50%; }
 }
 
+/* ---------------- Login (landing theme) ---------------- */
+/* Soft periwinkle gradient matching the marketing landing page */
+.login-bg {
+  background:
+    radial-gradient(60% 55% at 12% 12%, rgba(255, 255, 255, 0.28), transparent 60%),
+    radial-gradient(55% 55% at 92% 18%, rgba(183, 180, 244, 0.65), transparent 60%),
+    linear-gradient(135deg, #8b87e6 0%, #a5a2ee 55%, #b8b5f2 100%);
+}
+
+/* Gentle float for decorative blobs */
+@keyframes loginFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+.login-float-slow {
+  animation: loginFloat 8s ease-in-out infinite;
+}
+.login-float-slower {
+  animation: loginFloat 12s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-float-slow,
+  .login-float-slower {
+    animation: none !important;
+  }
+}
+
 /* ---------------- Optional: @custom-variant for Dark ---------------- */
 @custom-variant dark (&:is(.dark *));
 
