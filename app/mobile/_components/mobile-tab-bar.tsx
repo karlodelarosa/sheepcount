@@ -2,13 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SquarePen, ClipboardList, House } from "lucide-react";
+import { SquarePen, ClipboardList, House, HeartHandshake } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
   // Hard navigation: /mobile/desktop is a route handler that sets the
   // desktop opt-out cookie and redirects into the full desktop app.
   { href: "/mobile/desktop", label: "Home", icon: House, hard: true },
+  {
+    href: "/mobile/shepherding",
+    label: "Shepherd",
+    icon: HeartHandshake,
+    hard: false,
+  },
   { href: "/mobile", label: "Record", icon: SquarePen, hard: false },
   { href: "/mobile/browse", label: "Browse", icon: ClipboardList, hard: false },
 ] as const;

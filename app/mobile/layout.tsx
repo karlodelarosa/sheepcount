@@ -4,6 +4,8 @@ import { PeopleProvider } from "@/lib/people";
 import { ServiceAttendanceProvider } from "@/lib/service-attendance";
 import { EventsProvider } from "@/lib/events";
 import { GroupsMinistryProvider } from "@/lib/groups-ministry";
+import { DiscipleshipProvider } from "@/lib/discipleship";
+import { GrowthTrackProvider } from "@/lib/growth-track";
 
 /**
  * Phone-first shell for staff attendance capture.
@@ -23,13 +25,17 @@ export default function MobileLayout({
       <PeopleProvider>
         <ServiceAttendanceProvider>
           <GroupsMinistryProvider>
-            <EventsProvider>
-              <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
-                <div className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background shadow-sm">
-                  {children}
-                </div>
-              </div>
-            </EventsProvider>
+            <DiscipleshipProvider>
+              <GrowthTrackProvider>
+                <EventsProvider>
+                  <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+                    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background shadow-sm">
+                      {children}
+                    </div>
+                  </div>
+                </EventsProvider>
+              </GrowthTrackProvider>
+            </DiscipleshipProvider>
           </GroupsMinistryProvider>
         </ServiceAttendanceProvider>
       </PeopleProvider>

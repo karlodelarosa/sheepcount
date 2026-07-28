@@ -7,11 +7,15 @@ import { useTheme } from "@/context/theme-context";
 import { usePeople } from "@/lib/people";
 import { useGrowthTrack } from "@/lib/growth-track";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
-import { useOrganizationSettings } from "@/lib/organization-settings";
-import { useEntitlements } from "@/lib/subscription/use-entitlements";
-import { isMenuItemShownInNavigation } from "@/lib/navigation-visibility";
-import type { ModuleItemKey } from "@/lib/subscription/plans";
+import { useServiceAttendance } from "@/lib/service-attendance";
 import { GROWTH_TRACK_STAGES } from "@/lib/growth-track/stage-config";
+import { buildShepherdWorklist } from "@/lib/shepherding";
+import { ActionCenter } from "./_components/action-center";
+import {
+  getUnassignedNewMembers,
+  getUnrecordedSunday,
+  getUpcomingBirthdays,
+} from "./_lib/dashboard-actions";
 import {
   Card,
   CardContent,
@@ -28,10 +32,7 @@ import {
   UserPlus,
   ClipboardList,
   TrendingUp,
-  DollarSign,
-  UserCircle,
   Award,
-  Settings,
   ArrowRight,
   CalendarDays,
   GitBranch,
@@ -46,98 +47,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const shortcuts: Array<{
-  href: string;
-  label: string;
-  icon: typeof Users;
-  description: string;
-  color: string;
-  iconBg: string;
-  moduleKey?: ModuleItemKey;
-  disabled?: boolean;
-}> = [
-  {
-    href: "/people",
-    label: "People",
-    icon: Users,
-    description: "Directory",
-    moduleKey: "people",
-    color: "border-blue-200/80 bg-blue-50/80 hover:bg-blue-100/80 text-blue-700 dark:border-blue-800/60 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 dark:text-blue-300",
-    iconBg: "bg-blue-500 text-white dark:bg-blue-600",
-  },
-  {
-    href: "/service-attendance",
-    label: "Service",
-    icon: Church,
-    description: "Sunday worship",
-    moduleKey: "service_attendance",
-    color: "border-violet-200/80 bg-violet-50/80 hover:bg-violet-100/80 text-violet-700 dark:border-violet-800/60 dark:bg-violet-950/40 dark:hover:bg-violet-900/50 dark:text-violet-300",
-    iconBg: "bg-violet-500 text-white dark:bg-violet-600",
-  },
-  {
-    href: "/event-attendance",
-    label: "Events",
-    icon: CalendarDays,
-    description: "Camps & retreats",
-    moduleKey: "event_attendance",
-    color: "border-orange-200/80 bg-orange-50/80 hover:bg-orange-100/80 text-orange-700 dark:border-orange-800/60 dark:bg-orange-950/40 dark:hover:bg-orange-900/50 dark:text-orange-300",
-    iconBg: "bg-orange-500 text-white dark:bg-orange-600",
-  },
-  {
-    href: "/households",
-    label: "Households",
-    icon: Home,
-    description: "Families",
-    moduleKey: "households",
-    color: "border-emerald-200/80 bg-emerald-50/80 hover:bg-emerald-100/80 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 dark:text-emerald-300",
-    iconBg: "bg-emerald-500 text-white dark:bg-emerald-600",
-  },
-  {
-    href: "/life-groups",
-    label: "Life Groups",
-    icon: UserCircle,
-    description: "Groups",
-    moduleKey: "life_groups",
-    color: "border-cyan-200/80 bg-cyan-50/80 hover:bg-cyan-100/80 text-cyan-700 dark:border-cyan-800/60 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/50 dark:text-cyan-300",
-    iconBg: "bg-cyan-500 text-white dark:bg-cyan-600",
-  },
-  {
-    href: "/work-ministry",
-    label: "Work Ministry",
-    icon: Award,
-    description: "Teams",
-    moduleKey: "work_ministry",
-    color: "border-purple-200/80 bg-purple-50/80 hover:bg-purple-100/80 text-purple-700 dark:border-purple-800/60 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 dark:text-purple-300",
-    iconBg: "bg-purple-500 text-white dark:bg-purple-600",
-  },
-  {
-    href: "/growth-track",
-    label: "Growth Track",
-    icon: TrendingUp,
-    description: "Pipeline",
-    moduleKey: "growth_track",
-    color: "border-rose-200/80 bg-rose-50/80 hover:bg-rose-100/80 text-rose-700 dark:border-rose-800/60 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 dark:text-rose-300",
-    iconBg: "bg-rose-500 text-white dark:bg-rose-600",
-  },
-  {
-    href: "/financial",
-    label: "Financial",
-    icon: DollarSign,
-    description: "Tithes & offerings",
-    moduleKey: "financial",
-    color: "border-amber-200/80 bg-amber-50/80 hover:bg-amber-100/80 text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 dark:text-amber-300",
-    iconBg: "bg-amber-500 text-white dark:bg-amber-600",
-  },
-  {
-    href: "/settings",
-    label: "Settings",
-    icon: Settings,
-    description: "Org setup",
-    color: "border-slate-200/80 bg-slate-50/80 hover:bg-slate-100/80 text-slate-700 dark:border-slate-700/60 dark:bg-slate-900/40 dark:hover:bg-slate-800/50 dark:text-slate-300",
-    iconBg: "bg-slate-600 text-white dark:bg-slate-500",
-  },
-];
 
 const kpiColors = [
   {
@@ -198,28 +107,81 @@ const avatarGradients = [
 export default function DashboardPage() {
   const { tenant } = useTenant();
   const { settings } = useTheme();
-  const { settings: orgSettings } = useOrganizationSettings();
-  const { entitlements } = useEntitlements();
   const { people, households, hydrated: peopleHydrated } = usePeople();
-  const { overview, hydrated: growthHydrated } = useGrowthTrack();
-  const { lifeGroups, lifeGroupMembers, hydrated: groupsHydrated } =
-    useGroupsMinistry();
+  const {
+    overview,
+    growthPeople,
+    activities,
+    hydrated: growthHydrated,
+  } = useGrowthTrack();
+  const {
+    lifeGroups,
+    lifeGroupMembers,
+    hydrated: groupsHydrated,
+  } = useGroupsMinistry();
+  const { attendanceRows, hydrated: attendanceHydrated } =
+    useServiceAttendance();
 
-  const loading = !peopleHydrated || !growthHydrated || !groupsHydrated;
+  const loading =
+    !peopleHydrated ||
+    !growthHydrated ||
+    !groupsHydrated ||
+    !attendanceHydrated;
 
-  const visibleShortcuts = useMemo(() => {
-    return shortcuts.filter(item => {
-      if (!item.moduleKey) {
-        return true;
-      }
-
-      return isMenuItemShownInNavigation(
-        item.moduleKey,
-        orgSettings,
-        entitlements.modules,
-      );
+  const actions = useMemo(() => {
+    const worklist = buildShepherdWorklist({
+      people,
+      attendanceRows,
+      growthPeople,
+      activities,
     });
-  }, [entitlements.modules, orgSettings]);
+
+    const shepherd = worklist.filter(
+      item =>
+        item.status.level === "needs_visit" || item.status.level === "check_in",
+    );
+    const assimilateContacts = worklist.filter(
+      item => item.status.level === "needs_contact",
+    );
+    const followUps = worklist.filter(
+      item => item.status.level === "needs_follow_up",
+    );
+
+    const unassignedNewMembers = getUnassignedNewMembers(
+      people,
+      lifeGroupMembers,
+    );
+
+    const latestSunday = overview.sundayTrend.at(-1)?.rawDate ?? null;
+    const unrecordedSundayISO = getUnrecordedSunday(latestSunday);
+    const unrecordedSundayLabel = unrecordedSundayISO
+      ? new Date(`${unrecordedSundayISO}T00:00:00`).toLocaleDateString(
+          "en-US",
+          {
+            month: "short",
+            day: "numeric",
+          },
+        )
+      : null;
+
+    const upcomingBirthdays = getUpcomingBirthdays(people);
+
+    return {
+      shepherd,
+      assimilateContacts,
+      followUps,
+      unassignedNewMembers,
+      unrecordedSundayLabel,
+      upcomingBirthdays,
+    };
+  }, [
+    people,
+    attendanceRows,
+    growthPeople,
+    activities,
+    lifeGroupMembers,
+    overview,
+  ]);
 
   const stats = useMemo(() => {
     const activeMembers = people.filter(p => p.status === "Active").length;
@@ -287,46 +249,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      {/* Shortcut buttons */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-2">
-        {visibleShortcuts.map(item =>
-          item.disabled ? (
-            <Button
-              key={item.href}
-              variant="outline"
-              size="sm"
-              disabled
-              className={`h-auto flex-col gap-1.5 py-2.5 px-2 rounded-xl border transition-colors ${item.color}`}
-            >
-              <span
-                className={`flex items-center justify-center w-7 h-7 rounded-lg ${item.iconBg}`}
-              >
-                <item.icon className="w-3.5 h-3.5" />
-              </span>
-              <span className="text-xs font-medium">{item.label}</span>
-              <span className="text-[10px] opacity-70">{item.description}</span>
-            </Button>
-          ) : (
-            <Button
-              key={item.href}
-              variant="outline"
-              size="sm"
-              className={`h-auto flex-col gap-1.5 py-2.5 px-2 rounded-xl border transition-colors ${item.color}`}
-              asChild
-            >
-              <Link href={item.href}>
-                <span
-                  className={`flex items-center justify-center w-7 h-7 rounded-lg ${item.iconBg}`}
-                >
-                  <item.icon className="w-3.5 h-3.5" />
-                </span>
-                <span className="text-xs font-medium">{item.label}</span>
-                <span className="text-[10px] opacity-70">{item.description}</span>
-              </Link>
-            </Button>
-          ),
-        )}
-      </div>
+      {/* Action center — what needs doing, before the data */}
+      <ActionCenter
+        shepherd={actions.shepherd}
+        assimilateContacts={actions.assimilateContacts}
+        unassignedNewMembers={actions.unassignedNewMembers}
+        followUps={actions.followUps}
+        unrecordedSundayLabel={actions.unrecordedSundayLabel}
+        upcomingBirthdays={actions.upcomingBirthdays}
+      />
 
       {/* KPI row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -386,7 +317,12 @@ export default function DashboardPage() {
                     : "No records yet"}
                 </CardDescription>
               </div>
-              <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                asChild
+              >
                 <Link href="/service-attendance">
                   <ClipboardList className="w-3 h-3 mr-1" />
                   Record
@@ -496,7 +432,12 @@ export default function DashboardPage() {
                   Newest in the directory
                 </CardDescription>
               </div>
-              <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                asChild
+              >
                 <Link href="/people">
                   <UserPlus className="w-3 h-3 mr-1" />
                   Add
@@ -523,9 +464,7 @@ export default function DashboardPage() {
                     <p className="font-medium truncate">{person.name}</p>
                     <p className="text-muted-foreground truncate">
                       {person.membershipType}
-                      {person.householdName
-                        ? ` · ${person.householdName}`
-                        : ""}
+                      {person.householdName ? ` · ${person.householdName}` : ""}
                     </p>
                   </div>
                   <span className="text-muted-foreground shrink-0">
@@ -622,7 +561,9 @@ export default function DashboardPage() {
           <span>
             Plan:{" "}
             <span className="text-violet-700 dark:text-violet-300 font-medium capitalize">
-              {(tenant?.subscription?.plan ?? "basic").replace(/^./, c => c.toUpperCase())}
+              {(tenant?.subscription?.plan ?? "basic").replace(/^./, c =>
+                c.toUpperCase(),
+              )}
             </span>
           </span>
           <span className="text-border">·</span>
