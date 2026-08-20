@@ -15,30 +15,23 @@ import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { CertificateOrientation } from "@/components/certificates/certificate";
 import {
-  BaptismCertificateWithTheme,
-  downloadBaptismCertificateImage,
-  openBaptismCertificatePrint,
-  type BaptismCertificateData,
-} from "./baptism-certificate";
+  DedicationCertificateWithTheme,
+  downloadDedicationCertificateImage,
+  openDedicationCertificatePrint,
+  type DedicationCertificateData,
+} from "./dedication-certificate";
 
-type BaptismCertificateDialogProps = {
+type DedicationCertificateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  certificateData: BaptismCertificateData | null;
-  preview: {
-    personName: string;
-    baptizedAt: string;
-    location?: string;
-    officiantName?: string | null;
-  } | null;
+  certificateData: DedicationCertificateData | null;
 };
 
-export function BaptismCertificateDialog({
+export function DedicationCertificateDialog({
   open,
   onOpenChange,
   certificateData,
-  preview,
-}: BaptismCertificateDialogProps) {
+}: DedicationCertificateDialogProps) {
   const certificateRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [orientation, setOrientation] =
@@ -46,7 +39,7 @@ export function BaptismCertificateDialog({
 
   const handlePrint = () => {
     if (!certificateData) return;
-    openBaptismCertificatePrint({ ...certificateData, orientation });
+    openDedicationCertificatePrint({ ...certificateData, orientation });
   };
 
   const handleDownload = async () => {
@@ -54,7 +47,7 @@ export function BaptismCertificateDialog({
 
     setIsDownloading(true);
     try {
-      await downloadBaptismCertificateImage(certificateRef.current, {
+      await downloadDedicationCertificateImage(certificateRef.current, {
         ...certificateData,
         orientation,
       });
@@ -69,7 +62,7 @@ export function BaptismCertificateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Baptism certificate</DialogTitle>
+          <DialogTitle>Dedication certificate</DialogTitle>
         </DialogHeader>
 
         <div className="flex items-center justify-between gap-3">
@@ -90,13 +83,15 @@ export function BaptismCertificateDialog({
           </ToggleGroup>
         </div>
 
-        {preview && (
+        {certificateData && (
           <div ref={certificateRef}>
-            <BaptismCertificateWithTheme
-              personName={preview.personName}
-              baptizedAt={preview.baptizedAt}
-              location={preview.location}
-              officiantName={preview.officiantName}
+            <DedicationCertificateWithTheme
+              childName={certificateData.childName}
+              dedicatedAt={certificateData.dedicatedAt}
+              location={certificateData.location}
+              officiantName={certificateData.officiantName}
+              parentNames={certificateData.parentNames}
+              sponsors={certificateData.sponsors}
               orientation={orientation}
             />
           </div>

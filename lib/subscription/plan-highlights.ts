@@ -18,6 +18,8 @@ const PLAN_GROUP_LABELS: Record<ModuleGroupKey, string> = {
 
 const PLAN_ITEM_LABELS: Partial<Record<ModuleItemKey, string>> = {
   water_baptism: "Water Baptism",
+  weddings: "Weddings",
+  dedications: "Child Dedication",
   growth_track: "Growth Track",
   properties: "Properties",
   financial: "Financial",

@@ -19,17 +19,36 @@ function isPublicPath(pathname: string) {
   );
 }
 
+// Headers Next.js itself attaches to its internal App Router traffic (RSC data
+// fetches, <Link> prefetches, Server Actions) — never present on a real
+// top-level navigation. Framework-guaranteed, unlike Sec-Fetch-Dest: Safari
+// has historically not sent that header on all navigation types (notably
+// window.location.replace()), which silently broke this check on iPhone.
+const NEXT_INTERNAL_REQUEST_HEADERS = [
+  "rsc",
+  "next-router-prefetch",
+  "next-router-state-tree",
+  "next-action",
+];
+
+function isNextInternalRequest(request: NextRequest): boolean {
+  return NEXT_INTERNAL_REQUEST_HEADERS.some(header =>
+    request.headers.has(header),
+  );
+}
+
 /**
  * Whether an authenticated phone request should be sent to the /mobile app.
- * Only top-level document navigations are redirected (never API/fetch/asset
- * requests), and a `viewMode=desktop` cookie — set by /mobile/desktop — opts a
- * user out so they can use the full desktop app on their phone.
+ * Only top-level document navigations are redirected (never Next.js's own
+ * RSC/prefetch/action traffic), and a `viewMode=desktop` cookie — set by
+ * /mobile/desktop — opts a user out so they can use the full desktop app on
+ * their phone.
  */
 function shouldRedirectToMobile(
   request: NextRequest,
   pathname: string,
 ): boolean {
-  if (request.headers.get("sec-fetch-dest") !== "document") return false;
+  if (isNextInternalRequest(request)) return false;
   if (request.cookies.get("viewMode")?.value === "desktop") return false;
   if (pathname.startsWith("/mobile")) return false;
   if (isPublicPath(pathname)) return false;

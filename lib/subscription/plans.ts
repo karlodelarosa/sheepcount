@@ -5,6 +5,8 @@ import {
   Home,
   UserCog,
   Droplets,
+  Heart,
+  Baby,
   UserCircle,
   HeartHandshake,
   Award,
@@ -40,6 +42,8 @@ export type ModuleItemKey =
   | "workers"
   | "households"
   | "water_baptism"
+  | "weddings"
+  | "dedications"
   | "life_groups"
   | "cell_groups"
   | "work_ministry"
@@ -76,6 +80,8 @@ export type ViewRoute =
   | "event-attendance"
   | "growth-track"
   | "water-baptism"
+  | "weddings"
+  | "dedications"
   | "bible-study"
   | "church-goals";
 
@@ -133,29 +139,33 @@ export function getPlanTier(
   return PLAN_TIER_ORDER[normalizePlanKey(planKey)] ?? 0;
 }
 
-export const MODULE_ITEM_TO_GROUP: Record<ModuleItemKey, ModuleGroupKey | null> =
-  {
-    dashboard: "dashboard",
-    people: "people_membership",
-    workers: "people_membership",
-    households: "people_membership",
-    water_baptism: "people_membership",
-    life_groups: "groups_ministry",
-    cell_groups: "groups_ministry",
-    work_ministry: "groups_ministry",
-    service_attendance: "attendance",
-    event_attendance: "attendance",
-    training: "development",
-    discipleship: "development",
-    bible_study: "development",
-    programs: "development",
-    leadership: "leadership",
-    growth_track: "growth_track",
-    properties: "operations",
-    financial: "finance_projects",
-    goal_projects: "finance_projects",
-    church_goals: "ministry_planning",
-  };
+export const MODULE_ITEM_TO_GROUP: Record<
+  ModuleItemKey,
+  ModuleGroupKey | null
+> = {
+  dashboard: "dashboard",
+  people: "people_membership",
+  workers: "people_membership",
+  households: "people_membership",
+  water_baptism: "people_membership",
+  weddings: "people_membership",
+  dedications: "people_membership",
+  life_groups: "groups_ministry",
+  cell_groups: "groups_ministry",
+  work_ministry: "groups_ministry",
+  service_attendance: "attendance",
+  event_attendance: "attendance",
+  training: "development",
+  discipleship: "development",
+  bible_study: "development",
+  programs: "development",
+  leadership: "leadership",
+  growth_track: "growth_track",
+  properties: "operations",
+  financial: "finance_projects",
+  goal_projects: "finance_projects",
+  church_goals: "ministry_planning",
+};
 
 export const MODULE_ITEM_TO_ROUTE: Record<ModuleItemKey, ViewRoute> = {
   dashboard: "dashboard",
@@ -163,6 +173,8 @@ export const MODULE_ITEM_TO_ROUTE: Record<ModuleItemKey, ViewRoute> = {
   workers: "workers",
   households: "households",
   water_baptism: "water-baptism",
+  weddings: "weddings",
+  dedications: "dedications",
   life_groups: "life-groups",
   cell_groups: "cell-groups",
   work_ministry: "work-ministry",
@@ -203,12 +215,29 @@ export const SIDEBAR_MENU_REGISTRY: SidebarMenuGroupDef[] = [
     items: [
       { key: "people", title: "People", icon: Users, route: "people" },
       { key: "workers", title: "Workers", icon: UserCog, route: "workers" },
-      { key: "households", title: "Households", icon: Home, route: "households" },
+      {
+        key: "households",
+        title: "Households",
+        icon: Home,
+        route: "households",
+      },
       {
         key: "water_baptism",
         title: "Water Baptism",
         icon: Droplets,
         route: "water-baptism",
+      },
+      {
+        key: "weddings",
+        title: "Weddings",
+        icon: Heart,
+        route: "weddings",
+      },
+      {
+        key: "dedications",
+        title: "Child Dedication",
+        icon: Baby,
+        route: "dedications",
       },
     ],
   },
