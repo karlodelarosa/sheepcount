@@ -29,7 +29,7 @@ export function MobileTabBar() {
 
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center">
-      <div className="pointer-events-auto flex w-full max-w-md items-stretch justify-around border-t bg-background px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+      <div className="pointer-events-auto flex w-full max-w-md items-stretch justify-around border-t bg-card px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
         {TABS.map(tab => {
           const active =
             !tab.hard &&

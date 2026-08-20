@@ -22,7 +22,7 @@ export function MobileActionBar({
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center">
       <div
         className={cn(
-          "pointer-events-auto w-full max-w-md border-t bg-background/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur supports-[backdrop-filter]:bg-background/85",
+          "pointer-events-auto w-full max-w-md border-t bg-card/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur supports-[backdrop-filter]:bg-card/85",
           className,
         )}
       >

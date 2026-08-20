@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { Church, CalendarDays, UsersRound, ChevronRight } from "lucide-react";
+import {
+  BookOpen,
+  Church,
+  CalendarDays,
+  UsersRound,
+  ChevronRight,
+} from "lucide-react";
 import { MobileTabBar } from "./_components/mobile-tab-bar";
 import { MobileTopBar } from "./_components/mobile-top-bar";
 
@@ -17,6 +23,13 @@ const FLOWS = [
     description: "Record a group meeting",
     icon: UsersRound,
     accent: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  },
+  {
+    href: "/mobile/discipleship",
+    title: "Discipleship",
+    description: "Log a meeting or prayer request",
+    icon: BookOpen,
+    accent: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
   },
   {
     href: "/mobile/event",

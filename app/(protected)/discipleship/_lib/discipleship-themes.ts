@@ -1,4 +1,9 @@
-export type DiscipleshipAccent = "blue" | "green" | "purple" | "pink" | "indigo";
+export type DiscipleshipAccent =
+  | "blue"
+  | "green"
+  | "purple"
+  | "pink"
+  | "indigo";
 
 export const DISCIPLESHIP_ACCENTS: DiscipleshipAccent[] = [
   "blue",
@@ -104,3 +109,66 @@ export const discipleshipStatAccentThemes: Record<
 export function accentForIndex(index: number): DiscipleshipAccent {
   return DISCIPLESHIP_ACCENTS[index % DISCIPLESHIP_ACCENTS.length];
 }
+
+/**
+ * Flat (non-gradient) accent tokens for surfaces that don't use the hero
+ * gradient treatment above — e.g. mobile list rows, tab indicators, and
+ * icon badges. Keyed by the same DiscipleshipAccent so a group's color
+ * identity stays consistent between desktop and mobile.
+ */
+export const discipleshipFlatAccentThemes: Record<
+  DiscipleshipAccent,
+  {
+    solid: string;
+    soft: string;
+    text: string;
+    border: string;
+    tabActive: string;
+  }
+> = {
+  blue: {
+    solid:
+      "bg-blue-600 text-white hover:bg-blue-600/90 dark:bg-blue-500 dark:hover:bg-blue-500/90",
+    soft: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    text: "text-blue-600 dark:text-blue-400",
+    border: "border-blue-200/70 dark:border-blue-800/50",
+    tabActive:
+      "data-[state=active]:bg-blue-600 data-[state=active]:text-white dark:data-[state=active]:bg-blue-500",
+  },
+  green: {
+    solid:
+      "bg-emerald-600 text-white hover:bg-emerald-600/90 dark:bg-emerald-500 dark:hover:bg-emerald-500/90",
+    soft: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    text: "text-emerald-600 dark:text-emerald-400",
+    border: "border-emerald-200/70 dark:border-emerald-800/50",
+    tabActive:
+      "data-[state=active]:bg-emerald-600 data-[state=active]:text-white dark:data-[state=active]:bg-emerald-500",
+  },
+  purple: {
+    solid:
+      "bg-violet-600 text-white hover:bg-violet-600/90 dark:bg-violet-500 dark:hover:bg-violet-500/90",
+    soft: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+    text: "text-violet-600 dark:text-violet-400",
+    border: "border-violet-200/70 dark:border-violet-800/50",
+    tabActive:
+      "data-[state=active]:bg-violet-600 data-[state=active]:text-white dark:data-[state=active]:bg-violet-500",
+  },
+  pink: {
+    solid:
+      "bg-rose-600 text-white hover:bg-rose-600/90 dark:bg-rose-500 dark:hover:bg-rose-500/90",
+    soft: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+    text: "text-rose-600 dark:text-rose-400",
+    border: "border-rose-200/70 dark:border-rose-800/50",
+    tabActive:
+      "data-[state=active]:bg-rose-600 data-[state=active]:text-white dark:data-[state=active]:bg-rose-500",
+  },
+  indigo: {
+    solid:
+      "bg-indigo-600 text-white hover:bg-indigo-600/90 dark:bg-indigo-500 dark:hover:bg-indigo-500/90",
+    soft: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+    text: "text-indigo-600 dark:text-indigo-400",
+    border: "border-indigo-200/70 dark:border-indigo-800/50",
+    tabActive:
+      "data-[state=active]:bg-indigo-600 data-[state=active]:text-white dark:data-[state=active]:bg-indigo-500",
+  },
+};

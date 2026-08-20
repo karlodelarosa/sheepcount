@@ -3,11 +3,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATH_PREFIXES = ["/auth"];
+// Files a browser/OS must be able to fetch without a session to install the
+// PWA (manifest discovery and service worker registration happen outside any
+// authenticated fetch context) — not covered by the middleware matcher's
+// static-asset exclusions since those only skip _next/static and images.
+const PUBLIC_FILES = ["/manifest.json", "/sw.js"];
 const ONBOARDING_PATH = "/onboarding";
 const MOBILE_UA =
   /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i;
 
 function isPublicPath(pathname: string) {
+  if (PUBLIC_FILES.includes(pathname)) return true;
   return PUBLIC_PATH_PREFIXES.some(
     prefix => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );

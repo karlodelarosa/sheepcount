@@ -26,6 +26,16 @@ export type DiscipleshipGroupMeeting = {
   notes: string;
 };
 
+export type DiscipleshipGroupPrayerItem = {
+  id: string;
+  groupId: string;
+  personId: string | null;
+  content: string;
+  isAnswered: boolean;
+  answeredAt: string | null;
+  createdAt: string;
+};
+
 type DbDiscipleshipGroup = {
   id: string;
   organization_id: string;
@@ -48,6 +58,16 @@ type DbDiscipleshipGroupMeeting = {
   meeting_date: string;
   topic: string;
   notes: string;
+};
+
+type DbDiscipleshipGroupPrayerItem = {
+  id: string;
+  group_id: string;
+  person_id: string | null;
+  content: string;
+  is_answered: boolean;
+  answered_at: string | null;
+  created_at: string;
 };
 
 function toGroup(row: DbDiscipleshipGroup): DiscipleshipGroup {
@@ -77,6 +97,20 @@ function toGroupMeeting(row: DbDiscipleshipGroupMeeting): DiscipleshipGroupMeeti
     meetingDate: row.meeting_date,
     topic: row.topic,
     notes: row.notes,
+  };
+}
+
+function toGroupPrayerItem(
+  row: DbDiscipleshipGroupPrayerItem,
+): DiscipleshipGroupPrayerItem {
+  return {
+    id: row.id,
+    groupId: row.group_id,
+    personId: row.person_id,
+    content: row.content,
+    isAnswered: row.is_answered,
+    answeredAt: row.answered_at,
+    createdAt: row.created_at,
   };
 }
 
@@ -126,6 +160,23 @@ export async function fetchDiscipleshipGroupMeetings(
 
   if (error) throw error;
   return (data as DbDiscipleshipGroupMeeting[]).map(toGroupMeeting);
+}
+
+export async function fetchDiscipleshipGroupPrayerItems(
+  supabase: SupabaseClient,
+  organizationId: string,
+): Promise<DiscipleshipGroupPrayerItem[]> {
+  const { data, error } = await supabase
+    .from("discipleship_group_prayer_items")
+    .select(
+      "id, group_id, person_id, content, is_answered, answered_at, created_at, discipleship_groups!inner(organization_id, is_active)",
+    )
+    .eq("discipleship_groups.organization_id", organizationId)
+    .eq("discipleship_groups.is_active", true)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data as DbDiscipleshipGroupPrayerItem[]).map(toGroupPrayerItem);
 }
 
 export type CreateDiscipleshipGroupInput = {
@@ -234,6 +285,61 @@ export async function deleteDiscipleshipGroupMeeting(
     .from("discipleship_group_meetings")
     .delete()
     .eq("id", meetingId);
+
+  if (error) throw error;
+}
+
+export type CreateDiscipleshipGroupPrayerItemInput = {
+  groupId: string;
+  personId?: string | null;
+  content: string;
+};
+
+export async function createDiscipleshipGroupPrayerItem(
+  supabase: SupabaseClient,
+  input: CreateDiscipleshipGroupPrayerItemInput,
+): Promise<DiscipleshipGroupPrayerItem> {
+  const { data, error } = await supabase
+    .from("discipleship_group_prayer_items")
+    .insert({
+      group_id: input.groupId,
+      person_id: input.personId ?? null,
+      content: input.content.trim(),
+    })
+    .select("id, group_id, person_id, content, is_answered, answered_at, created_at")
+    .single();
+
+  if (error) throw error;
+  return toGroupPrayerItem(data as DbDiscipleshipGroupPrayerItem);
+}
+
+export async function setDiscipleshipGroupPrayerItemAnswered(
+  supabase: SupabaseClient,
+  prayerItemId: string,
+  isAnswered: boolean,
+): Promise<DiscipleshipGroupPrayerItem> {
+  const { data, error } = await supabase
+    .from("discipleship_group_prayer_items")
+    .update({
+      is_answered: isAnswered,
+      answered_at: isAnswered ? new Date().toISOString() : null,
+    })
+    .eq("id", prayerItemId)
+    .select("id, group_id, person_id, content, is_answered, answered_at, created_at")
+    .single();
+
+  if (error) throw error;
+  return toGroupPrayerItem(data as DbDiscipleshipGroupPrayerItem);
+}
+
+export async function deleteDiscipleshipGroupPrayerItem(
+  supabase: SupabaseClient,
+  prayerItemId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("discipleship_group_prayer_items")
+    .delete()
+    .eq("id", prayerItemId);
 
   if (error) throw error;
 }

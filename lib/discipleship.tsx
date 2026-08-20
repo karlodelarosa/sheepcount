@@ -43,18 +43,24 @@ import {
   addDiscipleshipGroupMember,
   createDiscipleshipGroup,
   createDiscipleshipGroupMeeting,
+  createDiscipleshipGroupPrayerItem,
   deleteDiscipleshipGroup,
   deleteDiscipleshipGroupMeeting,
+  deleteDiscipleshipGroupPrayerItem,
   fetchDiscipleshipGroupMeetings,
   fetchDiscipleshipGroupMembers,
+  fetchDiscipleshipGroupPrayerItems,
   fetchDiscipleshipGroups,
   removeDiscipleshipGroupMember,
+  setDiscipleshipGroupPrayerItemAnswered,
   type AddDiscipleshipGroupMemberInput,
   type CreateDiscipleshipGroupInput,
   type CreateDiscipleshipGroupMeetingInput,
+  type CreateDiscipleshipGroupPrayerItemInput,
   type DiscipleshipGroup,
   type DiscipleshipGroupMeeting,
   type DiscipleshipGroupMember,
+  type DiscipleshipGroupPrayerItem,
 } from "@/lib/supabase/discipleship-groups";
 
 export type PersonDiscipleshipRole = "Learner" | "Guide" | "Both" | null;
@@ -112,6 +118,16 @@ type DiscipleshipContextValue = {
   removeGroupMeetingById: (meetingId: string) => Promise<boolean>;
   getGroupMembers: (groupId: string) => DiscipleshipGroupMember[];
   getGroupMeetings: (groupId: string) => DiscipleshipGroupMeeting[];
+  groupPrayerItems: DiscipleshipGroupPrayerItem[];
+  addGroupPrayerItem: (
+    input: CreateDiscipleshipGroupPrayerItemInput,
+  ) => Promise<DiscipleshipGroupPrayerItem | null>;
+  setGroupPrayerItemAnswered: (
+    prayerItemId: string,
+    isAnswered: boolean,
+  ) => Promise<boolean>;
+  removeGroupPrayerItemById: (prayerItemId: string) => Promise<boolean>;
+  getGroupPrayerItems: (groupId: string) => DiscipleshipGroupPrayerItem[];
 };
 
 const DiscipleshipContext = createContext<DiscipleshipContextValue | null>(null);
@@ -142,6 +158,9 @@ export function DiscipleshipProvider({
   const [groups, setGroups] = useState<DiscipleshipGroup[]>([]);
   const [groupMembers, setGroupMembers] = useState<DiscipleshipGroupMember[]>([]);
   const [groupMeetings, setGroupMeetings] = useState<DiscipleshipGroupMeeting[]>([]);
+  const [groupPrayerItems, setGroupPrayerItems] = useState<
+    DiscipleshipGroupPrayerItem[]
+  >([]);
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -154,6 +173,7 @@ export function DiscipleshipProvider({
       setGroups([]);
       setGroupMembers([]);
       setGroupMeetings([]);
+      setGroupPrayerItems([]);
       setHydrated(!tenantLoading);
       return;
     }
@@ -167,6 +187,7 @@ export function DiscipleshipProvider({
         groupData,
         groupMemberData,
         groupMeetingData,
+        groupPrayerItemData,
       ] = await Promise.all([
         fetchDiscipleshipTracks(supabase, organizationId),
         fetchDiscipleshipEnrollments(supabase, organizationId),
@@ -175,6 +196,7 @@ export function DiscipleshipProvider({
         fetchDiscipleshipGroups(supabase, organizationId),
         fetchDiscipleshipGroupMembers(supabase, organizationId),
         fetchDiscipleshipGroupMeetings(supabase, organizationId),
+        fetchDiscipleshipGroupPrayerItems(supabase, organizationId),
       ]);
 
       setTracks(trackData);
@@ -184,6 +206,7 @@ export function DiscipleshipProvider({
       setGroups(groupData);
       setGroupMembers(groupMemberData);
       setGroupMeetings(groupMeetingData);
+      setGroupPrayerItems(groupPrayerItemData);
     } catch (error) {
       toast.error("Failed to load discipleship data", {
         description: getErrorMessage(error),
@@ -751,6 +774,78 @@ export function DiscipleshipProvider({
     [groupMeetings],
   );
 
+  const addGroupPrayerItem = useCallback(
+    async (
+      input: CreateDiscipleshipGroupPrayerItemInput,
+    ): Promise<DiscipleshipGroupPrayerItem | null> => {
+      setIsSaving(true);
+      try {
+        const prayerItem = await createDiscipleshipGroupPrayerItem(supabase, input);
+        await refreshDiscipleship();
+        toast.success("Prayer request added");
+        return prayerItem;
+      } catch (error) {
+        toast.error("Failed to add prayer request", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase],
+  );
+
+  const setGroupPrayerItemAnswered = useCallback(
+    async (prayerItemId: string, isAnswered: boolean): Promise<boolean> => {
+      setIsSaving(true);
+      try {
+        await setDiscipleshipGroupPrayerItemAnswered(supabase, prayerItemId, isAnswered);
+        await refreshDiscipleship();
+        return true;
+      } catch (error) {
+        toast.error("Failed to update prayer request", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase],
+  );
+
+  const removeGroupPrayerItemById = useCallback(
+    async (prayerItemId: string): Promise<boolean> => {
+      setIsSaving(true);
+      try {
+        await deleteDiscipleshipGroupPrayerItem(supabase, prayerItemId);
+        await refreshDiscipleship();
+        toast.success("Prayer request removed");
+        return true;
+      } catch (error) {
+        toast.error("Failed to remove prayer request", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [refreshDiscipleship, supabase],
+  );
+
+  const getGroupPrayerItems = useCallback(
+    (groupId: string) =>
+      groupPrayerItems
+        .filter(p => p.groupId === groupId)
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
+    [groupPrayerItems],
+  );
+
   return (
     <DiscipleshipContext.Provider
       value={{
@@ -787,6 +882,11 @@ export function DiscipleshipProvider({
         removeGroupMeetingById,
         getGroupMembers,
         getGroupMeetings,
+        groupPrayerItems,
+        addGroupPrayerItem,
+        setGroupPrayerItemAnswered,
+        removeGroupPrayerItemById,
+        getGroupPrayerItems,
       }}
     >
       {children}
@@ -805,4 +905,4 @@ export function useDiscipleship() {
 }
 
 export type { DiscipleshipRole, DiscipleshipTrack, DiscipleshipEnrollment, DiscipleshipBadge, DiscipleshipTrackStatus };
-export type { DiscipleshipGroup, DiscipleshipGroupMember, DiscipleshipGroupMeeting, DiscipleshipGroupRole } from "@/lib/supabase/discipleship-groups";
+export type { DiscipleshipGroup, DiscipleshipGroupMember, DiscipleshipGroupMeeting, DiscipleshipGroupPrayerItem, DiscipleshipGroupRole } from "@/lib/supabase/discipleship-groups";

@@ -24,6 +24,9 @@ import {
 import {
   ArrowLeft,
   CalendarDays,
+  CheckCircle2,
+  Circle,
+  HeartHandshake,
   MessageSquareText,
   Plus,
   Search,
@@ -61,6 +64,10 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
     removeGroup,
     getGroupMembers,
     getGroupMeetings,
+    addGroupPrayerItem,
+    setGroupPrayerItemAnswered,
+    removeGroupPrayerItemById,
+    getGroupPrayerItems,
   } = useDiscipleship();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -69,6 +76,8 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
   const [meetingDate, setMeetingDate] = useState(todayDateInputValue());
   const [topic, setTopic] = useState("");
   const [notes, setNotes] = useState("");
+  const [prayerContent, setPrayerContent] = useState("");
+  const [prayerPersonId, setPrayerPersonId] = useState("");
   const [removeGroupDialogOpen, setRemoveGroupDialogOpen] = useState(false);
 
   const group = groups.find(g => g.id === groupId);
@@ -78,6 +87,10 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
 
   const memberships = useMemo(() => getGroupMembers(groupId), [getGroupMembers, groupId]);
   const meetings = useMemo(() => getGroupMeetings(groupId), [getGroupMeetings, groupId]);
+  const prayerItems = useMemo(
+    () => getGroupPrayerItems(groupId),
+    [getGroupPrayerItems, groupId],
+  );
 
   const members = useMemo(
     () =>
@@ -86,6 +99,11 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
         person: people.find(p => p.id === m.personId),
       })),
     [memberships, people],
+  );
+
+  const memberPeople = useMemo(
+    () => members.map(m => m.person).filter((p): p is NonNullable<typeof p> => Boolean(p)),
+    [members],
   );
 
   const availablePeople = useMemo(
@@ -122,6 +140,27 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
 
   const handleRemoveMeeting = async (meetingId: string) => {
     await removeGroupMeetingById(meetingId);
+  };
+
+  const handleAddPrayerItem = async () => {
+    if (!prayerContent.trim()) return;
+    const result = await addGroupPrayerItem({
+      groupId,
+      personId: prayerPersonId || null,
+      content: prayerContent,
+    });
+    if (result) {
+      setPrayerContent("");
+      setPrayerPersonId("");
+    }
+  };
+
+  const handleToggleAnswered = async (prayerItemId: string, isAnswered: boolean) => {
+    await setGroupPrayerItemAnswered(prayerItemId, !isAnswered);
+  };
+
+  const handleRemovePrayerItem = async (prayerItemId: string) => {
+    await removeGroupPrayerItemById(prayerItemId);
   };
 
   const handleRemoveGroup = async () => {
@@ -427,6 +466,133 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
                       </Button>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-1 border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 h-fit">
+          <CardHeader>
+            <CardTitle className="text-slate-900 dark:text-white">Add Prayer Request</CardTitle>
+            <CardDescription className="text-slate-600 dark:text-zinc-400">
+              Share something this group is praying for.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Prayer Request *</Label>
+              <Textarea
+                value={prayerContent}
+                onChange={e => setPrayerContent(e.target.value)}
+                placeholder="What should the group pray for?"
+                className={DualModeInputClass}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>For (optional)</Label>
+              <PersonSelect
+                people={memberPeople}
+                value={prayerPersonId}
+                onValueChange={setPrayerPersonId}
+                placeholder="Attribute to a member"
+                triggerClassName={DualModeInputClass}
+              />
+            </div>
+            <Button
+              onClick={() => void handleAddPrayerItem()}
+              disabled={!prayerContent.trim() || isSaving}
+              className={`w-full ${DualModePrimaryButtonClass}`}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add to Prayer Wall
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2 border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
+          <CardHeader>
+            <CardTitle className="text-lg text-slate-900 dark:text-white flex items-center gap-2">
+              <HeartHandshake className="w-5 h-5" />
+              Prayer Wall ({prayerItems.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="border border-slate-200/60 rounded-xl overflow-hidden dark:border-zinc-700/60 mx-6 mb-6">
+              {prayerItems.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 dark:text-zinc-500">
+                  No prayer requests yet.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-200/60 dark:divide-zinc-700/60">
+                  {prayerItems.map(item => {
+                    const person = item.personId
+                      ? people.find(p => p.id === item.personId)
+                      : undefined;
+                    return (
+                      <div
+                        key={item.id}
+                        className="p-4 flex items-start justify-between gap-3 hover:bg-slate-50 dark:hover:bg-zinc-700/50"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-500">
+                            <CalendarDays className="w-3.5 h-3.5" />
+                            {new Date(item.createdAt).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                            {person && <span>&middot; {person.name}</span>}
+                          </div>
+                          <p
+                            className={cn(
+                              "font-medium mt-1",
+                              item.isAnswered
+                                ? "text-slate-500 line-through dark:text-zinc-500"
+                                : "text-slate-900 dark:text-white",
+                            )}
+                          >
+                            {item.content}
+                          </p>
+                          {item.isAnswered && (
+                            <Badge
+                              variant="secondary"
+                              className="mt-1.5 rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
+                            >
+                              Answered
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => void handleToggleAnswered(item.id, item.isAnswered)}
+                            disabled={isSaving}
+                            title={item.isAnswered ? "Mark as unanswered" : "Mark as answered"}
+                            className="text-emerald-600 hover:text-emerald-700"
+                          >
+                            {item.isAnswered ? (
+                              <CheckCircle2 className="w-4 h-4" />
+                            ) : (
+                              <Circle className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => void handleRemovePrayerItem(item.id)}
+                            disabled={isSaving}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
