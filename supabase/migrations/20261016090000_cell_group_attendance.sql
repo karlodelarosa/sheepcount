@@ -39,6 +39,7 @@ CREATE INDEX IF NOT EXISTS cell_group_session_attendees_person_idx
 ALTER TABLE public.cell_group_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cell_group_session_attendees ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Org members can view cell group sessions" ON public.cell_group_sessions;
 CREATE POLICY "Org members can view cell group sessions"
   ON public.cell_group_sessions FOR SELECT
   USING (
@@ -51,6 +52,7 @@ CREATE POLICY "Org members can view cell group sessions"
     )
   );
 
+DROP POLICY IF EXISTS "Org members can insert cell group sessions" ON public.cell_group_sessions;
 CREATE POLICY "Org members can insert cell group sessions"
   ON public.cell_group_sessions FOR INSERT
   WITH CHECK (
@@ -63,6 +65,7 @@ CREATE POLICY "Org members can insert cell group sessions"
     )
   );
 
+DROP POLICY IF EXISTS "Org members can update cell group sessions" ON public.cell_group_sessions;
 CREATE POLICY "Org members can update cell group sessions"
   ON public.cell_group_sessions FOR UPDATE
   USING (
@@ -84,6 +87,7 @@ CREATE POLICY "Org members can update cell group sessions"
     )
   );
 
+DROP POLICY IF EXISTS "Org admins can delete cell group sessions" ON public.cell_group_sessions;
 CREATE POLICY "Org admins can delete cell group sessions"
   ON public.cell_group_sessions FOR DELETE
   USING (
@@ -97,6 +101,7 @@ CREATE POLICY "Org admins can delete cell group sessions"
     )
   );
 
+DROP POLICY IF EXISTS "Org members can view cell group session attendees" ON public.cell_group_session_attendees;
 CREATE POLICY "Org members can view cell group session attendees"
   ON public.cell_group_session_attendees FOR SELECT
   USING (
@@ -111,6 +116,7 @@ CREATE POLICY "Org members can view cell group session attendees"
     )
   );
 
+DROP POLICY IF EXISTS "Org members can insert cell group session attendees" ON public.cell_group_session_attendees;
 CREATE POLICY "Org members can insert cell group session attendees"
   ON public.cell_group_session_attendees FOR INSERT
   WITH CHECK (
@@ -125,6 +131,7 @@ CREATE POLICY "Org members can insert cell group session attendees"
     )
   );
 
+DROP POLICY IF EXISTS "Org members can delete cell group session attendees" ON public.cell_group_session_attendees;
 CREATE POLICY "Org members can delete cell group session attendees"
   ON public.cell_group_session_attendees FOR DELETE
   USING (
@@ -251,6 +258,8 @@ GRANT EXECUTE ON FUNCTION public.record_cell_group_attendance(
   UUID, UUID, DATE, UUID, TEXT, TEXT, UUID[]
 ) TO authenticated;
 
+DROP TRIGGER IF EXISTS enforce_cell_group_attendance_session_limit
+  ON public.cell_group_sessions;
 CREATE TRIGGER enforce_cell_group_attendance_session_limit
   BEFORE INSERT ON public.cell_group_sessions
   FOR EACH ROW
