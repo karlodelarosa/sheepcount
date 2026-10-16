@@ -1,6 +1,6 @@
 -- Wedding and child dedication records (free-text participants, not tied to `people`)
 
-CREATE TABLE public.wedding_records (
+CREATE TABLE IF NOT EXISTS public.wedding_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   spouse1_name TEXT NOT NULL,
@@ -18,10 +18,10 @@ CREATE TABLE public.wedding_records (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX wedding_records_organization_id_idx ON public.wedding_records(organization_id);
-CREATE INDEX wedding_records_married_at_idx ON public.wedding_records(married_at DESC);
+CREATE INDEX IF NOT EXISTS wedding_records_organization_id_idx ON public.wedding_records(organization_id);
+CREATE INDEX IF NOT EXISTS wedding_records_married_at_idx ON public.wedding_records(married_at DESC);
 
-CREATE TABLE public.dedication_records (
+CREATE TABLE IF NOT EXISTS public.dedication_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   child_name TEXT NOT NULL,
@@ -37,14 +37,15 @@ CREATE TABLE public.dedication_records (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX dedication_records_organization_id_idx ON public.dedication_records(organization_id);
-CREATE INDEX dedication_records_dedicated_at_idx ON public.dedication_records(dedicated_at DESC);
+CREATE INDEX IF NOT EXISTS dedication_records_organization_id_idx ON public.dedication_records(organization_id);
+CREATE INDEX IF NOT EXISTS dedication_records_dedicated_at_idx ON public.dedication_records(dedicated_at DESC);
 
 ALTER TABLE public.wedding_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dedication_records ENABLE ROW LEVEL SECURITY;
 
 -- wedding_records policies
 
+DROP POLICY IF EXISTS "Org members with weddings module can view wedding records" ON public.wedding_records;
 CREATE POLICY "Org members with weddings module can view wedding records"
   ON public.wedding_records FOR SELECT
   USING (
@@ -57,6 +58,7 @@ CREATE POLICY "Org members with weddings module can view wedding records"
     AND public.org_has_module(wedding_records.organization_id, 'weddings')
   );
 
+DROP POLICY IF EXISTS "Org members with weddings module can insert wedding records" ON public.wedding_records;
 CREATE POLICY "Org members with weddings module can insert wedding records"
   ON public.wedding_records FOR INSERT
   WITH CHECK (
@@ -69,6 +71,7 @@ CREATE POLICY "Org members with weddings module can insert wedding records"
     AND public.org_has_module(wedding_records.organization_id, 'weddings')
   );
 
+DROP POLICY IF EXISTS "Org members with weddings module can update wedding records" ON public.wedding_records;
 CREATE POLICY "Org members with weddings module can update wedding records"
   ON public.wedding_records FOR UPDATE
   USING (
@@ -90,6 +93,7 @@ CREATE POLICY "Org members with weddings module can update wedding records"
     AND public.org_has_module(wedding_records.organization_id, 'weddings')
   );
 
+DROP POLICY IF EXISTS "Org admins with weddings module can delete wedding records" ON public.wedding_records;
 CREATE POLICY "Org admins with weddings module can delete wedding records"
   ON public.wedding_records FOR DELETE
   USING (
@@ -105,6 +109,7 @@ CREATE POLICY "Org admins with weddings module can delete wedding records"
 
 -- dedication_records policies
 
+DROP POLICY IF EXISTS "Org members with dedications module can view dedication records" ON public.dedication_records;
 CREATE POLICY "Org members with dedications module can view dedication records"
   ON public.dedication_records FOR SELECT
   USING (
@@ -117,6 +122,7 @@ CREATE POLICY "Org members with dedications module can view dedication records"
     AND public.org_has_module(dedication_records.organization_id, 'dedications')
   );
 
+DROP POLICY IF EXISTS "Org members with dedications module can insert dedication records" ON public.dedication_records;
 CREATE POLICY "Org members with dedications module can insert dedication records"
   ON public.dedication_records FOR INSERT
   WITH CHECK (
@@ -129,6 +135,7 @@ CREATE POLICY "Org members with dedications module can insert dedication records
     AND public.org_has_module(dedication_records.organization_id, 'dedications')
   );
 
+DROP POLICY IF EXISTS "Org members with dedications module can update dedication records" ON public.dedication_records;
 CREATE POLICY "Org members with dedications module can update dedication records"
   ON public.dedication_records FOR UPDATE
   USING (
@@ -150,6 +157,7 @@ CREATE POLICY "Org members with dedications module can update dedication records
     AND public.org_has_module(dedication_records.organization_id, 'dedications')
   );
 
+DROP POLICY IF EXISTS "Org admins with dedications module can delete dedication records" ON public.dedication_records;
 CREATE POLICY "Org admins with dedications module can delete dedication records"
   ON public.dedication_records FOR DELETE
   USING (
