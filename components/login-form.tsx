@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { APP_NAME } from "@/lib/branding";
+import { BrandLogoIcon } from "@/components/brand-logo-icon";
 import {
   Eye,
   EyeOff,
@@ -323,9 +324,10 @@ export function LoginForm({
 function BrandLockup() {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex size-11 items-center justify-center rounded-2xl bg-white shadow-lg shadow-indigo-950/10">
-        <Eye className="size-6 text-indigo-500" />
-      </div>
+      <BrandLogoIcon
+        className="size-11 rounded-2xl shadow-lg shadow-indigo-950/10"
+        variant="light"
+      />
       <span className="text-lg font-semibold text-white">{APP_NAME}</span>
     </div>
   );

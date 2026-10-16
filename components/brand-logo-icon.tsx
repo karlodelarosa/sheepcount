@@ -1,28 +1,47 @@
-import { Eye } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export function BrandLogoIcon({
   className,
-  iconClassName,
+  variant = "auto",
 }: {
   className?: string;
+  // Kept for backwards compatibility with existing callers. The new logo is
+  // a complete image, so it no longer has a separately sized inner glyph.
   iconClassName?: string;
+  variant?: "auto" | "light" | "dark";
 }) {
   return (
-    <div
+    <span
       className={cn(
-        "rounded-lg flex items-center justify-center shrink-0",
+        "relative block shrink-0 overflow-hidden rounded-lg",
         className,
       )}
-      style={{
-        background:
-          "linear-gradient(to bottom right, var(--accent-color), var(--accent-color-muted))",
-      }}
     >
-      <Eye
-        className={cn(iconClassName)}
-        style={{ color: "var(--accent-color-foreground)" }}
-      />
-    </div>
+      {variant !== "dark" && (
+        <Image
+          src="/images/ml-logo.png"
+          alt=""
+          width={64}
+          height={64}
+          className={cn(
+            "size-full object-cover",
+            variant === "auto" && "dark:hidden",
+          )}
+        />
+      )}
+      {variant !== "light" && (
+        <Image
+          src="/images/ml-logo-inverted.png"
+          alt=""
+          width={64}
+          height={64}
+          className={cn(
+            "size-full object-cover",
+            variant === "auto" && "hidden dark:block",
+          )}
+        />
+      )}
+    </span>
   );
 }
