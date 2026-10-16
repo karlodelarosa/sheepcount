@@ -169,17 +169,20 @@ export async function addCellGroupMember(
     return toCellGroupMember(row);
   }
 
-  const { data: otherMembership, error: otherMembershipError } = await supabase
-    .from("cell_group_members")
-    .select("id, cell_group_id")
-    .eq("person_id", personId)
-    .neq("cell_group_id", cellGroupId)
-    .limit(1)
-    .maybeSingle();
+  if (role === "Member") {
+    const { data: otherMembership, error: otherMembershipError } =
+      await supabase
+        .from("cell_group_members")
+        .select("id, cell_group_id")
+        .eq("person_id", personId)
+        .neq("cell_group_id", cellGroupId)
+        .limit(1)
+        .maybeSingle();
 
-  if (otherMembershipError) throw otherMembershipError;
-  if (otherMembership) {
-    throw new Error("This person already belongs to another cell group.");
+    if (otherMembershipError) throw otherMembershipError;
+    if (otherMembership) {
+      throw new Error("This person already belongs to another cell group.");
+    }
   }
 
   if (role === "Leader") {

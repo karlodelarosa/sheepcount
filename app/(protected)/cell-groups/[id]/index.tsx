@@ -81,17 +81,6 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
     [people, memberships, peopleInOtherCells],
   );
 
-  const leaderCandidates = useMemo(
-    () =>
-      people.filter(person => {
-        const membership = cellGroupMembers.find(
-          member => member.personId === person.id,
-        );
-        return !membership || membership.cellGroupId === groupId;
-      }),
-    [cellGroupMembers, groupId, people],
-  );
-
   const effectiveLeaderId =
     group?.leaderPersonId ??
     memberships.find(member => member.role === "Leader")?.personId ??
@@ -208,7 +197,7 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
             <div className="space-y-2 border-t pt-4">
               <Label>Permanent Cell Group leader</Label>
               <PersonSelect
-                people={leaderCandidates}
+                people={people}
                 value={effectiveLeaderId}
                 onValueChange={personId =>
                   void assignCellGroupLeader(groupId, personId)
