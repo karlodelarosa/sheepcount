@@ -74,7 +74,11 @@ export function getPersonPastoralStatus(
   attendanceRows: PersonAttendanceRow[],
   outreachPriority?: OutreachPriority | null,
 ): PersonPastoralStatus {
-  if (person.status === "Inactive" || person.status === "Exited") {
+  if (
+    person.status === "Inactive" ||
+    person.status === "Exited" ||
+    person.status === "Deceased"
+  ) {
     return buildStatus(
       "inactive",
       person.status,
@@ -148,7 +152,10 @@ export function getPersonPastoralStatus(
     );
   }
 
-  if (daysSinceLastSeen !== null && daysSinceLastSeen >= CHECK_IN_THRESHOLD_DAYS) {
+  if (
+    daysSinceLastSeen !== null &&
+    daysSinceLastSeen >= CHECK_IN_THRESHOLD_DAYS
+  ) {
     return buildStatus(
       "check_in",
       "Due for check-in",
@@ -191,7 +198,8 @@ export const PASTORAL_LEVEL_STYLES: Record<
     icon: "text-rose-600 dark:text-rose-400",
   },
   check_in: {
-    badge: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
+    badge:
+      "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
     banner:
       "border-amber-200/80 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/30",
     icon: "text-amber-600 dark:text-amber-400",
@@ -203,7 +211,8 @@ export const PASTORAL_LEVEL_STYLES: Record<
     icon: "text-sky-600 dark:text-sky-400",
   },
   needs_follow_up: {
-    badge: "bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300",
+    badge:
+      "bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300",
     banner:
       "border-orange-200/80 bg-orange-50/80 dark:border-orange-900/50 dark:bg-orange-950/30",
     icon: "text-orange-600 dark:text-orange-400",

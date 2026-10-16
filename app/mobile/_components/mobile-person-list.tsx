@@ -43,19 +43,22 @@ export function MobilePersonList({
   }, [people, search]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search
+          className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-muted-foreground"
+          strokeWidth={1.8}
+        />
         <Input
           value={search}
           onChange={event => setSearch(event.target.value)}
           placeholder="Search by name…"
-          className="h-11 pl-9"
+          className="h-[52px] border-0 bg-card pl-11 text-[16px] shadow-none ring-1 ring-black/[0.04] dark:ring-white/[0.08]"
           inputMode="search"
         />
       </div>
 
-      <div className="flex items-center justify-between text-xs">
+      <div className="flex items-center justify-between px-1 text-[13px]">
         <span className="text-muted-foreground">
           {selectedIds.length} selected · {filtered.length} shown
         </span>
@@ -63,7 +66,7 @@ export function MobilePersonList({
           {onSelectAll ? (
             <button
               type="button"
-              className="font-medium text-primary"
+              className="min-h-11 px-1 font-medium text-foreground"
               onClick={() => onSelectAll(filtered.map(person => person.id))}
             >
               Select all
@@ -72,7 +75,7 @@ export function MobilePersonList({
           {onClear && selectedIds.length > 0 ? (
             <button
               type="button"
-              className="font-medium text-muted-foreground"
+              className="min-h-11 px-1 font-medium text-muted-foreground"
               onClick={onClear}
             >
               Clear
@@ -82,12 +85,12 @@ export function MobilePersonList({
       </div>
 
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-          <Users className="h-6 w-6" />
+        <div className="flex flex-col items-center gap-3 rounded-[20px] bg-card py-12 text-center text-[15px] text-muted-foreground">
+          <Users className="size-6" strokeWidth={1.8} />
           {emptyLabel}
         </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="overflow-hidden rounded-[20px] bg-card ring-1 ring-black/[0.04] dark:ring-white/[0.08]">
           {filtered.map(person => {
             const isSelected = selectedSet.has(person.id);
             return (
@@ -97,28 +100,28 @@ export function MobilePersonList({
                   onClick={() => onToggle(person.id)}
                   aria-pressed={isSelected}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors active:scale-[0.99]",
-                    isSelected
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-card hover:bg-muted/50",
+                    "flex min-h-[60px] w-full items-center gap-3 border-b px-4 text-left transition-colors duration-200 last:border-b-0 hover:bg-muted/50 active:bg-muted motion-reduce:transition-none",
+                    isSelected && "bg-muted/70",
                   )}
                 >
                   <span
                     className={cn(
-                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
+                      "flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors duration-200 motion-reduce:transition-none",
                       isSelected
-                        ? "border-primary bg-primary text-primary-foreground"
+                        ? "border-foreground bg-foreground text-background"
                         : "border-muted-foreground/40",
                     )}
                   >
-                    {isSelected ? <Check className="h-4 w-4" /> : null}
+                    {isSelected ? (
+                      <Check className="size-4" strokeWidth={2.3} />
+                    ) : null}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">
+                    <span className="block truncate text-[16px] font-medium leading-5">
                       {person.name}
                     </span>
                     {person.householdName ? (
-                      <span className="block truncate text-xs text-muted-foreground">
+                      <span className="mt-0.5 block truncate text-[13px] leading-4 text-muted-foreground">
                         {person.householdName}
                       </span>
                     ) : null}

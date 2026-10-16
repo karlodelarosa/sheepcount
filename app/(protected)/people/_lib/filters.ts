@@ -4,10 +4,7 @@ import type {
   Person,
   PersonStatus,
 } from "@/lib/people";
-import {
-  getPersonVisitDate,
-  isAttenderNewComer,
-} from "@/lib/membership-path";
+import { getPersonVisitDate, isAttenderNewComer } from "@/lib/membership-path";
 import type { PersonAchievementKind } from "../_components/person-detail-ui";
 
 export type PeopleAchievementFilter =
@@ -97,10 +94,18 @@ export function filterPeople(
 
     const achievement = achievementByPersonId.get(person.id) ?? null;
     if (filters.achievement === "any" && !achievement) return false;
-    if (filters.achievement === "discipleship" && achievement !== "discipleship" && achievement !== "both") {
+    if (
+      filters.achievement === "discipleship" &&
+      achievement !== "discipleship" &&
+      achievement !== "both"
+    ) {
       return false;
     }
-    if (filters.achievement === "training" && achievement !== "training" && achievement !== "both") {
+    if (
+      filters.achievement === "training" &&
+      achievement !== "training" &&
+      achievement !== "both"
+    ) {
       return false;
     }
     if (filters.achievement === "none" && achievement) return false;
@@ -109,6 +114,7 @@ export function filterPeople(
       const haystack = [
         person.name,
         person.phone,
+        person.socialContact,
         person.householdName,
         person.email,
         person.membershipType,

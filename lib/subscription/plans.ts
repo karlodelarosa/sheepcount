@@ -7,6 +7,7 @@ import {
   Droplets,
   Heart,
   Baby,
+  Cross,
   UserCircle,
   HeartHandshake,
   Award,
@@ -27,6 +28,7 @@ import {
 export type ModuleGroupKey =
   | "dashboard"
   | "people_membership"
+  | "life_events"
   | "groups_ministry"
   | "attendance"
   | "development"
@@ -44,6 +46,7 @@ export type ModuleItemKey =
   | "water_baptism"
   | "weddings"
   | "dedications"
+  | "memorials"
   | "life_groups"
   | "cell_groups"
   | "work_ministry"
@@ -82,6 +85,7 @@ export type ViewRoute =
   | "water-baptism"
   | "weddings"
   | "dedications"
+  | "memorials"
   | "bible-study"
   | "church-goals";
 
@@ -147,9 +151,10 @@ export const MODULE_ITEM_TO_GROUP: Record<
   people: "people_membership",
   workers: "people_membership",
   households: "people_membership",
-  water_baptism: "people_membership",
-  weddings: "people_membership",
-  dedications: "people_membership",
+  water_baptism: "life_events",
+  weddings: "life_events",
+  dedications: "life_events",
+  memorials: "life_events",
   life_groups: "groups_ministry",
   cell_groups: "groups_ministry",
   work_ministry: "groups_ministry",
@@ -175,6 +180,7 @@ export const MODULE_ITEM_TO_ROUTE: Record<ModuleItemKey, ViewRoute> = {
   water_baptism: "water-baptism",
   weddings: "weddings",
   dedications: "dedications",
+  memorials: "memorials",
   life_groups: "life-groups",
   cell_groups: "cell-groups",
   work_ministry: "work-ministry",
@@ -221,6 +227,12 @@ export const SIDEBAR_MENU_REGISTRY: SidebarMenuGroupDef[] = [
         icon: Home,
         route: "households",
       },
+    ],
+  },
+  {
+    key: "life_events",
+    title: "Life Events",
+    items: [
       {
         key: "water_baptism",
         title: "Water Baptism",
@@ -238,6 +250,12 @@ export const SIDEBAR_MENU_REGISTRY: SidebarMenuGroupDef[] = [
         title: "Child Dedication",
         icon: Baby,
         route: "dedications",
+      },
+      {
+        key: "memorials",
+        title: "Memorial Records",
+        icon: Cross,
+        route: "memorials",
       },
     ],
   },

@@ -50,7 +50,7 @@ export interface Household {
   createdDate: string;
 }
 
-export type PersonStatus = "Active" | "Inactive" | "Exited";
+export type PersonStatus = "Active" | "Inactive" | "Exited" | "Deceased";
 export type MembershipType =
   | "Worker"
   | "Volunteer Worker"
@@ -75,6 +75,7 @@ export interface Person {
   lastName: string;
   name: string;
   phone: string;
+  socialContact: string;
   birthdate: string;
   gender: PersonGender | null;
   isProspect: boolean;
@@ -105,9 +106,11 @@ export type AddPersonInput = {
   middleName?: string;
   lastName: string;
   phone?: string;
+  socialContact?: string;
   birthdate?: string;
   gender?: PersonGender | null;
   membershipType: MembershipType;
+  evangelismStage?: EvangelismStage;
   firstAttendance?: string;
   memberSince?: string;
 };
@@ -119,6 +122,7 @@ export type UpdatePersonInput = Partial<
     | "middleName"
     | "lastName"
     | "phone"
+    | "socialContact"
     | "birthdate"
     | "gender"
     | "isProspect"
@@ -147,7 +151,10 @@ type PeopleContextValue = {
     input: AddPersonInput,
     options?: { quiet?: boolean },
   ) => Promise<Person | null>;
-  updatePerson: (id: string, input: UpdatePersonInput) => Promise<Person | null>;
+  updatePerson: (
+    id: string,
+    input: UpdatePersonInput,
+  ) => Promise<Person | null>;
   deletePerson: (id: string) => Promise<boolean>;
   promoteAlongPath: (id: string) => Promise<Person | null>;
   assignToHousehold: (
@@ -176,7 +183,10 @@ type PeopleContextValue = {
   removeFromHousehold: (personId: string) => Promise<Person | null>;
   getPerson: (id: string) => Person | undefined;
   getHousehold: (householdId: string) => Household | undefined;
-  getHouseholdMembers: (householdId: string, excludePersonId?: string) => Person[];
+  getHouseholdMembers: (
+    householdId: string,
+    excludePersonId?: string,
+  ) => Person[];
   getOtherResidents: (householdId: string) => HouseholdOtherResident[];
   getHouseholdHead: (householdId: string) => Person | undefined;
   isInFamilyHousehold: (person: Person) => boolean;
@@ -200,9 +210,9 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
 
   const [people, setPeople] = useState<Person[]>([]);
   const [households, setHouseholds] = useState<Household[]>([]);
-  const [otherResidents, setOtherResidents] = useState<HouseholdOtherResident[]>(
-    [],
-  );
+  const [otherResidents, setOtherResidents] = useState<
+    HouseholdOtherResident[]
+  >([]);
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -327,7 +337,8 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
         payload.membershipType = "Attender";
         payload.isProspect = false;
         if (input.evangelismStage === undefined) {
-          payload.evangelismStage = evangelismStageForMembershipType("Attender");
+          payload.evangelismStage =
+            evangelismStageForMembershipType("Attender");
         }
       }
 
@@ -539,7 +550,10 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
           households.find(h => h.id === householdId) ?? null;
 
         if (input.name !== undefined || input.address !== undefined) {
-          const { headPersonId: _, ...householdInput } = input;
+          const householdInput: UpdateHouseholdInput = {
+            name: input.name,
+            address: input.address,
+          };
           household = await updateHouseholdDb(
             supabase,
             orgId,
@@ -559,11 +573,7 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
 
         await refreshPeople();
         toast.success("Household updated");
-        return (
-          household ??
-          households.find(h => h.id === householdId) ??
-          null
-        );
+        return household ?? households.find(h => h.id === householdId) ?? null;
       } catch (error) {
         toast.error("Failed to update household", {
           description: getErrorMessage(error),
@@ -573,13 +583,7 @@ export function PeopleProvider({ children }: { children: React.ReactNode }) {
         setIsSaving(false);
       }
     },
-    [
-      households,
-      organizationId,
-      refreshPeople,
-      refreshSession,
-      supabase,
-    ],
+    [households, organizationId, refreshPeople, refreshSession, supabase],
   );
 
   const addOtherResident = useCallback(

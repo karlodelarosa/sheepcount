@@ -79,7 +79,8 @@ export function PeopleDirectory() {
   const { people, hydrated, isSaving, addPerson } = usePeople();
   const { getPersonBadges } = useDiscipleship();
   const { getPersonTrainingBadges } = useTraining();
-  const { lifeGroupMembers, lifeGroups } = useGroupsMinistry();
+  const { lifeGroupMembers, lifeGroups, cellGroupMembers } =
+    useGroupsMinistry();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const page = parsePage(searchParams.get("page"));
@@ -111,13 +112,7 @@ export function PeopleDirectory() {
     router.replace(query ? `${pathname}?${query}` : pathname, {
       scroll: false,
     });
-  }, [
-    debouncedSearch,
-    filtersFromUrl,
-    pageSize,
-    pathname,
-    router,
-  ]);
+  }, [debouncedSearch, filtersFromUrl, pageSize, pathname, router]);
 
   const filters = useMemo(
     () => ({ ...filtersFromUrl, search: debouncedSearch }),
@@ -161,6 +156,12 @@ export function PeopleDirectory() {
         personId => getPersonTrainingBadges(personId).length,
       ),
     [people, getPersonBadges, getPersonTrainingBadges],
+  );
+
+  const cellGroupRoleByPersonId = useMemo(
+    () =>
+      new Map(cellGroupMembers.map(member => [member.personId, member.role])),
+    [cellGroupMembers],
   );
 
   const filteredPeople = useMemo(
@@ -210,6 +211,8 @@ export function PeopleDirectory() {
         return "bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300";
       case "Exited":
         return "bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-300";
+      case "Deceased":
+        return "bg-slate-200 text-slate-700 dark:bg-zinc-700 dark:text-zinc-200";
       default:
         return "bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
     }
@@ -226,7 +229,7 @@ export function PeopleDirectory() {
       return "bg-amber-50/90 hover:bg-amber-100/80 dark:bg-amber-950/35 dark:hover:bg-amber-950/50";
     }
 
-    if (person.status === "Exited") {
+    if (person.status === "Exited" || person.status === "Deceased") {
       return "bg-slate-100/80 hover:bg-slate-100 dark:bg-zinc-800/60 dark:hover:bg-zinc-800/80 opacity-75";
     }
 
@@ -340,10 +343,15 @@ export function PeopleDirectory() {
                     const achievement =
                       achievementByPersonId.get(person.id) ?? null;
                     const lifeGroupName = lifeGroupByPersonId.get(person.id);
-                    const birthdateLabel = formatBirthdayDisplay(person.birthdate);
+                    const birthdateLabel = formatBirthdayDisplay(
+                      person.birthdate,
+                    );
                     const birthdayToday = isBirthdayToday(person.birthdate);
                     const birthMonth =
                       !birthdayToday && isBirthMonth(person.birthdate);
+                    const cellGroupRole = cellGroupRoleByPersonId.get(
+                      person.id,
+                    );
 
                     return (
                       <TableRow
@@ -384,6 +392,13 @@ export function PeopleDirectory() {
                               {person.isProspect && (
                                 <Badge className="rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300">
                                   Prospect
+                                </Badge>
+                              )}
+                              {cellGroupRole && (
+                                <Badge className="rounded-lg bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-200">
+                                  {cellGroupRole === "Leader"
+                                    ? "Cell Group Leader"
+                                    : "Cell Group Member"}
                                 </Badge>
                               )}
                               {achievement && (
@@ -497,7 +512,9 @@ export function PeopleDirectory() {
                   {filteredPeople.length}
                 </p>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Per page</span>
+                  <span className="text-sm text-muted-foreground">
+                    Per page
+                  </span>
                   <Select
                     value={String(pageSize)}
                     onValueChange={handlePageSizeChange}

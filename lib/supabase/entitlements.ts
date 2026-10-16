@@ -48,6 +48,7 @@ async function fetchUsageCounts(
     { count: people },
     { count: serviceSessions },
     { count: lifeGroupSessions },
+    { count: cellGroupSessions },
     { count: adminSeats },
     { count: memberSeats },
   ] = await Promise.all([
@@ -68,6 +69,10 @@ async function fetchUsageCounts(
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId),
     supabase
+      .from("cell_group_sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId),
+    supabase
       .from("organization_members")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organizationId)
@@ -83,7 +88,10 @@ async function fetchUsageCounts(
 
   return {
     people: people ?? 0,
-    attendance_sessions: (serviceSessions ?? 0) + (lifeGroupSessions ?? 0),
+    attendance_sessions:
+      (serviceSessions ?? 0) +
+      (lifeGroupSessions ?? 0) +
+      (cellGroupSessions ?? 0),
     admin_seats: adminSeats ?? 0,
     member_seats: memberSeats ?? 0,
   };
@@ -168,7 +176,10 @@ export async function fetchOrgEntitlements(
     return parseEntitlements(data) ?? BASIC_ENTITLEMENTS_FALLBACK;
   }
 
-  const fromTables = await fetchEntitlementsFromTables(supabase, organizationId);
+  const fromTables = await fetchEntitlementsFromTables(
+    supabase,
+    organizationId,
+  );
   if (fromTables) {
     return fromTables;
   }

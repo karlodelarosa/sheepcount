@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatPersonName } from "@/lib/person-name";
-import { evangelismStageForMembershipType, isMembershipPathType } from "@/lib/membership-path";
+import {
+  evangelismStageForMembershipType,
+  isMembershipPathType,
+} from "@/lib/membership-path";
 import type {
   AddPersonInput,
   EvangelismStage,
@@ -29,6 +32,7 @@ type DbPersonRow = {
   middle_name: string | null;
   last_name: string;
   phone: string;
+  social_contact: string;
   email: string;
   birthdate: string | null;
   gender: string | null;
@@ -92,6 +96,7 @@ function toPerson(row: DbPersonRow): Person {
       lastName,
     }),
     phone: row.phone,
+    socialContact: row.social_contact ?? "",
     email: row.email,
     birthdate: row.birthdate ?? "",
     gender: (row.gender as PersonGender | null) ?? null,
@@ -118,6 +123,7 @@ const personSelect = `
   middle_name,
   last_name,
   phone,
+  social_contact,
   email,
   birthdate,
   gender,
@@ -189,11 +195,13 @@ export async function createPersonInHousehold(
 
   const membershipType = input.membershipType;
   const isProspect = membershipType === "Prospect";
-  const evangelismStage = isMembershipPathType(membershipType)
-    ? evangelismStageForMembershipType(membershipType)
-    : isProspect
-      ? "First-time Attendee"
-      : "Follow-up";
+  const evangelismStage =
+    input.evangelismStage ??
+    (isMembershipPathType(membershipType)
+      ? evangelismStageForMembershipType(membershipType)
+      : isProspect
+        ? "First-time Attendee"
+        : "Follow-up");
   const isMemberType =
     membershipType === "Member" ||
     membershipType === "Volunteer Worker" ||
@@ -208,6 +216,7 @@ export async function createPersonInHousehold(
       middle_name: middleName || null,
       last_name: lastName,
       phone: input.phone?.trim() ?? "",
+      social_contact: input.socialContact?.trim() ?? "",
       email: input.email?.trim() ?? "",
       birthdate: input.birthdate?.trim() || null,
       gender: input.gender ?? null,
@@ -238,11 +247,13 @@ export async function createPerson(
 
   const membershipType = input.membershipType;
   const isProspect = membershipType === "Prospect";
-  const evangelismStage = isMembershipPathType(membershipType)
-    ? evangelismStageForMembershipType(membershipType)
-    : isProspect
-      ? "First-time Attendee"
-      : "Follow-up";
+  const evangelismStage =
+    input.evangelismStage ??
+    (isMembershipPathType(membershipType)
+      ? evangelismStageForMembershipType(membershipType)
+      : isProspect
+        ? "First-time Attendee"
+        : "Follow-up");
   const isMemberType =
     membershipType === "Member" ||
     membershipType === "Volunteer Worker" ||
@@ -257,6 +268,7 @@ export async function createPerson(
       middle_name: middleName || null,
       last_name: lastName,
       phone: input.phone?.trim() ?? "",
+      social_contact: input.socialContact?.trim() ?? "",
       birthdate: input.birthdate?.trim() || null,
       gender: input.gender ?? null,
       is_prospect: isProspect,
@@ -301,6 +313,9 @@ export async function updatePerson(
   }
 
   if (input.phone !== undefined) updates.phone = input.phone.trim();
+  if (input.socialContact !== undefined) {
+    updates.social_contact = input.socialContact.trim();
+  }
   if (input.email !== undefined) updates.email = input.email.trim();
   if (input.birthdate !== undefined) {
     updates.birthdate = input.birthdate.trim() || null;

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, HeartHandshake, Users } from "lucide-react";
+import { Plus, HeartHandshake, MapPin } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { usePeople } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
@@ -21,16 +21,12 @@ import { useGroupsMinistry } from "@/lib/groups-ministry";
 export function CellGroupsList() {
   const router = useRouter();
   const { people } = usePeople();
-  const {
-    cellGroups,
-    cellGroupMembers,
-    hydrated,
-    isSaving,
-    addCellGroup,
-  } = useGroupsMinistry();
+  const { cellGroups, cellGroupMembers, hydrated, isSaving, addCellGroup } =
+    useGroupsMinistry();
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
 
   const getGroupMembers = (groupId: string) => {
     const memberships = cellGroupMembers.filter(m => m.cellGroupId === groupId);
@@ -47,10 +43,11 @@ export function CellGroupsList() {
 
   const handleCreate = async () => {
     if (!name.trim()) return;
-    const group = await addCellGroup({ name, description });
+    const group = await addCellGroup({ name, description, location });
     if (group) {
       setName("");
       setDescription("");
+      setLocation("");
       setShowCreate(false);
       router.push(`/cell-groups/${group.id}`);
     }
@@ -79,9 +76,8 @@ export function CellGroupsList() {
                 Cell Groups
               </CardTitle>
               <CardDescription className="text-slate-600 dark:text-zinc-400 max-w-2xl">
-                Small groups of 3–4 people for Bible study and mutual
-                accountability. Members can also serve in work ministry. When a
-                group is ready, they can multiply and start a new cell group.
+                Open feeder-course communities where people build relationships,
+                study Scripture, and prepare for intentional discipleship.
               </CardDescription>
             </div>
             <Button
@@ -108,6 +104,14 @@ export function CellGroupsList() {
                     value={name}
                     onChange={e => setName(e.target.value)}
                     placeholder="e.g., Cell Group Alpha"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Default Location</Label>
+                  <Input
+                    value={location}
+                    onChange={e => setLocation(e.target.value)}
+                    placeholder="e.g., Santos residence"
                   />
                 </div>
                 <div className="space-y-2">
@@ -150,7 +154,7 @@ export function CellGroupsList() {
                           <HeartHandshake className="w-6 h-6 text-white" />
                         </div>
                         <Badge variant="secondary" className="rounded-lg">
-                          {members.length}/4
+                          {members.length} members
                         </Badge>
                       </div>
                       <CardTitle className="text-slate-900 dark:text-white">
@@ -158,6 +162,12 @@ export function CellGroupsList() {
                       </CardTitle>
                       {group.description && (
                         <CardDescription>{group.description}</CardDescription>
+                      )}
+                      {group.location && (
+                        <CardDescription className="flex items-center gap-1.5">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {group.location}
+                        </CardDescription>
                       )}
                     </CardHeader>
                     <CardContent>
@@ -175,7 +185,9 @@ export function CellGroupsList() {
                                   {member.person?.name.charAt(0)}
                                 </span>
                               </div>
-                              <span className="text-sm">{member.person?.name}</span>
+                              <span className="text-sm">
+                                {member.person?.name}
+                              </span>
                               {member.role === "Leader" && (
                                 <Badge variant="outline" className="text-xs">
                                   Leader

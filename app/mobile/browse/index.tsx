@@ -6,6 +6,7 @@ import {
   Church,
   ChevronDown,
   Inbox,
+  Sprout,
   UsersRound,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,8 +18,9 @@ import { useEvents } from "@/lib/events";
 import { groupAttendanceBySession } from "@/app/(protected)/service-attendance/_lib/group-attendance";
 import { MobileTabBar } from "../_components/mobile-tab-bar";
 import { MobileTopBar } from "../_components/mobile-top-bar";
+import { MobilePageHeader } from "../_components/mobile-page-header";
 
-type BrowseType = "service" | "life-group" | "event";
+type BrowseType = "service" | "life-group" | "cell-group" | "event";
 
 interface BrowseSession {
   key: string;
@@ -29,24 +31,22 @@ interface BrowseSession {
   attendeeIds: string[];
 }
 
-const TYPE_META: Record<
-  BrowseType,
-  { label: string; icon: typeof Church; accent: string }
-> = {
+const TYPE_META: Record<BrowseType, { label: string; icon: typeof Church }> = {
   service: {
     label: "Service",
     icon: Church,
-    accent: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
   },
   "life-group": {
     label: "Life Group",
     icon: UsersRound,
-    accent: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  },
+  "cell-group": {
+    label: "Cell Group",
+    icon: Sprout,
   },
   event: {
     label: "Event",
     icon: CalendarDays,
-    accent: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   },
 };
 
@@ -54,6 +54,7 @@ const FILTERS: { value: BrowseType | "all"; label: string }[] = [
   { value: "all", label: "All" },
   { value: "service", label: "Service" },
   { value: "life-group", label: "Life Groups" },
+  { value: "cell-group", label: "Cell Groups" },
   { value: "event", label: "Events" },
 ];
 
@@ -74,6 +75,8 @@ export function MobileBrowse() {
   const {
     lifeGroups,
     lifeGroupSessions,
+    cellGroups,
+    cellGroupSessions,
     hydrated: groupsHydrated,
   } = useGroupsMinistry();
   const { events, attendanceRecords, hydrated: eventsHydrated } = useEvents();
@@ -123,6 +126,22 @@ export function MobileBrowse() {
     const eventTitleById = new Map(
       events.map(event => [event.id, event.title]),
     );
+
+    const cellGroupNameById = new Map(
+      cellGroups.map(group => [group.id, group.name]),
+    );
+    const cellGroupSessionRows: BrowseSession[] = cellGroupSessions.map(
+      session => ({
+        key: `cell-group-${session.id}`,
+        type: "cell-group",
+        title: cellGroupNameById.get(session.cellGroupId) ?? "Cell Group",
+        subtitle: [session.leaderName, session.location]
+          .filter(Boolean)
+          .join(" · "),
+        date: session.sessionDate,
+        attendeeIds: session.attendeePersonIds,
+      }),
+    );
     const eventSessionMap = new Map<string, BrowseSession>();
     for (const record of attendanceRecords) {
       const key = `event-${record.eventId}-${record.date}-${record.sessionLabel}`;
@@ -144,12 +163,15 @@ export function MobileBrowse() {
     return [
       ...serviceSessions,
       ...lifeGroupSessionRows,
+      ...cellGroupSessionRows,
       ...eventSessionMap.values(),
     ].sort((a, b) => b.date.localeCompare(a.date));
   }, [
     attendanceRows,
     lifeGroups,
     lifeGroupSessions,
+    cellGroups,
+    cellGroupSessions,
     events,
     attendanceRecords,
   ]);
@@ -166,24 +188,22 @@ export function MobileBrowse() {
     <>
       <MobileTopBar />
 
-      <header className="border-b px-5 py-5">
-        <h1 className="text-xl font-semibold">Browse Records</h1>
-        <p className="text-sm text-muted-foreground">
-          Double-check what&apos;s been recorded
-        </p>
-      </header>
+      <MobilePageHeader
+        title="Browse records"
+        subtitle="Double-check what’s been recorded"
+      />
 
-      <div className="sticky top-0 z-10 flex gap-2 overflow-x-auto border-b bg-background/95 px-4 py-3 backdrop-blur">
+      <div className="sticky top-0 z-10 flex gap-1.5 overflow-x-auto bg-background/88 px-4 py-2 backdrop-blur-xl supports-[backdrop-filter]:bg-background/78">
         {FILTERS.map(option => (
           <button
             key={option.value}
             type="button"
             onClick={() => setFilter(option.value)}
             className={cn(
-              "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+              "min-h-9 shrink-0 rounded-full px-3.5 text-[13px] font-medium transition-colors duration-200 motion-reduce:transition-none",
               filter === option.value
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-card text-muted-foreground",
+                ? "bg-foreground text-background"
+                : "bg-card text-muted-foreground hover:text-foreground",
             )}
           >
             {option.label}
@@ -191,46 +211,46 @@ export function MobileBrowse() {
         ))}
       </div>
 
-      <main className="flex-1 px-4 py-4 pb-24">
+      <main className="flex-1 px-4 pb-28 pt-3">
         {loading ? (
           <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, index) => (
-              <Skeleton key={index} className="h-16 w-full" />
+              <Skeleton
+                key={index}
+                className="h-[72px] w-full rounded-[18px]"
+              />
             ))}
           </div>
         ) : visibleSessions.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-16 text-center text-sm text-muted-foreground">
-            <Inbox className="h-6 w-6" />
-            No records yet
+          <div className="flex flex-col items-center gap-3 rounded-[20px] bg-card py-16 text-center text-[15px] text-muted-foreground">
+            <Inbox className="size-6" strokeWidth={1.8} />
+            <div>
+              <p className="font-medium text-foreground">No records yet</p>
+              <p className="mt-1 text-[13px]">
+                New attendance records appear here.
+              </p>
+            </div>
           </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="overflow-hidden rounded-[20px] bg-card ring-1 ring-black/[0.04] dark:ring-white/[0.08]">
             {visibleSessions.map(session => {
               const meta = TYPE_META[session.type];
               const Icon = meta.icon;
               const isExpanded = expandedKey === session.key;
               return (
-                <li
-                  key={session.key}
-                  className="overflow-hidden rounded-xl border bg-card"
-                >
+                <li key={session.key} className="border-b last:border-b-0">
                   <button
                     type="button"
                     onClick={() =>
                       setExpandedKey(isExpanded ? null : session.key)
                     }
-                    className="flex w-full items-center gap-3 px-3 py-3 text-left"
+                    className="flex min-h-[72px] w-full items-center gap-3.5 px-4 text-left transition-colors duration-200 hover:bg-muted/50 active:bg-muted motion-reduce:transition-none"
                   >
-                    <span
-                      className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                        meta.accent,
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
+                    <span className="flex w-7 shrink-0 items-center justify-center text-foreground">
+                      <Icon className="size-6" strokeWidth={1.8} />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">
+                      <span className="block truncate text-[16px] font-medium leading-5">
                         {session.title}
                         {session.subtitle ? (
                           <span className="text-muted-foreground">
@@ -239,15 +259,15 @@ export function MobileBrowse() {
                           </span>
                         ) : null}
                       </span>
-                      <span className="block truncate text-xs text-muted-foreground">
+                      <span className="mt-1 block truncate text-[13px] leading-4 text-muted-foreground">
                         {formatDate(session.date)} · {meta.label}
                       </span>
                     </span>
-                    <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="flex shrink-0 items-center gap-1.5 text-[13px] text-muted-foreground">
                       {session.attendeeIds.length}
                       <ChevronDown
                         className={cn(
-                          "h-4 w-4 transition-transform",
+                          "size-4 transition-transform duration-200 motion-reduce:transition-none",
                           isExpanded && "rotate-180",
                         )}
                       />
@@ -255,17 +275,17 @@ export function MobileBrowse() {
                   </button>
 
                   {isExpanded ? (
-                    <div className="border-t bg-muted/30 px-3 py-2">
+                    <div className="border-t bg-muted/45 px-4 py-2.5">
                       {session.attendeeIds.length === 0 ? (
-                        <p className="py-1 text-xs text-muted-foreground">
+                        <p className="py-2 text-[13px] text-muted-foreground">
                           No attendees recorded
                         </p>
                       ) : (
-                        <ul className="divide-y divide-border/60">
+                        <ul className="divide-y divide-border/70">
                           {session.attendeeIds.map((personId, index) => (
                             <li
                               key={`${session.key}-${personId}-${index}`}
-                              className="py-1.5 text-sm"
+                              className="py-2.5 text-[15px]"
                             >
                               {nameById.get(personId) ?? "Unknown"}
                             </li>

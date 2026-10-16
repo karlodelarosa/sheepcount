@@ -141,31 +141,34 @@ export function MobileEventAttendance() {
         backHref="/mobile"
       >
         {activeEvents.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-12 text-center text-sm text-muted-foreground">
-            <CalendarDays className="h-6 w-6" />
+          <div className="flex flex-col items-center gap-3 rounded-[20px] bg-card py-14 text-center text-[15px] text-muted-foreground">
+            <CalendarDays className="size-6" strokeWidth={1.8} />
             No active events
           </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="overflow-hidden rounded-[20px] bg-card ring-1 ring-black/[0.04] dark:ring-white/[0.08]">
             {activeEvents.map(event => (
-              <li key={event.id}>
+              <li key={event.id} className="border-b last:border-b-0">
                 <button
                   type="button"
                   onClick={() => openEvent(event.id)}
-                  className="flex w-full items-center gap-3 rounded-xl border bg-card px-4 py-3.5 text-left transition-colors hover:bg-muted/50 active:scale-[0.99]"
+                  className="flex min-h-[72px] w-full items-center gap-3.5 px-4 text-left transition-colors duration-200 hover:bg-muted/50 active:bg-muted motion-reduce:transition-none"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                    <CalendarDays className="h-5 w-5" />
+                  <span className="flex w-7 shrink-0 items-center justify-center text-foreground">
+                    <CalendarDays className="size-6" strokeWidth={1.8} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">
+                    <span className="block truncate text-[16px] font-medium">
                       {event.title}
                     </span>
-                    <span className="block truncate text-xs text-muted-foreground">
+                    <span className="mt-1 block truncate text-[13px] text-muted-foreground">
                       {event.startDate}
                     </span>
                   </span>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  <ChevronRight
+                    className="size-5 shrink-0 text-muted-foreground/70"
+                    strokeWidth={1.8}
+                  />
                 </button>
               </li>
             ))}
@@ -186,7 +189,7 @@ export function MobileEventAttendance() {
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 px-2 text-xs"
+          className="h-11 rounded-xl px-3 text-[13px]"
           onClick={closeEvent}
         >
           Change

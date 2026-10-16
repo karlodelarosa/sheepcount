@@ -6,6 +6,7 @@ import type { ModuleGroupKey, ModuleItemKey } from "@/lib/subscription/plans";
 const PLAN_GROUP_LABELS: Record<ModuleGroupKey, string> = {
   dashboard: "Dashboard",
   people_membership: "People & Membership",
+  life_events: "Life Events",
   groups_ministry: "Groups & Ministry",
   attendance: "Attendance",
   development: "Development",
@@ -20,6 +21,7 @@ const PLAN_ITEM_LABELS: Partial<Record<ModuleItemKey, string>> = {
   water_baptism: "Water Baptism",
   weddings: "Weddings",
   dedications: "Child Dedication",
+  memorials: "Memorial Records",
   growth_track: "Growth Track",
   properties: "Properties",
   financial: "Financial",

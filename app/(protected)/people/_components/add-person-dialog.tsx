@@ -76,12 +76,14 @@ export function AddPersonDialog({
   const buildInput = (formData: FormData): AddPersonInput => {
     const phone = (formData.get("phone") as string)?.trim();
     const birthdate = (formData.get("birthdate") as string)?.trim();
+    const socialContact = (formData.get("socialContact") as string)?.trim();
 
     return {
       firstName: formData.get("firstName") as string,
       middleName: (formData.get("middleName") as string) || undefined,
       lastName: formData.get("lastName") as string,
       phone: phone || undefined,
+      socialContact: socialContact || undefined,
       birthdate: birthdate || undefined,
       firstAttendance:
         (formData.get("firstAttendance") as string)?.trim() || undefined,
@@ -132,11 +134,7 @@ export function AddPersonDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          ref={formRef}
-          onSubmit={handleSubmit}
-          className="space-y-4"
-        >
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Where are they on the journey?</Label>
             <ToggleGroup
@@ -207,6 +205,22 @@ export function AddPersonDialog({
               disabled={isSaving}
               className="rounded-xl"
               autoComplete="tel"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="socialContact">
+              Social media contact{" "}
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
+            </Label>
+            <Input
+              id="socialContact"
+              name="socialContact"
+              placeholder="Name, @handle, or profile link"
+              disabled={isSaving}
+              className="rounded-xl"
             />
           </div>
 

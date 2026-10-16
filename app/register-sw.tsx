@@ -7,7 +7,11 @@ export function RegisterServiceWorker() {
     if (typeof window === "undefined" || !("serviceWorker" in navigator))
       return;
     navigator.serviceWorker
-      .register("/sw.js", { scope: "/mobile" })
+      .register("/sw.js", {
+        scope: "/mobile",
+        updateViaCache: "none",
+      })
+      .then(registration => registration.update())
       .catch(() => {
         // Installability is a progressive enhancement, not required to use the app.
       });

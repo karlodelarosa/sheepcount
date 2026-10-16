@@ -314,7 +314,7 @@ export function MobileServiceAttendance() {
               <Button
                 type="button"
                 variant="outline"
-                className="h-11 shrink-0 gap-1.5"
+                className="h-[52px] shrink-0 gap-1.5 rounded-xl"
                 onClick={addGuest}
                 disabled={!guestInput.trim()}
               >
@@ -329,7 +329,7 @@ export function MobileServiceAttendance() {
                   return (
                     <span
                       key={key}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[13px]"
                     >
                       {guest ? formatGuestName(guest) : "Guest"}
                       <button
@@ -370,7 +370,7 @@ export function MobileServiceAttendance() {
 
       {step === 3 && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2 text-sm">
+          <div className="flex min-h-[52px] items-center justify-between rounded-[16px] bg-card px-4 text-[15px] ring-1 ring-black/[0.04] dark:ring-white/[0.08]">
             <span className="flex items-center gap-1.5">
               <Clock className="h-4 w-4 text-muted-foreground" />
               Baseline{" "}
@@ -392,7 +392,7 @@ export function MobileServiceAttendance() {
                 type="button"
                 size="sm"
                 variant="outline"
-                className="h-8 flex-1 px-2 text-xs"
+                className="h-11 flex-1 rounded-xl px-2 text-[13px]"
                 onClick={() => applyToggleToAll(toggle)}
               >
                 {formatArrivalStatusLabel(toggle)}
@@ -400,7 +400,7 @@ export function MobileServiceAttendance() {
             ))}
           </div>
 
-          <ul className="space-y-2">
+          <ul className="overflow-hidden rounded-[20px] bg-card ring-1 ring-black/[0.04] dark:ring-white/[0.08]">
             {attendees.map(attendee => {
               const arrivalStatus = classifyArrival(
                 attendee.timeOfArrival,
@@ -409,13 +409,13 @@ export function MobileServiceAttendance() {
               return (
                 <li
                   key={attendee.key}
-                  className="flex items-center gap-3 rounded-xl border bg-card px-3 py-2.5"
+                  className="flex min-h-[68px] items-center gap-3 border-b px-4 last:border-b-0"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
+                    <p className="truncate text-[16px] font-medium">
                       {attendee.name}
                     </p>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="mt-0.5 truncate text-[13px] text-muted-foreground">
                       {attendee.status === "new"
                         ? "New guest"
                         : attendee.householdName}

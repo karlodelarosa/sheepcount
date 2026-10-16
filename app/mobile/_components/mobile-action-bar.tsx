@@ -19,15 +19,15 @@ export function MobileActionBar({
   className,
 }: MobileActionBarProps) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       <div
         className={cn(
-          "pointer-events-auto w-full max-w-md border-t bg-card/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur supports-[backdrop-filter]:bg-card/85",
+          "pointer-events-auto w-full max-w-[26.5rem] rounded-[22px] border border-black/[0.06] bg-card/92 p-3 shadow-[0_10px_35px_rgba(0,0,0,0.14)] backdrop-blur-xl dark:border-white/[0.1] supports-[backdrop-filter]:bg-card/84 [&_button]:min-h-[3.25rem] [&_button]:rounded-xl",
           className,
         )}
       >
         {hint ? (
-          <div className="mb-2 text-center text-xs text-muted-foreground">
+          <div className="mb-2 text-center text-[13px] text-muted-foreground">
             {hint}
           </div>
         ) : null}

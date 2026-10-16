@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
@@ -96,12 +93,8 @@ export function PersonDetails({
     cellGroups,
     cellGroupMembers,
   } = useGroupsMinistry();
-  const {
-    getPersonBadges,
-    getPersonDiscipleshipRoles,
-    tracks,
-    enrollments,
-  } = useDiscipleship();
+  const { getPersonBadges, getPersonDiscipleshipRoles, tracks, enrollments } =
+    useDiscipleship();
   const {
     courses,
     modules,
@@ -189,10 +182,13 @@ export function PersonDetails({
 
   const trackBadgeColors: Record<string, string> = {
     blue: "from-blue-500 to-blue-700 dark:from-sky-600 dark:to-cyan-800",
-    green: "from-green-500 to-green-700 dark:from-emerald-600 dark:to-green-800",
-    purple: "from-purple-500 to-purple-700 dark:from-violet-600 dark:to-fuchsia-800",
+    green:
+      "from-green-500 to-green-700 dark:from-emerald-600 dark:to-green-800",
+    purple:
+      "from-purple-500 to-purple-700 dark:from-violet-600 dark:to-fuchsia-800",
     pink: "from-pink-500 to-pink-700 dark:from-rose-600 dark:to-pink-800",
-    indigo: "from-indigo-500 to-indigo-700 dark:from-indigo-600 dark:to-indigo-800",
+    indigo:
+      "from-indigo-500 to-indigo-700 dark:from-indigo-600 dark:to-indigo-800",
   };
 
   const attendanceStats = buildPersonAttendanceStats(
@@ -201,7 +197,9 @@ export function PersonDetails({
     person?.lastAttendance,
   );
 
-  const growthTrackPerson = growthTrack?.growthPeople.find(p => p.id === personId);
+  const growthTrackPerson = growthTrack?.growthPeople.find(
+    p => p.id === personId,
+  );
   const pastoralStatus = person
     ? getPersonPastoralStatus(
         person,
@@ -243,6 +241,8 @@ export function PersonDetails({
         return "bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300";
       case "Exited":
         return "bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-300";
+      case "Deceased":
+        return "bg-slate-200 text-slate-700 dark:bg-zinc-700 dark:text-zinc-200";
       default:
         return "bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
     }
@@ -263,7 +263,9 @@ export function PersonDetails({
       middleName: (formData.get("middleName") as string) || "",
       lastName: formData.get("lastName") as string,
       phone: formData.get("phone") as string,
-      birthdate: ((formData.get("birthdate") as string) || "").trim() || undefined,
+      socialContact: (formData.get("socialContact") as string) || "",
+      birthdate:
+        ((formData.get("birthdate") as string) || "").trim() || undefined,
       firstAttendance:
         ((formData.get("firstAttendance") as string) || "").trim() || undefined,
       memberSince:
@@ -271,7 +273,7 @@ export function PersonDetails({
       email: (formData.get("email") as string) || "",
       gender: editGender || null,
       role: editRole,
-      status: editStatus as "Active" | "Inactive" | "Exited",
+      status: editStatus as "Active" | "Inactive" | "Exited" | "Deceased",
     });
     setConfirmEditOpen(true);
   };
@@ -444,7 +446,8 @@ export function PersonDetails({
                   Assign to Ministry
                 </DropdownMenuItem>
 
-                {(person.status === "Active" || person.status === "Inactive") && (
+                {(person.status === "Active" ||
+                  person.status === "Inactive") && (
                   <>
                     <DropdownMenuSeparator />
                     {person.status === "Active" && (
@@ -499,6 +502,7 @@ export function PersonDetails({
               visitDate,
             )}
             isProspect={person.isProspect}
+            cellGroupRole={cellGroup?.role}
             isEditing={isEditing}
             discipleshipBadges={discipleshipBadges}
             trackBadgeColors={trackBadgeColors}
@@ -649,9 +653,7 @@ export function PersonDetails({
         onOpenChange={setHouseholdOpen}
         personName={person.name}
         households={households.filter(
-          h =>
-            h.id !== person.householdId ||
-            inFamilyHousehold,
+          h => h.id !== person.householdId || inFamilyHousehold,
         )}
         currentHouseholdId={person.householdId ?? undefined}
         canRemoveFromHousehold={hasHousehold}

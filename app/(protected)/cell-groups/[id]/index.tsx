@@ -1,10 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, UserPlus, Search, ArrowLeft, Users } from "lucide-react";
+import {
+  X,
+  UserPlus,
+  Search,
+  ArrowLeft,
+  Users,
+  MapPin,
+  Save,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -29,8 +37,6 @@ interface CellGroupDetailsProps {
   onBack: () => void;
 }
 
-const MAX_CELL_SIZE = 4;
-
 export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
   const { people } = usePeople();
   const {
@@ -39,13 +45,19 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
     hydrated,
     isSaving,
     assignCellGroupMember,
+    assignCellGroupLeader,
+    updateCellGroupById,
     removeCellGroupMemberById,
   } = useGroupsMinistry();
   const [searchTerm, setSearchTerm] = useState("");
   const [newPersonId, setNewPersonId] = useState("");
-  const [newRole, setNewRole] = useState<"Leader" | "Member">("Member");
+  const [location, setLocation] = useState("");
 
   const group = cellGroups.find(g => g.id === groupId);
+
+  useEffect(() => {
+    setLocation(group?.location ?? "");
+  }, [group?.id, group?.location]);
 
   const memberships = useMemo(
     () => cellGroupMembers.filter(m => m.cellGroupId === groupId),
@@ -76,19 +88,36 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
     [people, memberships, peopleInOtherCells],
   );
 
+  const leaderCandidates = useMemo(
+    () =>
+      people.filter(person => {
+        const membership = cellGroupMembers.find(
+          member => member.personId === person.id,
+        );
+        return !membership || membership.cellGroupId === groupId;
+      }),
+    [cellGroupMembers, groupId, people],
+  );
+
+  const effectiveLeaderId =
+    group?.leaderPersonId ??
+    memberships.find(member => member.role === "Leader")?.personId ??
+    "";
+
   const filteredMembers = members.filter(member =>
     member.person?.name?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const atCapacity = members.length >= MAX_CELL_SIZE;
-
   const handleAddMember = async () => {
-    if (!newPersonId || atCapacity) return;
-    const result = await assignCellGroupMember(groupId, newPersonId, newRole);
+    if (!newPersonId) return;
+    const result = await assignCellGroupMember(groupId, newPersonId, "Member");
     if (result) {
       setNewPersonId("");
-      setNewRole("Member");
     }
+  };
+
+  const handleSaveLocation = async () => {
+    await updateCellGroupById(groupId, { location });
   };
 
   const handleRemoveMember = async (membershipId: string) => {
@@ -116,7 +145,12 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
     return (
       <div className="space-y-6 p-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={onBack} className="rounded-xl">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onBack}
+            className="rounded-xl"
+          >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-slate-900 dark:text-white">Group Not Found</h1>
@@ -140,12 +174,12 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
           <div>
             <h1 className="text-slate-900 dark:text-white">{group.name}</h1>
             <p className="text-slate-600 dark:text-zinc-400">
-              {group.description || "Small group Bible study and accountability"}
+              {group.description || "Open Cell Group feeder course"}
             </p>
           </div>
         </div>
         <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
-          {members.length}/{MAX_CELL_SIZE} members
+          {members.length} members
         </Badge>
       </div>
 
@@ -156,8 +190,7 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
               Add Member
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-zinc-400">
-              Cell groups are kept small (3–4 people). A person can only belong
-              to one cell group at a time.
+              A person has one primary Cell Group but may visit other groups.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -171,29 +204,62 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
                 triggerClassName={DualModeInputClass}
               />
             </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Select
-                value={newRole}
-                onValueChange={v => setNewRole(v as "Leader" | "Member")}
-              >
-                <SelectTrigger className={DualModeInputClass}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Leader">Leader</SelectItem>
-                  <SelectItem value="Member">Member</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <Button
               onClick={() => void handleAddMember()}
-              disabled={!newPersonId || atCapacity || isSaving}
+              disabled={!newPersonId || isSaving}
               className={`w-full ${DualModePrimaryButtonClass}`}
             >
               <UserPlus className="w-4 h-4 mr-2" />
-              {atCapacity ? "Group Full" : "Add to Cell Group"}
+              Add to Cell Group
             </Button>
+            <div className="space-y-2 border-t pt-4">
+              <Label>Permanent Cell Group leader</Label>
+              <Select
+                value={effectiveLeaderId}
+                onValueChange={personId =>
+                  void assignCellGroupLeader(groupId, personId)
+                }
+                disabled={isSaving}
+              >
+                <SelectTrigger className={DualModeInputClass}>
+                  <SelectValue placeholder="Choose a trained leader" />
+                </SelectTrigger>
+                <SelectContent>
+                  {leaderCandidates.map(person => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-slate-500 dark:text-zinc-500">
+                Permanent leaders must have completed Cell Leader training.
+              </p>
+            </div>
+            <div className="space-y-2 border-t pt-4">
+              <Label>Default meeting location</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Input
+                    value={location}
+                    onChange={event => setLocation(event.target.value)}
+                    placeholder="Home, campus, or address"
+                    className={`pl-9 ${DualModeInputClass}`}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => void handleSaveLocation()}
+                  disabled={isSaving || location === group.location}
+                  aria-label="Save default location"
+                >
+                  <Save className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -246,7 +312,10 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
+                        <Badge
+                          variant="secondary"
+                          className={DualModeSecondaryBadgeClass}
+                        >
                           {member.role}
                         </Badge>
                         <Button

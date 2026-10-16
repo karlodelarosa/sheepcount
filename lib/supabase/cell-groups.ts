@@ -7,6 +7,7 @@ export type CellGroup = {
   id: string;
   name: string;
   description: string;
+  location: string;
   leaderPersonId: string | null;
   status: CellGroupStatus;
   parentCellGroupId: string | null;
@@ -24,6 +25,7 @@ type DbCellGroup = {
   id: string;
   name: string;
   description: string;
+  location: string;
   leader_person_id: string | null;
   status: CellGroupStatus;
   parent_cell_group_id: string | null;
@@ -42,6 +44,7 @@ function toCellGroup(row: DbCellGroup): CellGroup {
     id: row.id,
     name: row.name,
     description: row.description,
+    location: row.location ?? "",
     leaderPersonId: row.leader_person_id,
     status: row.status,
     parentCellGroupId: row.parent_cell_group_id,
@@ -64,7 +67,9 @@ export async function fetchCellGroups(
 ): Promise<CellGroup[]> {
   const { data, error } = await supabase
     .from("cell_groups")
-    .select("id, name, description, leader_person_id, status, parent_cell_group_id")
+    .select(
+      "id, name, description, location, leader_person_id, status, parent_cell_group_id",
+    )
     .eq("organization_id", organizationId)
     .order("name");
 
@@ -90,6 +95,7 @@ export async function fetchCellGroupMembers(
 export type CreateCellGroupInput = {
   name: string;
   description?: string;
+  location?: string;
   leaderPersonId?: string;
 };
 
@@ -104,9 +110,12 @@ export async function createCellGroup(
       organization_id: organizationId,
       name: input.name.trim(),
       description: input.description?.trim() ?? "",
+      location: input.location?.trim() ?? "",
       leader_person_id: input.leaderPersonId ?? null,
     })
-    .select("id, name, description, leader_person_id, status, parent_cell_group_id")
+    .select(
+      "id, name, description, location, leader_person_id, status, parent_cell_group_id",
+    )
     .single();
 
   if (error) throw error;
@@ -160,6 +169,19 @@ export async function addCellGroupMember(
     return toCellGroupMember(row);
   }
 
+  const { data: otherMembership, error: otherMembershipError } = await supabase
+    .from("cell_group_members")
+    .select("id, cell_group_id")
+    .eq("person_id", personId)
+    .neq("cell_group_id", cellGroupId)
+    .limit(1)
+    .maybeSingle();
+
+  if (otherMembershipError) throw otherMembershipError;
+  if (otherMembership) {
+    throw new Error("This person already belongs to another cell group.");
+  }
+
   if (role === "Leader") {
     let orgId = organizationId;
     if (!orgId) {
@@ -208,6 +230,14 @@ export async function updateCellGroupLeader(
     organizationId,
   );
 
+  const { error: demoteError } = await supabase
+    .from("cell_group_members")
+    .update({ role: "Member" })
+    .eq("cell_group_id", cellGroupId)
+    .eq("role", "Leader")
+    .neq("person_id", leaderPersonId);
+  if (demoteError) throw demoteError;
+
   const { data, error } = await supabase
     .from("cell_groups")
     .update({
@@ -217,7 +247,42 @@ export async function updateCellGroupLeader(
     .eq("id", cellGroupId)
     .eq("organization_id", organizationId)
     .select(
-      "id, name, description, leader_person_id, status, parent_cell_group_id",
+      "id, name, description, location, leader_person_id, status, parent_cell_group_id",
+    )
+    .single();
+
+  if (error) throw error;
+  return toCellGroup(data as DbCellGroup);
+}
+
+export type UpdateCellGroupInput = {
+  name?: string;
+  description?: string;
+  location?: string;
+};
+
+export async function updateCellGroup(
+  supabase: SupabaseClient,
+  organizationId: string,
+  cellGroupId: string,
+  input: UpdateCellGroupInput,
+): Promise<CellGroup> {
+  const updates: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+  if (input.name !== undefined) updates.name = input.name.trim();
+  if (input.description !== undefined) {
+    updates.description = input.description.trim();
+  }
+  if (input.location !== undefined) updates.location = input.location.trim();
+
+  const { data, error } = await supabase
+    .from("cell_groups")
+    .update(updates)
+    .eq("id", cellGroupId)
+    .eq("organization_id", organizationId)
+    .select(
+      "id, name, description, location, leader_person_id, status, parent_cell_group_id",
     )
     .single();
 

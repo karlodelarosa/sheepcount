@@ -47,8 +47,8 @@ export default function MobileLayout({
               <GrowthTrackProvider>
                 <EventsProvider>
                   <RegisterServiceWorker />
-                  <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
-                    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background shadow-sm">
+                  <div className="mobile-ui min-h-screen bg-background text-foreground">
+                    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background">
                       {children}
                     </div>
                   </div>

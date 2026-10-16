@@ -150,6 +150,7 @@ export const BASIC_ENTITLEMENTS_FALLBACK: Entitlements = {
     groups: {
       dashboard: { enabled: true },
       people_membership: { enabled: true },
+      life_events: { enabled: false },
       groups_ministry: { enabled: true },
       attendance: { enabled: true },
       development: { enabled: true },
@@ -167,6 +168,7 @@ export const BASIC_ENTITLEMENTS_FALLBACK: Entitlements = {
       water_baptism: { enabled: false },
       weddings: { enabled: false },
       dedications: { enabled: false },
+      memorials: { enabled: false },
       life_groups: { enabled: true },
       cell_groups: { enabled: true },
       work_ministry: { enabled: true },
@@ -200,6 +202,7 @@ export const PRO_ENTITLEMENTS_FALLBACK: Entitlements = {
     groups: {
       dashboard: { enabled: true },
       people_membership: { enabled: true },
+      life_events: { enabled: true },
       groups_ministry: { enabled: true },
       attendance: { enabled: true },
       development: { enabled: true },
@@ -217,6 +220,7 @@ export const PRO_ENTITLEMENTS_FALLBACK: Entitlements = {
       water_baptism: { enabled: true },
       weddings: { enabled: true },
       dedications: { enabled: true },
+      memorials: { enabled: true },
       life_groups: { enabled: true },
       cell_groups: { enabled: true },
       work_ministry: { enabled: true },

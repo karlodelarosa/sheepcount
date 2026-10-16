@@ -2,8 +2,15 @@
 
 import { Award, Droplets } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { PersonAvatar, panelCard, type PersonAchievementKind } from "./person-detail-ui";
-import { PersonPastoralBadge, PersonPastoralAlert } from "./person-pastoral-alert";
+import {
+  PersonAvatar,
+  panelCard,
+  type PersonAchievementKind,
+} from "./person-detail-ui";
+import {
+  PersonPastoralBadge,
+  PersonPastoralAlert,
+} from "./person-pastoral-alert";
 import type { PersonPastoralStatus } from "../_lib/person-pastoral-status";
 import { isPastoralAlertLevel } from "../_lib/person-pastoral-status";
 import { cn } from "@/lib/utils";
@@ -57,6 +64,7 @@ type PersonProfileHeroProps = {
   membershipLabel: string;
   membershipColorClass: string;
   isProspect: boolean;
+  cellGroupRole?: "Leader" | "Member";
   isEditing: boolean;
   discipleshipBadges: Array<{
     enrollmentId: string;
@@ -80,6 +88,7 @@ export function PersonProfileHero({
   membershipLabel,
   membershipColorClass,
   isProspect,
+  cellGroupRole,
   isEditing,
   discipleshipBadges,
   trackBadgeColors,
@@ -124,12 +133,17 @@ export function PersonProfileHero({
                 >
                   {membershipLabel}
                 </Badge>
-                {!isEditing && (
-                  <PersonPastoralBadge status={pastoralStatus} />
-                )}
+                {!isEditing && <PersonPastoralBadge status={pastoralStatus} />}
                 {isProspect && (
                   <Badge className="rounded-md px-1.5 py-0 text-[10px] h-5 bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300">
                     Prospect
+                  </Badge>
+                )}
+                {cellGroupRole && (
+                  <Badge className="h-5 rounded-md bg-teal-100 px-1.5 py-0 text-[10px] text-teal-800 dark:bg-teal-950 dark:text-teal-200">
+                    {cellGroupRole === "Leader"
+                      ? "Cell Group Leader"
+                      : "Cell Group Member"}
                   </Badge>
                 )}
                 {showBaptismBadge && baptizedAt && (
@@ -161,9 +175,7 @@ export function PersonProfileHero({
               </div>
             </div>
 
-            {!isEditing && (
-              <ProfileQuickStats items={quickStats} />
-            )}
+            {!isEditing && <ProfileQuickStats items={quickStats} />}
           </div>
         </div>
 

@@ -15,11 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  getMembershipDisplayColor,
-  getMembershipDisplayLabel,
-  MEMBERSHIP_TYPE_OPTIONS,
-} from "@/lib/membership-path";
+import { MEMBERSHIP_TYPE_OPTIONS } from "@/lib/membership-path";
 import type { EvangelismStage, MembershipType } from "@/lib/people";
 import {
   countActivePeopleFilters,
@@ -33,6 +29,7 @@ const STATUS_OPTIONS = [
   { value: "Active", label: "Active" },
   { value: "Inactive", label: "Inactive" },
   { value: "Exited", label: "Exited" },
+  { value: "Deceased", label: "Deceased" },
 ] as const;
 
 const MEMBERSHIP_OPTIONS: { value: MembershipType | "all"; label: string }[] = [
@@ -81,7 +78,7 @@ export function PeopleFilterBar({
         <div className="flex items-center gap-2 flex-1 px-4 py-2 bg-slate-50 rounded-xl border border-slate-200/60 dark:bg-zinc-700 dark:border-zinc-600/60">
           <Search className="w-4 h-4 text-slate-400 dark:text-zinc-400 shrink-0" />
           <Input
-            placeholder="Search by name, phone, household, or email..."
+            placeholder="Search name, phone, social, household, or email..."
             value={search}
             onChange={e => onSearchChange(e.target.value)}
             className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400 text-slate-900 dark:placeholder:text-zinc-400 dark:text-white"
@@ -159,7 +156,8 @@ export function PeopleFilterBar({
                   onValueChange={value =>
                     onFiltersChange({
                       ...filters,
-                      evangelismStage: value as PeopleFilters["evangelismStage"],
+                      evangelismStage:
+                        value as PeopleFilters["evangelismStage"],
                     })
                   }
                 >

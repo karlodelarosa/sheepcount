@@ -3,10 +3,7 @@ import type {
   MembershipType,
   PersonStatus,
 } from "@/lib/people";
-import {
-  type PeopleAchievementFilter,
-  type PeopleFilters,
-} from "./filters";
+import { type PeopleAchievementFilter, type PeopleFilters } from "./filters";
 
 export const PEOPLE_PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 export type PeoplePageSize = (typeof PEOPLE_PAGE_SIZE_OPTIONS)[number];
@@ -26,6 +23,7 @@ const VALID_STATUSES = new Set<PersonStatus | "all">([
   "Active",
   "Inactive",
   "Exited",
+  "Deceased",
 ]);
 const VALID_MEMBERSHIP = new Set<MembershipType | "all">([
   "all",

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Award,
+  AtSign,
   BookOpen,
   Calendar,
   CalendarCheck,
@@ -54,6 +55,7 @@ import { PersonHouseholdSection } from "./person-household-section";
 import { PersonAttendanceSection } from "./person-attendance-section";
 import { PersonPastoralAlert } from "./person-pastoral-alert";
 import { PersonBaptismSection } from "./person-baptism-section";
+import { PersonMemorialSection } from "./person-memorial-section";
 import type { PersonAttendanceRow } from "../_lib/person-attendance";
 import type { PersonPastoralStatus } from "../_lib/person-pastoral-status";
 import { isPastoralAlertLevel } from "../_lib/person-pastoral-status";
@@ -66,11 +68,7 @@ export type PersonDetailTab =
   | "growth";
 
 function parseTab(value: string | null): PersonDetailTab {
-  if (
-    value === "community" ||
-    value === "attendance" ||
-    value === "growth"
-  ) {
+  if (value === "community" || value === "attendance" || value === "growth") {
     return value;
   }
   return "overview";
@@ -152,9 +150,11 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
 
   useEffect(() => {
     if (props.isEditing && activeTab !== "overview") {
-      setActiveTab("overview");
+      router.replace(`/people/${props.personId}?tab=overview`, {
+        scroll: false,
+      });
     }
-  }, [props.isEditing, activeTab]);
+  }, [props.isEditing, props.personId, activeTab, router]);
 
   const {
     person,
@@ -309,6 +309,16 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                       className="rounded-xl"
                     />
                   </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="socialContact">Social media contact</Label>
+                    <Input
+                      id="socialContact"
+                      name="socialContact"
+                      defaultValue={person.socialContact}
+                      placeholder="Name, @handle, or profile link"
+                      className="rounded-xl"
+                    />
+                  </div>
                   <div className="col-span-2">
                     <BirthdateField
                       key={`${personId}-${isEditing}-birthdate`}
@@ -392,6 +402,7 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                         <SelectItem value="Active">Active</SelectItem>
                         <SelectItem value="Inactive">Inactive</SelectItem>
                         <SelectItem value="Exited">Exited</SelectItem>
+                        <SelectItem value="Deceased">Deceased</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -423,6 +434,13 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                     </span>
                   )}
                 </InfoTile>
+                <InfoTile icon={AtSign} label="Social media">
+                  {person.socialContact || (
+                    <span className="text-slate-400 font-normal">
+                      Not provided
+                    </span>
+                  )}
+                </InfoTile>
                 <InfoTile icon={Calendar} label="Birthdate">
                   {person.birthdate
                     ? new Date(person.birthdate).toLocaleDateString()
@@ -449,7 +467,7 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                   </Badge>
                 </InfoTile>
                 <InfoTile icon={Calendar} label="First attendance">
-                  {(person.firstAttendance || person.joinDate)
+                  {person.firstAttendance || person.joinDate
                     ? new Date(
                         person.firstAttendance || person.joinDate,
                       ).toLocaleDateString()
@@ -647,6 +665,8 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
           people={people}
           baptismRecords={profileDetails.baptism.records}
         />
+
+        <PersonMemorialSection person={person} />
 
         <div className={cn(panelCard, "p-5")}>
           <SectionHeader

@@ -62,7 +62,7 @@ const STATUS_SECTIONS: {
     icon: UserX,
   },
   {
-    status: "Exited",
+    status: "Deceased",
     title: "In Loving Memory",
     description: "Beloved members who have passed away",
     icon: Heart,
@@ -395,7 +395,10 @@ export function BirthdaysTab({ people }: BirthdaysTabProps) {
                   const Icon = section.icon;
 
                   return (
-                    <Card key={section.status} className="border-border/60 bg-card/50">
+                    <Card
+                      key={section.status}
+                      className="border-border/60 bg-card/50"
+                    >
                       <CardHeader className="py-3 px-4">
                         <div className="flex items-center justify-between gap-2">
                           <div>
@@ -407,7 +410,10 @@ export function BirthdaysTab({ people }: BirthdaysTabProps) {
                               {section.description}
                             </CardDescription>
                           </div>
-                          <Badge variant="outline" className="text-[10px] shrink-0">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] shrink-0"
+                          >
                             {section.people.length}
                           </Badge>
                         </div>
@@ -415,7 +421,10 @@ export function BirthdaysTab({ people }: BirthdaysTabProps) {
                       <CardContent className="px-4 pb-4 pt-0">
                         <div className="space-y-1.5">
                           {section.people.map(person => (
-                            <BirthdayPersonRow key={person.id} person={person} />
+                            <BirthdayPersonRow
+                              key={person.id}
+                              person={person}
+                            />
                           ))}
                         </div>
                       </CardContent>
@@ -459,7 +468,6 @@ export function BirthdaysTab({ people }: BirthdaysTabProps) {
           )}
         </CardContent>
       </Card>
-
     </div>
   );
 }

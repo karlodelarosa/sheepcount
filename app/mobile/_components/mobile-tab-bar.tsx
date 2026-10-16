@@ -28,8 +28,8 @@ export function MobileTabBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center">
-      <div className="pointer-events-auto flex w-full max-w-md items-stretch justify-around border-t bg-card px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div className="pointer-events-auto flex w-full max-w-[26.5rem] items-stretch justify-around rounded-[22px] border border-black/[0.06] bg-card/90 p-1.5 shadow-[0_10px_35px_rgba(0,0,0,0.12)] backdrop-blur-xl dark:border-white/[0.1] supports-[backdrop-filter]:bg-card/82">
         {TABS.map(tab => {
           const active =
             !tab.hard &&
@@ -38,16 +38,15 @@ export function MobileTabBar() {
               : pathname.startsWith(tab.href));
           const Icon = tab.icon;
           const className = cn(
-            "flex flex-1 flex-col items-center gap-1 py-1.5 transition-colors",
-            active ? "text-primary" : "text-muted-foreground",
+            "flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl transition-colors duration-200 motion-reduce:transition-none",
+            active
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground hover:text-foreground",
           );
           const content = (
             <>
-              <Icon
-                className={cn("h-6 w-6", active && "fill-current")}
-                strokeWidth={active ? 2 : 1.75}
-              />
-              <span className="text-[11px] font-medium leading-none">
+              <Icon className="size-6" strokeWidth={active ? 2.1 : 1.75} />
+              <span className="text-[11px] font-medium leading-none tracking-[-0.01em]">
                 {tab.label}
               </span>
             </>

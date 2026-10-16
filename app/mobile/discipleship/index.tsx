@@ -22,10 +22,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useDiscipleship } from "@/lib/discipleship";
-import {
-  accentForIndex,
-  discipleshipFlatAccentThemes,
-} from "@/app/(protected)/discipleship/_lib/discipleship-themes";
 import { MobileShell } from "../_components/mobile-shell";
 
 function todayDateInputValue(): string {
@@ -59,10 +55,6 @@ export function MobileDiscipleship() {
   );
   const selectedGroup =
     selectedGroupIndex >= 0 ? groups[selectedGroupIndex] : null;
-  const theme =
-    discipleshipFlatAccentThemes[
-      accentForIndex(Math.max(selectedGroupIndex, 0))
-    ];
 
   const memberCountByGroup = useMemo(() => {
     const counts = new Map<string, number>();
@@ -139,39 +131,35 @@ export function MobileDiscipleship() {
         backHref="/mobile"
       >
         {groups.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-12 text-center text-sm text-muted-foreground">
-            <BookOpen className="h-6 w-6" />
+          <div className="flex flex-col items-center gap-3 rounded-[20px] bg-card py-14 text-center text-[15px] text-muted-foreground">
+            <BookOpen className="size-6" strokeWidth={1.8} />
             No discipleship groups yet
           </div>
         ) : (
-          <ul className="space-y-2">
-            {groups.map((group, index) => {
-              const rowTheme =
-                discipleshipFlatAccentThemes[accentForIndex(index)];
+          <ul className="overflow-hidden rounded-[20px] bg-card ring-1 ring-black/[0.04] dark:ring-white/[0.08]">
+            {groups.map(group => {
               return (
-                <li key={group.id}>
+                <li key={group.id} className="border-b last:border-b-0">
                   <button
                     type="button"
                     onClick={() => openGroup(group.id)}
-                    className="flex w-full items-center gap-3 rounded-xl border bg-card px-4 py-3.5 text-left transition-colors hover:bg-muted/50 active:scale-[0.99]"
+                    className="flex min-h-[72px] w-full items-center gap-3.5 px-4 text-left transition-colors duration-200 hover:bg-muted/50 active:bg-muted motion-reduce:transition-none"
                   >
-                    <span
-                      className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                        rowTheme.soft,
-                      )}
-                    >
-                      <BookOpen className="h-5 w-5" />
+                    <span className="flex w-7 shrink-0 items-center justify-center text-foreground">
+                      <BookOpen className="size-6" strokeWidth={1.8} />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">
+                      <span className="block truncate text-[16px] font-medium">
                         {group.name}
                       </span>
-                      <span className="block truncate text-xs text-muted-foreground">
+                      <span className="mt-1 block truncate text-[13px] text-muted-foreground">
                         {memberCountByGroup.get(group.id) ?? 0} members
                       </span>
                     </span>
-                    <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                    <ChevronRight
+                      className="size-5 shrink-0 text-muted-foreground/70"
+                      strokeWidth={1.8}
+                    />
                   </button>
                 </li>
               );
@@ -192,7 +180,7 @@ export function MobileDiscipleship() {
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 px-2 text-xs"
+          className="h-11 rounded-xl px-3 text-[13px]"
           onClick={closeGroup}
         >
           Change
@@ -203,18 +191,12 @@ export function MobileDiscipleship() {
         value={activeTab}
         onValueChange={value => setActiveTab(value as DetailTab)}
       >
-        <TabsList className="grid h-12 w-full grid-cols-2 gap-1 p-1">
-          <TabsTrigger
-            value="meeting"
-            className={cn("gap-1.5", theme.tabActive)}
-          >
+        <TabsList className="grid h-[52px] w-full grid-cols-2 gap-1 rounded-[16px] p-1">
+          <TabsTrigger value="meeting" className="gap-1.5">
             <BookOpen className="h-4 w-4" />
             Meeting
           </TabsTrigger>
-          <TabsTrigger
-            value="prayer"
-            className={cn("gap-1.5", theme.tabActive)}
-          >
+          <TabsTrigger value="prayer" className="gap-1.5">
             <HeartHandshake className="h-4 w-4" />
             Prayer Wall
           </TabsTrigger>
@@ -225,17 +207,12 @@ export function MobileDiscipleship() {
             <Accordion
               type="single"
               collapsible
-              className="rounded-xl border bg-card px-3.5"
+              className="rounded-[20px] bg-card px-4 ring-1 ring-black/[0.04] dark:ring-white/[0.08]"
             >
               <AccordionItem value="log-meeting" className="border-b-0">
                 <AccordionTrigger className="py-3 hover:no-underline">
                   <span className="flex items-center gap-2.5 text-sm font-medium">
-                    <span
-                      className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
-                        theme.soft,
-                      )}
-                    >
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                       <Plus className="h-3.5 w-3.5" />
                     </span>
                     Log a meeting
@@ -271,7 +248,7 @@ export function MobileDiscipleship() {
                     </div>
                     <Button
                       type="button"
-                      className={cn("h-11 w-full gap-1.5", theme.solid)}
+                      className="h-[52px] w-full gap-1.5 rounded-xl"
                       disabled={!meetingDate || !topic.trim() || isSaving}
                       onClick={() => void handleLogMeeting()}
                     >
@@ -287,20 +264,15 @@ export function MobileDiscipleship() {
                 Meeting history ({meetings.length})
               </Label>
               {meetings.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-                  <CalendarDays className="h-5 w-5" />
+                <div className="flex flex-col items-center gap-3 rounded-[20px] bg-card py-12 text-center text-[15px] text-muted-foreground">
+                  <CalendarDays className="size-6" strokeWidth={1.8} />
                   No meetings logged yet
                 </div>
               ) : (
-                <ul className="divide-y rounded-xl border bg-card">
+                <ul className="divide-y overflow-hidden rounded-[20px] bg-card ring-1 ring-black/[0.04] dark:ring-white/[0.08]">
                   {meetings.map(meeting => (
                     <li key={meeting.id} className="px-3.5 py-3">
-                      <div
-                        className={cn(
-                          "flex items-center gap-1.5 text-xs",
-                          theme.text,
-                        )}
-                      >
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <CalendarDays className="h-3.5 w-3.5" />
                         {new Date(meeting.meetingDate).toLocaleDateString(
                           undefined,
@@ -332,17 +304,12 @@ export function MobileDiscipleship() {
             <Accordion
               type="single"
               collapsible
-              className="rounded-xl border bg-card px-3.5"
+              className="rounded-[20px] bg-card px-4 ring-1 ring-black/[0.04] dark:ring-white/[0.08]"
             >
               <AccordionItem value="add-prayer" className="border-b-0">
                 <AccordionTrigger className="py-3 hover:no-underline">
                   <span className="flex items-center gap-2.5 text-sm font-medium">
-                    <span
-                      className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
-                        theme.soft,
-                      )}
-                    >
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
                       <Plus className="h-3.5 w-3.5" />
                     </span>
                     Add a prayer request
@@ -357,7 +324,7 @@ export function MobileDiscipleship() {
                     />
                     <Button
                       type="button"
-                      className={cn("h-11 w-full gap-1.5", theme.solid)}
+                      className="h-[52px] w-full gap-1.5 rounded-xl"
                       disabled={!prayerContent.trim() || isSaving}
                       onClick={() => void handleAddPrayerItem()}
                     >
@@ -373,12 +340,12 @@ export function MobileDiscipleship() {
                 Prayer wall ({prayerItems.length})
               </Label>
               {prayerItems.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
-                  <HeartHandshake className="h-5 w-5" />
+                <div className="flex flex-col items-center gap-3 rounded-[20px] bg-card py-12 text-center text-[15px] text-muted-foreground">
+                  <HeartHandshake className="size-6" strokeWidth={1.8} />
                   No prayer requests yet
                 </div>
               ) : (
-                <ul className="divide-y rounded-xl border bg-card">
+                <ul className="divide-y overflow-hidden rounded-[20px] bg-card ring-1 ring-black/[0.04] dark:ring-white/[0.08]">
                   {prayerItems.map(item => (
                     <li key={item.id} className="px-3.5 py-3">
                       <p className="text-xs text-muted-foreground">

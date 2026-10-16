@@ -18,11 +18,19 @@ import {
   fetchCellGroupMembers,
   fetchCellGroups,
   removeCellGroupMember,
+  updateCellGroup,
   updateCellGroupLeader,
   type CellGroup,
   type CellGroupMember,
   type CreateCellGroupInput,
+  type UpdateCellGroupInput,
 } from "@/lib/supabase/cell-groups";
+import {
+  fetchCellGroupSessions,
+  recordCellGroupAttendance,
+  type CellGroupSession,
+  type RecordCellGroupAttendanceInput,
+} from "@/lib/supabase/cell-group-attendance";
 import {
   addLifeGroupMember,
   createLifeGroup,
@@ -74,6 +82,7 @@ type GroupsMinistryContextValue = {
   workMinistryMembers: WorkMinistryMember[];
   cellGroups: CellGroup[];
   cellGroupMembers: CellGroupMember[];
+  cellGroupSessions: CellGroupSession[];
   hydrated: boolean;
   isSaving: boolean;
   refreshGroupsMinistry: () => Promise<void>;
@@ -109,7 +118,9 @@ type GroupsMinistryContextValue = {
     },
   ) => Promise<WorkMinistryMember | null>;
   removeWorkMinistryMemberById: (membershipId: string) => Promise<boolean>;
-  addWorkMinistry: (input: CreateWorkMinistryInput) => Promise<WorkMinistry | null>;
+  addWorkMinistry: (
+    input: CreateWorkMinistryInput,
+  ) => Promise<WorkMinistry | null>;
   assignWorkMinistryHead: (
     ministryId: string,
     personId: string | null,
@@ -132,6 +143,10 @@ type GroupsMinistryContextValue = {
   getMinistryTeams: (ministryId: string) => WorkMinistryTeam[];
   getTeamRoleOptions: (teamId: string) => WorkMinistryTeamRole[];
   addCellGroup: (input: CreateCellGroupInput) => Promise<CellGroup | null>;
+  updateCellGroupById: (
+    cellGroupId: string,
+    input: UpdateCellGroupInput,
+  ) => Promise<CellGroup | null>;
   assignCellGroupMember: (
     cellGroupId: string,
     personId: string,
@@ -142,9 +157,10 @@ type GroupsMinistryContextValue = {
     leaderPersonId: string,
   ) => Promise<CellGroup | null>;
   removeCellGroupMemberById: (membershipId: string) => Promise<boolean>;
-  getPersonMinistries: (
-    personId: string,
-  ) => (WorkMinistryMember & {
+  recordCellGroupAttendance: (
+    input: RecordCellGroupAttendanceInput,
+  ) => Promise<boolean>;
+  getPersonMinistries: (personId: string) => (WorkMinistryMember & {
     ministry?: WorkMinistry;
     team?: WorkMinistryTeam;
   })[];
@@ -185,9 +201,9 @@ export function GroupsMinistryProvider({
     LifeGroupSession[]
   >([]);
   const [workMinistries, setWorkMinistries] = useState<WorkMinistry[]>([]);
-  const [workMinistryTeams, setWorkMinistryTeams] = useState<WorkMinistryTeam[]>(
-    [],
-  );
+  const [workMinistryTeams, setWorkMinistryTeams] = useState<
+    WorkMinistryTeam[]
+  >([]);
   const [workMinistryTeamRoles, setWorkMinistryTeamRoles] = useState<
     WorkMinistryTeamRole[]
   >([]);
@@ -198,6 +214,9 @@ export function GroupsMinistryProvider({
   const [cellGroupMembers, setCellGroupMembers] = useState<CellGroupMember[]>(
     [],
   );
+  const [cellGroupSessions, setCellGroupSessions] = useState<
+    CellGroupSession[]
+  >([]);
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -212,6 +231,7 @@ export function GroupsMinistryProvider({
       setWorkMinistryMembers([]);
       setCellGroups([]);
       setCellGroupMembers([]);
+      setCellGroupSessions([]);
       setHydrated(!tenantLoading);
       return;
     }
@@ -227,6 +247,7 @@ export function GroupsMinistryProvider({
         ministryMembers,
         cells,
         cellMembers,
+        cellSessions,
       ] = await Promise.all([
         fetchLifeGroups(supabase, organizationId),
         fetchLifeGroupMembers(supabase, organizationId),
@@ -237,6 +258,7 @@ export function GroupsMinistryProvider({
         fetchWorkMinistryMembers(supabase, organizationId),
         fetchCellGroups(supabase, organizationId),
         fetchCellGroupMembers(supabase, organizationId),
+        fetchCellGroupSessions(supabase, organizationId),
       ]);
 
       setLifeGroups(groups);
@@ -248,6 +270,7 @@ export function GroupsMinistryProvider({
       setWorkMinistryMembers(ministryMembers);
       setCellGroups(cells);
       setCellGroupMembers(cellMembers);
+      setCellGroupSessions(cellSessions);
     } catch (error) {
       toast.error("Failed to load groups and ministries", {
         description: getErrorMessage(error),
@@ -319,7 +342,11 @@ export function GroupsMinistryProvider({
     ): Promise<LifeGroupMember | null> => {
       setIsSaving(true);
       try {
-        const member = await addLifeGroupMember(supabase, lifeGroupId, personId);
+        const member = await addLifeGroupMember(
+          supabase,
+          lifeGroupId,
+          personId,
+        );
         await refreshGroupsMinistry();
         toast.success("Member added to life group");
         return member;
@@ -592,7 +619,10 @@ export function GroupsMinistryProvider({
   );
 
   const addTeamRoleOption = useCallback(
-    async (teamId: string, name: string): Promise<WorkMinistryTeamRole | null> => {
+    async (
+      teamId: string,
+      name: string,
+    ): Promise<WorkMinistryTeamRole | null> => {
       setIsSaving(true);
       try {
         const role = await addWorkMinistryTeamRole(supabase, teamId, name);
@@ -718,6 +748,35 @@ export function GroupsMinistryProvider({
     [organizationId, refreshGroupsMinistry, supabase],
   );
 
+  const updateCellGroupById = useCallback(
+    async (
+      cellGroupId: string,
+      input: UpdateCellGroupInput,
+    ): Promise<CellGroup | null> => {
+      if (!organizationId) return null;
+      setIsSaving(true);
+      try {
+        const group = await updateCellGroup(
+          supabase,
+          organizationId,
+          cellGroupId,
+          input,
+        );
+        await refreshGroupsMinistry();
+        toast.success("Cell group updated");
+        return group;
+      } catch (error) {
+        toast.error("Failed to update cell group", {
+          description: getErrorMessage(error),
+        });
+        return null;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshGroupsMinistry, supabase],
+  );
+
   const assignCellGroupLeader = useCallback(
     async (
       cellGroupId: string,
@@ -766,6 +825,26 @@ export function GroupsMinistryProvider({
       }
     },
     [refreshGroupsMinistry, supabase],
+  );
+
+  const recordCellGroupAttendanceHandler = useCallback(
+    async (input: RecordCellGroupAttendanceInput): Promise<boolean> => {
+      if (!organizationId) return false;
+      setIsSaving(true);
+      try {
+        await recordCellGroupAttendance(supabase, organizationId, input);
+        await refreshGroupsMinistry();
+        return true;
+      } catch (error) {
+        toast.error("Failed to record cell group attendance", {
+          description: getErrorMessage(error),
+        });
+        return false;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshGroupsMinistry, supabase],
   );
 
   const getPersonMinistries = useCallback(
@@ -846,6 +925,7 @@ export function GroupsMinistryProvider({
         workMinistryMembers,
         cellGroups,
         cellGroupMembers,
+        cellGroupSessions,
         hydrated,
         isSaving,
         refreshGroupsMinistry,
@@ -869,9 +949,11 @@ export function GroupsMinistryProvider({
         getMinistryTeams,
         getTeamRoleOptions,
         addCellGroup,
+        updateCellGroupById,
         assignCellGroupMember,
         assignCellGroupLeader,
         removeCellGroupMemberById,
+        recordCellGroupAttendance: recordCellGroupAttendanceHandler,
         getPersonMinistries,
         getPersonLifeGroups,
         getPersonCellGroup,

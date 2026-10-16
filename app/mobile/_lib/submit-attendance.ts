@@ -1,4 +1,4 @@
-import type { Person } from "@/lib/people";
+import type { AddPersonInput, Person } from "@/lib/people";
 import type { NewAttendanceAttendee } from "@/app/(protected)/service-attendance/_lib/attendance-workflow";
 
 /**
@@ -11,10 +11,120 @@ import type { NewAttendanceAttendee } from "@/app/(protected)/service-attendance
  */
 
 interface AddPersonFn {
-  (
-    input: { firstName: string; lastName: string; membershipType: "Prospect" },
-    options: { quiet: boolean },
-  ): Promise<Person | null>;
+  (input: AddPersonInput, options: { quiet: boolean }): Promise<Person | null>;
+}
+
+export type NewCellGroupAttendee = {
+  key: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  socialContact: string;
+  birthdate: string;
+};
+
+export function isValidNewCellGroupAttendee(
+  attendee: Omit<NewCellGroupAttendee, "key">,
+): boolean {
+  return Boolean(
+    attendee.firstName.trim() &&
+      attendee.lastName.trim() &&
+      (attendee.phone.trim() || attendee.socialContact.trim()),
+  );
+}
+
+export interface SubmitCellGroupAttendanceParams {
+  cellGroupId: string;
+  date: string;
+  leaderPersonId: string;
+  leaderName: string;
+  location: string;
+  existingPersonIds: string[];
+  enrollExistingPersonIds: string[];
+  newAttendees: NewCellGroupAttendee[];
+  addPerson: AddPersonFn;
+  assignCellGroupMember: (
+    cellGroupId: string,
+    personId: string,
+    role?: "Leader" | "Member",
+  ) => Promise<unknown | null>;
+  recordCellGroupAttendance: (input: {
+    cellGroupId: string;
+    date: string;
+    leaderPersonId: string;
+    leaderName: string;
+    location: string;
+    personIds: string[];
+  }) => Promise<boolean>;
+}
+
+export async function submitCellGroupAttendance({
+  cellGroupId,
+  date,
+  leaderPersonId,
+  leaderName,
+  location,
+  existingPersonIds,
+  enrollExistingPersonIds,
+  newAttendees,
+  addPerson,
+  assignCellGroupMember,
+  recordCellGroupAttendance,
+}: SubmitCellGroupAttendanceParams): Promise<boolean> {
+  if (
+    !cellGroupId ||
+    !date ||
+    !leaderPersonId ||
+    !leaderName.trim() ||
+    !location.trim()
+  ) {
+    return false;
+  }
+
+  for (const personId of enrollExistingPersonIds) {
+    const membership = await assignCellGroupMember(
+      cellGroupId,
+      personId,
+      "Member",
+    );
+    if (!membership) return false;
+  }
+
+  const personIds = [...existingPersonIds];
+  for (const attendee of newAttendees) {
+    const person = await addPerson(
+      {
+        firstName: attendee.firstName,
+        lastName: attendee.lastName,
+        phone: attendee.phone || undefined,
+        socialContact: attendee.socialContact || undefined,
+        birthdate: attendee.birthdate || undefined,
+        firstAttendance: date,
+        membershipType: "Prospect",
+        evangelismStage: "Small Group",
+      },
+      { quiet: true },
+    );
+    if (!person) return false;
+
+    const membership = await assignCellGroupMember(
+      cellGroupId,
+      person.id,
+      "Member",
+    );
+    if (!membership) return false;
+    personIds.push(person.id);
+  }
+
+  if (personIds.length === 0) return false;
+  return recordCellGroupAttendance({
+    cellGroupId,
+    date,
+    leaderPersonId,
+    leaderName,
+    location,
+    personIds,
+  });
 }
 
 interface RecordServiceAttendanceFn {
