@@ -68,7 +68,8 @@ export function SearchableSelect({
   }, [open]);
 
   const showEmptyState =
-    filteredOptions.length === 0 && (!pinnedOptions || pinnedOptions.length === 0);
+    filteredOptions.length === 0 &&
+    (!pinnedOptions || pinnedOptions.length === 0);
 
   return (
     <Select
@@ -98,7 +99,13 @@ export function SearchableSelect({
             onKeyDown={event => event.stopPropagation()}
           />
         </div>
-        <div className="max-h-[300px] overflow-y-auto p-1">
+        <div
+          className="touch-pan-y overscroll-contain overflow-y-auto p-1"
+          style={{
+            maxHeight:
+              "min(300px, calc(var(--radix-select-content-available-height) - 64px))",
+          }}
+        >
           {pinnedOptions?.map(option => (
             <SelectItem
               key={option.value}

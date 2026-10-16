@@ -13,13 +13,6 @@ import {
   MapPin,
   Save,
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PersonSelect } from "@/components/person-select";
 import { Label } from "@/components/ui/label";
 import {
@@ -214,24 +207,18 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
             </Button>
             <div className="space-y-2 border-t pt-4">
               <Label>Permanent Cell Group leader</Label>
-              <Select
+              <PersonSelect
+                people={leaderCandidates}
                 value={effectiveLeaderId}
                 onValueChange={personId =>
                   void assignCellGroupLeader(groupId, personId)
                 }
                 disabled={isSaving}
-              >
-                <SelectTrigger className={DualModeInputClass}>
-                  <SelectValue placeholder="Choose a trained leader" />
-                </SelectTrigger>
-                <SelectContent>
-                  {leaderCandidates.map(person => (
-                    <SelectItem key={person.id} value={person.id}>
-                      {person.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Choose a trained leader"
+                searchPlaceholder="Search leaders..."
+                emptyMessage="No eligible leaders found"
+                triggerClassName={DualModeInputClass}
+              />
               <p className="text-xs text-slate-500 dark:text-zinc-500">
                 Permanent leaders must have completed Cell Leader training.
               </p>
