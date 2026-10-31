@@ -26,6 +26,14 @@ import {
   type UpdateCellGroupInput,
 } from "@/lib/supabase/cell-groups";
 import {
+  fetchCellGroupLeadershipRoster,
+  searchCellGroupLeaderCandidates,
+  setCellGroupLeaderApprovals,
+  type CellGroupLeaderApprovalResult,
+  type CellGroupLeaderCandidate,
+  type CellGroupLeadershipRosterEntry,
+} from "@/lib/supabase/cell-group-leaders";
+import {
   fetchCellGroupSessions,
   recordCellGroupAttendance,
   type CellGroupSession,
@@ -83,6 +91,7 @@ type GroupsMinistryContextValue = {
   cellGroups: CellGroup[];
   cellGroupMembers: CellGroupMember[];
   cellGroupSessions: CellGroupSession[];
+  cellGroupLeaders: CellGroupLeadershipRosterEntry[];
   hydrated: boolean;
   isSaving: boolean;
   refreshGroupsMinistry: () => Promise<void>;
@@ -156,6 +165,15 @@ type GroupsMinistryContextValue = {
     cellGroupId: string,
     leaderPersonId: string,
   ) => Promise<CellGroup | null>;
+  assignCellGroupLeaders: (
+    personIds: string[],
+  ) => Promise<CellGroupLeaderApprovalResult[]>;
+  revokeCellGroupLeader: (
+    personId: string,
+  ) => Promise<CellGroupLeaderApprovalResult[]>;
+  searchCellGroupLeaderCandidates: (
+    query: string,
+  ) => Promise<CellGroupLeaderCandidate[]>;
   removeCellGroupMemberById: (membershipId: string) => Promise<boolean>;
   recordCellGroupAttendance: (
     input: RecordCellGroupAttendanceInput,
@@ -217,6 +235,9 @@ export function GroupsMinistryProvider({
   const [cellGroupSessions, setCellGroupSessions] = useState<
     CellGroupSession[]
   >([]);
+  const [cellGroupLeaders, setCellGroupLeaders] = useState<
+    CellGroupLeadershipRosterEntry[]
+  >([]);
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -232,6 +253,7 @@ export function GroupsMinistryProvider({
       setCellGroups([]);
       setCellGroupMembers([]);
       setCellGroupSessions([]);
+      setCellGroupLeaders([]);
       setHydrated(!tenantLoading);
       return;
     }
@@ -248,6 +270,7 @@ export function GroupsMinistryProvider({
         cells,
         cellMembers,
         cellSessions,
+        cellLeaders,
       ] = await Promise.all([
         fetchLifeGroups(supabase, organizationId),
         fetchLifeGroupMembers(supabase, organizationId),
@@ -259,6 +282,9 @@ export function GroupsMinistryProvider({
         fetchCellGroups(supabase, organizationId),
         fetchCellGroupMembers(supabase, organizationId),
         fetchCellGroupSessions(supabase, organizationId),
+        tenant?.profile.role === "admin"
+          ? fetchCellGroupLeadershipRoster(supabase, organizationId)
+          : Promise.resolve([]),
       ]);
 
       setLifeGroups(groups);
@@ -271,6 +297,7 @@ export function GroupsMinistryProvider({
       setCellGroups(cells);
       setCellGroupMembers(cellMembers);
       setCellGroupSessions(cellSessions);
+      setCellGroupLeaders(cellLeaders);
     } catch (error) {
       toast.error("Failed to load groups and ministries", {
         description: getErrorMessage(error),
@@ -278,7 +305,7 @@ export function GroupsMinistryProvider({
     } finally {
       setHydrated(true);
     }
-  }, [organizationId, supabase, tenantLoading]);
+  }, [organizationId, supabase, tenant?.profile.role, tenantLoading]);
 
   useEffect(() => {
     if (tenantLoading) return;
@@ -807,6 +834,76 @@ export function GroupsMinistryProvider({
     [organizationId, refreshGroupsMinistry, supabase],
   );
 
+  const assignCellGroupLeaders = useCallback(
+    async (personIds: string[]): Promise<CellGroupLeaderApprovalResult[]> => {
+      if (!organizationId) return [];
+      setIsSaving(true);
+      try {
+        const results = await setCellGroupLeaderApprovals(
+          supabase,
+          organizationId,
+          personIds,
+          true,
+        );
+        await refreshGroupsMinistry();
+        const succeeded = results.filter(result => result.ok).length;
+        if (succeeded)
+          toast.success(
+            `${succeeded} leader${succeeded === 1 ? "" : "s"} assigned`,
+          );
+        return results;
+      } catch (error) {
+        toast.error("Failed to assign leaders", {
+          description: getErrorMessage(error),
+        });
+        return [];
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshGroupsMinistry, supabase],
+  );
+
+  const revokeCellGroupLeader = useCallback(
+    async (personId: string): Promise<CellGroupLeaderApprovalResult[]> => {
+      if (!organizationId) return [];
+      setIsSaving(true);
+      try {
+        const results = await setCellGroupLeaderApprovals(
+          supabase,
+          organizationId,
+          [personId],
+          false,
+        );
+        if (results[0]?.ok) {
+          await refreshGroupsMinistry();
+          toast.success("Cell group leader status removed");
+        } else if (results[0]?.message) {
+          toast.error("Could not remove leader status", {
+            description: results[0].message,
+          });
+        }
+        return results;
+      } catch (error) {
+        toast.error("Could not remove leader status", {
+          description: getErrorMessage(error),
+        });
+        return [];
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, refreshGroupsMinistry, supabase],
+  );
+
+  const searchCellGroupLeaders = useCallback(
+    async (query: string) => {
+      if (!organizationId) return [];
+      return searchCellGroupLeaderCandidates(supabase, organizationId, query);
+    },
+    [organizationId, supabase],
+  );
+
   const removeCellGroupMemberById = useCallback(
     async (membershipId: string): Promise<boolean> => {
       setIsSaving(true);
@@ -926,6 +1023,7 @@ export function GroupsMinistryProvider({
         cellGroups,
         cellGroupMembers,
         cellGroupSessions,
+        cellGroupLeaders,
         hydrated,
         isSaving,
         refreshGroupsMinistry,
@@ -952,6 +1050,9 @@ export function GroupsMinistryProvider({
         updateCellGroupById,
         assignCellGroupMember,
         assignCellGroupLeader,
+        assignCellGroupLeaders,
+        revokeCellGroupLeader,
+        searchCellGroupLeaderCandidates: searchCellGroupLeaders,
         removeCellGroupMemberById,
         recordCellGroupAttendance: recordCellGroupAttendanceHandler,
         getPersonMinistries,

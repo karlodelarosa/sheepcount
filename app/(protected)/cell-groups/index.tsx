@@ -13,17 +13,42 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, HeartHandshake, MapPin } from "lucide-react";
+import { Plus, HeartHandshake, MapPin, UserRoundPlus } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { usePeople } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { AssignLeadersDialog } from "./assign-leaders-dialog";
+import { useTenant } from "@/app/providers/tenant-provider";
 
 export function CellGroupsList() {
   const router = useRouter();
+  const { tenant } = useTenant();
+  const isAdmin = tenant?.profile.role === "admin";
   const { people } = usePeople();
-  const { cellGroups, cellGroupMembers, hydrated, isSaving, addCellGroup } =
-    useGroupsMinistry();
+  const {
+    cellGroups,
+    cellGroupMembers,
+    cellGroupLeaders,
+    hydrated,
+    isSaving,
+    addCellGroup,
+    assignCellGroupLeaders,
+    revokeCellGroupLeader,
+    searchCellGroupLeaderCandidates,
+  } = useGroupsMinistry();
   const [showCreate, setShowCreate] = useState(false);
+  const [showAssignLeaders, setShowAssignLeaders] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
@@ -39,6 +64,10 @@ export function CellGroupsList() {
   const activeGroups = useMemo(
     () => cellGroups.filter(g => g.status === "active"),
     [cellGroups],
+  );
+  const ungroupedLeaders = useMemo(
+    () => cellGroupLeaders.filter(leader => leader.activeGroupCount === 0),
+    [cellGroupLeaders],
   );
 
   const handleCreate = async () => {
@@ -70,7 +99,7 @@ export function CellGroupsList() {
     <div className="space-y-6">
       <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50">
         <CardHeader>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <CardTitle className="text-slate-900 dark:text-white">
                 Cell Groups
@@ -80,13 +109,24 @@ export function CellGroupsList() {
                 study Scripture, and prepare for intentional discipleship.
               </CardDescription>
             </div>
-            <Button
-              onClick={() => setShowCreate(v => !v)}
-              className={DualModePrimaryButtonClass}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Cell Group
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAssignLeaders(true)}
+                >
+                  <UserRoundPlus className="mr-2 h-4 w-4" />
+                  Assign Leaders
+                </Button>
+              )}
+              <Button
+                onClick={() => setShowCreate(v => !v)}
+                className={DualModePrimaryButtonClass}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                New Cell Group
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -131,6 +171,89 @@ export function CellGroupsList() {
                 </Button>
               </CardContent>
             </Card>
+          )}
+
+          {isAdmin && ungroupedLeaders.length > 0 && (
+            <section
+              aria-labelledby="ungrouped-leaders-heading"
+              className="space-y-3"
+            >
+              <div>
+                <h2
+                  id="ungrouped-leaders-heading"
+                  className="font-semibold text-slate-900 dark:text-white"
+                >
+                  Leaders without a group
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-zinc-400">
+                  Approved to set up their first Circle when they are ready.
+                </p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {ungroupedLeaders.map(leader => (
+                  <div
+                    key={leader.personId}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-800/70"
+                  >
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${DualModeMemberAvatarClass}`}
+                    >
+                      <span className="text-sm font-medium text-white">
+                        {leader.fullName.charAt(0)}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                        {leader.fullName}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        <Badge variant="outline" className="text-xs">
+                          Leader
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {leader.accountStatus === "active"
+                            ? "Circles account active"
+                            : "No Circles account yet"}
+                        </Badge>
+                      </div>
+                    </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={isSaving}
+                        >
+                          Remove
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Remove leader status?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {leader.fullName} will lose leader-only Circles
+                            access. Their stored credentials will be kept.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() =>
+                              void revokeCellGroupLeader(leader.personId)
+                            }
+                          >
+                            Remove leader status
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
 
           {activeGroups.length === 0 ? (
@@ -209,6 +332,15 @@ export function CellGroupsList() {
           )}
         </CardContent>
       </Card>
+      {isAdmin && (
+        <AssignLeadersDialog
+          open={showAssignLeaders}
+          onOpenChange={setShowAssignLeaders}
+          isSaving={isSaving}
+          onAssign={assignCellGroupLeaders}
+          onSearch={searchCellGroupLeaderCandidates}
+        />
+      )}
     </div>
   );
 }
