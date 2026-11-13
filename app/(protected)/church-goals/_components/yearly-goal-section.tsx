@@ -43,7 +43,7 @@ export function YearlyGoalSection({
           Set a yearly theme and vision to guide the church.
         </p>
         {isAdmin && (
-          <Button variant="outline" className="mt-5 gap-2" onClick={onEdit}>
+          <Button variant="accent" className="mt-5 gap-2" onClick={onEdit}>
             <Edit className="w-4 h-4" />
             Set up {year}
           </Button>

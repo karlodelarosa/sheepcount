@@ -80,9 +80,10 @@ export function DirectoryTitleCard({
           {action ? (
             <Button
               type="button"
+              variant="accent"
               onClick={action.onClick}
               disabled={action.disabled}
-              className="min-h-11 lg:min-h-9 shrink-0 gap-2 rounded-xl bg-[var(--accent-color)] px-5 text-[var(--accent-color-foreground)] shadow-sm hover:bg-[var(--accent-color-muted)] focus-visible:ring-[var(--accent-color)]"
+              className="min-h-11 lg:min-h-9 shrink-0 gap-2 rounded-xl px-5 shadow-sm"
             >
               {ActionIcon ? (
                 <ActionIcon className="size-4" aria-hidden="true" />

@@ -188,7 +188,7 @@ export function ChurchGoalsPageHeader({
   return (
     <div>
       <div className="flex items-center gap-2 flex-wrap">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Vision & Themes
         </h1>
         {isCurrentYear && (
@@ -198,7 +198,7 @@ export function ChurchGoalsPageHeader({
           </span>
         )}
       </div>
-      <p className="text-slate-600 dark:text-zinc-400 mt-1">
+      <p className="mt-1 text-sm text-muted-foreground">
         Plan the annual vision, track objectives, and shape service themes for{" "}
         {selectedYear}.
       </p>

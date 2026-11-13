@@ -468,8 +468,8 @@ export function CellGroupsList() {
                 <div className="flex items-start gap-3">
                   <span
                     className={cn(
-                      "flex size-12 shrink-0 items-center justify-center rounded-xl",
-                      accentSurfaceVariants({ tone: "gradient" }),
+                      "flex size-12 shrink-0 items-center justify-center rounded-2xl",
+                      accentSurfaceVariants({ tone: "soft" }),
                     )}
                   >
                     <HeartHandshake className="size-6" />
@@ -477,7 +477,7 @@ export function CellGroupsList() {
                   <div className="min-w-0 flex-1">
                     <Link
                       href={`/cell-groups/${group.id}`}
-                      className="rounded font-bold text-lg tracking-tight hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="rounded text-lg font-bold tracking-tight text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {group.name}
                     </Link>
@@ -495,11 +495,7 @@ export function CellGroupsList() {
                   </div>
                   <Badge
                     variant="secondary"
-                    className={cn(
-                      "shrink-0 rounded-full text-xs",
-                      members.length > 0 &&
-                        accentSurfaceVariants({ tone: "soft" }),
-                    )}
+                    className="shrink-0 rounded-full bg-muted text-xs font-medium text-muted-foreground"
                   >
                     {members.length}{" "}
                     {members.length === 1 ? "member" : "members"}
@@ -515,9 +511,9 @@ export function CellGroupsList() {
                         <span
                           key={member.id}
                           title={member.person?.name ?? "Member"}
-                          className="flex size-11 items-center justify-center rounded-full border-2 border-card bg-[var(--accent-color-soft)] font-semibold text-[var(--accent-color-strong)]"
+                          className="flex size-11 items-center justify-center rounded-full border-2 border-card bg-foreground text-sm font-medium text-background"
                         >
-                          {member.person?.name.charAt(0) ?? "?"}
+                          {member.person?.name.charAt(0).toUpperCase() ?? "?"}
                         </span>
                       ))}
                       {members.length > 5 && (
@@ -536,11 +532,11 @@ export function CellGroupsList() {
                 <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3">
                   {leader ? (
                     <div className="flex min-w-0 items-center gap-2 text-sm">
-                      <Crown className="size-4 shrink-0 text-[var(--accent-color-strong)]" />
+                      <Crown className="size-4 shrink-0 text-muted-foreground" />
                       <span className="truncate">{leader.name}</span>
                       <Badge
                         variant="secondary"
-                        className="bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)]"
+                        className="border border-border bg-background font-medium text-foreground"
                       >
                         Leader
                       </Badge>
@@ -559,7 +555,7 @@ export function CellGroupsList() {
                     asChild
                     variant="outline"
                     size="icon"
-                    className="size-9 shrink-0 rounded-full border-[var(--accent-color-border)] bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] hover:bg-[var(--accent-color)] hover:text-[var(--accent-color-foreground)] dark:text-[var(--accent-color)] dark:hover:text-[var(--accent-color-foreground)]"
+                    className="size-9 shrink-0 rounded-full border-border bg-background text-muted-foreground hover:bg-[var(--accent-color-soft)] hover:text-[var(--accent-color-strong)] dark:hover:text-[var(--accent-color)]"
                   >
                     <Link
                       href={`/cell-groups/${group.id}`}
@@ -613,6 +609,7 @@ export function CellGroupsList() {
               Cancel
             </Button>
             <Button
+              variant="accent"
               disabled={!assignGroupId || isSaving}
               onClick={async () => {
                 if (

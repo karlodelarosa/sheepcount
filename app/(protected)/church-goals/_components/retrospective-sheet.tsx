@@ -305,6 +305,7 @@ export function RetrospectiveSheet({
               Cancel
             </Button>
             <Button
+              variant="accent"
               onClick={() => void handleSave()}
               disabled={isSaving || !goal}
             >

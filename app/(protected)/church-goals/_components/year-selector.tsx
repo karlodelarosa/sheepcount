@@ -88,7 +88,11 @@ export function YearSelector({
       </div>
 
       {isAdmin && !hasGoalForYear && (
-        <Button className="gap-2 shadow-sm" onClick={onSetupYear}>
+        <Button
+          variant="accent"
+          className="gap-2 rounded-xl shadow-sm"
+          onClick={onSetupYear}
+        >
           <Plus className="w-4 h-4" />
           Set up {selectedYear}
         </Button>

@@ -155,7 +155,8 @@ export function ChurchGoalsView() {
           />
           {isAdmin && (
             <Button
-              className="gap-2"
+              variant="accent"
+              className="gap-2 rounded-xl"
               onClick={() => setEditActiveMonthOpen(true)}
             >
               <Plus className="size-4" />

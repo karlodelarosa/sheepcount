@@ -71,10 +71,10 @@ export function EditMonthlyThemeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] border-slate-200/60 bg-white dark:bg-zinc-800 dark:border-zinc-700/60 dark:text-white">
+      <DialogContent className="sm:max-w-[480px] border-border/70 bg-card text-card-foreground">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-blue-100 dark:bg-blue-900/30 p-2.5 text-blue-600 dark:text-blue-400">
+            <div className="rounded-xl bg-[var(--accent-color-soft)] p-2.5 text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
@@ -138,6 +138,7 @@ export function EditMonthlyThemeDialog({
             Cancel
           </Button>
           <Button
+            variant="accent"
             onClick={() => void handleSave()}
             disabled={!title.trim() || isSaving}
           >
