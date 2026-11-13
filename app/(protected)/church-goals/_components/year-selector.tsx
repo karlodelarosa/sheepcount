@@ -53,8 +53,9 @@ export function YearSelector({
           onValueChange={value => onYearChange(Number(value))}
         >
           <SelectTrigger
+            aria-label="Planning year"
             className={cn(
-              "w-[120px] border-0 shadow-none focus:ring-0 gap-2 font-semibold",
+              "w-[180px] border-0 shadow-none focus:ring-0 gap-2 font-semibold",
             )}
           >
             <CalendarDays className="w-4 h-4 text-muted-foreground shrink-0" />
