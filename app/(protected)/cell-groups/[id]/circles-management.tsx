@@ -71,7 +71,7 @@ export function CirclesManagement({ groupId }: { groupId: string }) {
     tenant?.tenant.status === "active";
   const isAdmin = tenant?.profile.role === "admin";
   const circlesUrl =
-    process.env.NEXT_PUBLIC_CIRCLES_URL || "http://localhost:5173";
+    process.env.NEXT_PUBLIC_CIRCLES_URL || "https://circles.elgchurch.com";
 
   const load = useCallback(async () => {
     if (!enabled || !isAdmin) {
