@@ -24,7 +24,9 @@ function getDisplayName(
   lastName: string | undefined,
   email: string,
 ) {
-  const fullName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(" ");
+  const fullName = [firstName?.trim(), lastName?.trim()]
+    .filter(Boolean)
+    .join(" ");
   if (fullName) return fullName;
   const emailLocal = email.split("@")[0]?.trim();
   return emailLocal || "User";
@@ -44,9 +46,10 @@ const UserDropdown = () => {
     profile?.last_name,
     email,
   );
-  const initials = profile?.first_name?.trim() || profile?.last_name?.trim()
-    ? getInitials(profile.first_name, profile.last_name)
-    : (displayName.charAt(0).toUpperCase() || "U");
+  const initials =
+    profile?.first_name?.trim() || profile?.last_name?.trim()
+      ? getInitials(profile.first_name, profile.last_name)
+      : displayName.charAt(0).toUpperCase() || "U";
 
   const handleLogout = async () => {
     setMenuOpen(false);

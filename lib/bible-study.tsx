@@ -31,7 +31,9 @@ type BibleStudyContextValue = {
   hydrated: boolean;
   isSaving: boolean;
   refreshBibleStudy: () => Promise<void>;
-  addGroup: (input: CreateBibleStudyGroupInput) => Promise<BibleStudyGroup | null>;
+  addGroup: (
+    input: CreateBibleStudyGroupInput,
+  ) => Promise<BibleStudyGroup | null>;
   updateGroupStatus: (
     groupId: string,
     status: BibleStudyStatus,
@@ -62,7 +64,11 @@ function getErrorMessage(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-export function BibleStudyProvider({ children }: { children: React.ReactNode }) {
+export function BibleStudyProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { tenant, isLoading: tenantLoading } = useTenant();
   const supabase = useMemo(() => createClient(), []);
   const organizationId = getOrganizationId(tenant);
@@ -102,13 +108,22 @@ export function BibleStudyProvider({ children }: { children: React.ReactNode }) 
   }, [refreshBibleStudy]);
 
   const addGroup = useCallback(
-    async (input: CreateBibleStudyGroupInput): Promise<BibleStudyGroup | null> => {
+    async (
+      input: CreateBibleStudyGroupInput,
+    ): Promise<BibleStudyGroup | null> => {
       if (!organizationId) return null;
 
       setIsSaving(true);
       try {
-        const group = await createBibleStudyGroup(supabase, organizationId, input);
-        const memberData = await fetchBibleStudyMembers(supabase, organizationId);
+        const group = await createBibleStudyGroup(
+          supabase,
+          organizationId,
+          input,
+        );
+        const memberData = await fetchBibleStudyMembers(
+          supabase,
+          organizationId,
+        );
         setGroups(prev => [group, ...prev]);
         setMembers(memberData);
         toast.success("Bible study group created");
@@ -216,9 +231,7 @@ export function BibleStudyProvider({ children }: { children: React.ReactNode }) 
           newLeaderPersonId,
           personHouseholdById,
         );
-        setGroups(prev =>
-          prev.map(g => (g.id === groupId ? result.group : g)),
-        );
+        setGroups(prev => prev.map(g => (g.id === groupId ? result.group : g)));
         setMembers(prev => [
           ...prev.filter(m => m.bibleStudyGroupId !== groupId),
           ...result.members,
@@ -249,7 +262,10 @@ export function BibleStudyProvider({ children }: { children: React.ReactNode }) 
   );
 
   const getActiveHouseholdIds = useCallback(
-    () => new Set(groups.filter(g => g.status === "active").map(g => g.householdId)),
+    () =>
+      new Set(
+        groups.filter(g => g.status === "active").map(g => g.householdId),
+      ),
     [groups],
   );
 
@@ -285,7 +301,9 @@ export function BibleStudyProvider({ children }: { children: React.ReactNode }) 
   );
 
   return (
-    <BibleStudyContext.Provider value={value}>{children}</BibleStudyContext.Provider>
+    <BibleStudyContext.Provider value={value}>
+      {children}
+    </BibleStudyContext.Provider>
   );
 }
 

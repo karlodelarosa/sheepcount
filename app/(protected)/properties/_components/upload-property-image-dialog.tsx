@@ -70,7 +70,7 @@ export function UploadPropertyImageDialog({
           <Button
             type="button"
             onClick={() => void handleSave()}
-            className="rounded-lg bg-slate-900 hover:bg-slate-800"
+            className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
             disabled={!isAdmin || !imageFile}
           >
             Save image

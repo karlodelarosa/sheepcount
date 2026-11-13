@@ -69,11 +69,12 @@ export function filterPeople(
       return false;
     }
 
-    if (
-      filters.membershipType !== "all" &&
-      person.membershipType !== filters.membershipType
-    ) {
-      return false;
+    if (filters.membershipType !== "all") {
+      const matchesMembership =
+        filters.membershipType === "Prospect"
+          ? person.membershipType === "Prospect" || person.isProspect
+          : person.membershipType === filters.membershipType;
+      if (!matchesMembership) return false;
     }
 
     if (

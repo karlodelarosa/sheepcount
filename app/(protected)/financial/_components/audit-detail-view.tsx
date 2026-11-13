@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -26,7 +28,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { OverviewStatCard } from "@/components/overview-stat-card";
-import { DEFAULT_CURRENCY, formatCurrency, type SupportedCurrency } from "@/lib/currency";
+import {
+  DEFAULT_CURRENCY,
+  formatCurrency,
+  type SupportedCurrency,
+} from "@/lib/currency";
 import { useOrganizationSettings } from "@/lib/organization-settings";
 import { useEntitlements } from "@/lib/subscription/use-entitlements";
 import { isItemEnabled } from "@/lib/subscription/entitlements";
@@ -120,11 +126,7 @@ export function AuditDetailView({ auditId }: AuditDetailViewProps) {
   };
 
   if (entitlementsLoading || !hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading...
-      </div>
-    );
+    return <PageSkeleton message="Loading..." />;
   }
 
   if (!financialEnabled) {
@@ -135,7 +137,10 @@ export function AuditDetailView({ auditId }: AuditDetailViewProps) {
   if (!audit) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" onClick={() => router.push("/financial?tab=audits")}>
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/financial?tab=audits")}
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to audits
         </Button>
@@ -176,13 +181,17 @@ export function AuditDetailView({ auditId }: AuditDetailViewProps) {
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" onClick={handlePrint} className="rounded-lg">
+          <Button
+            variant="outline"
+            onClick={handlePrint}
+            className="rounded-lg"
+          >
             <Printer className="w-4 h-4 mr-2" />
             Print report
           </Button>
           <Button
             onClick={() => setIsAddDialogOpen(true)}
-            className="rounded-xl bg-slate-900 hover:bg-slate-800"
+            className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add entry
@@ -265,7 +274,11 @@ export function AuditDetailView({ auditId }: AuditDetailViewProps) {
           ) : (
             <div className="h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={expenseChartData} layout="vertical" margin={{ left: 8 }}>
+                <BarChart
+                  data={expenseChartData}
+                  layout="vertical"
+                  margin={{ left: 8 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis
                     type="number"
@@ -320,7 +333,9 @@ export function AuditDetailView({ auditId }: AuditDetailViewProps) {
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className="rounded-lg bg-blue-500">{line.type}</Badge>
+                      <Badge className="rounded-lg bg-blue-500">
+                        {line.type}
+                      </Badge>
                       <span className="text-sm font-medium text-slate-900 dark:text-white">
                         {line.source}
                       </span>

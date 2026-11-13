@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -41,13 +43,21 @@ function statusBadge(status: "owned" | "borrowed" | "lost") {
   switch (status) {
     case "borrowed":
       return (
-        <Badge className="rounded-lg bg-amber-500 hover:bg-amber-500">Borrowed</Badge>
+        <Badge className="rounded-lg bg-amber-500 hover:bg-amber-500">
+          Borrowed
+        </Badge>
       );
     case "lost":
-      return <Badge variant="destructive" className="rounded-lg">Lost</Badge>;
+      return (
+        <Badge variant="destructive" className="rounded-lg">
+          Lost
+        </Badge>
+      );
     default:
       return (
-        <Badge className="rounded-lg bg-emerald-500 hover:bg-emerald-500">Owned</Badge>
+        <Badge className="rounded-lg bg-emerald-500 hover:bg-emerald-500">
+          Owned
+        </Badge>
       );
   }
 }
@@ -121,17 +131,18 @@ export function PropertyDetails({
   };
 
   if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading...
-      </div>
-    );
+    return <PageSkeleton message="Loading..." />;
   }
 
   if (!property) {
     return (
       <div className="p-8 space-y-4">
-        <Button variant="outline" size="icon" onClick={onBack} className="rounded-xl">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={onBack}
+          className="rounded-xl"
+        >
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div className="text-center text-red-500">
@@ -215,8 +226,7 @@ export function PropertyDetails({
               label={property.typeName}
               value={formatCurrency(property.estimatedValue, currency)}
               subtext={
-                property.description.trim() ||
-                `Purchased ${purchaseLabel}`
+                property.description.trim() || `Purchased ${purchaseLabel}`
               }
               accent="blue"
               className="border-0 shadow-none p-0 bg-transparent"

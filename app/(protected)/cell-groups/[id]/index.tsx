@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +26,7 @@ import {
 } from "@/components/ui/card";
 import { usePeople } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { CirclesManagement } from "./circles-management";
 
 interface CellGroupDetailsProps {
   groupId: string;
@@ -116,11 +119,7 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
     "rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
 
   if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading cell group...
-      </div>
-    );
+    return <PageSkeleton message="Loading cell group..." />;
   }
 
   if (!group) {
@@ -312,6 +311,7 @@ export function CellGroupDetails({ groupId, onBack }: CellGroupDetailsProps) {
           </CardContent>
         </Card>
       </div>
+      <CirclesManagement groupId={groupId} />
     </div>
   );
 }

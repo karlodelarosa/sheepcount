@@ -8,10 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import {
-  formatGuestName,
-  type GuestName,
-} from "../_lib/attendance-workflow";
+import { formatGuestName, type GuestName } from "../_lib/attendance-workflow";
 
 interface PersonOption {
   id: string;
@@ -47,7 +44,7 @@ export function AttendanceSelectionStep({
   onClearSelection,
 }: AttendanceSelectionStepProps) {
   const selectedGuestKeys = useMemo(
-    () => selectedKeys.filter((key) => key.startsWith("guest-")),
+    () => selectedKeys.filter(key => key.startsWith("guest-")),
     [selectedKeys],
   );
 
@@ -61,7 +58,7 @@ export function AttendanceSelectionStep({
     if (!term) return sortedPeople;
 
     return sortedPeople.filter(
-      (person) =>
+      person =>
         person.name.toLowerCase().includes(term) ||
         person.householdName.toLowerCase().includes(term),
     );
@@ -76,8 +73,8 @@ export function AttendanceSelectionStep({
             id="quick-add-guest"
             placeholder="First and last name, then press Enter"
             value={guestInput}
-            onChange={(e) => onGuestInputChange(e.target.value)}
-            onKeyDown={(e) => {
+            onChange={e => onGuestInputChange(e.target.value)}
+            onKeyDown={e => {
               if (e.key === "Enter") {
                 e.preventDefault();
                 onAddGuest();
@@ -98,7 +95,7 @@ export function AttendanceSelectionStep({
 
       {selectedGuestKeys.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedGuestKeys.map((guestKey) => {
+          {selectedGuestKeys.map(guestKey => {
             const guest = guestNames.get(guestKey);
             if (!guest) return null;
 
@@ -147,13 +144,13 @@ export function AttendanceSelectionStep({
             className="pl-10"
             placeholder="Search roster..."
             value={searchTerm}
-            onChange={(e) => onSearchTermChange(e.target.value)}
+            onChange={e => onSearchTermChange(e.target.value)}
           />
         </div>
 
         <ScrollArea className="h-64 rounded-xl border p-3">
           <div className="space-y-1">
-            {filteredPeople.map((person) => {
+            {filteredPeople.map(person => {
               const isSelected = selectedKeys.includes(person.id);
 
               return (

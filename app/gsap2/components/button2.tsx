@@ -18,7 +18,7 @@ export function PlasmaButton({ label = "Ignite" }) {
         filter: "brightness(1)",
         duration: 0.6,
         ease: "elastic.out(1,0.4)",
-      }
+      },
     );
   };
 
@@ -49,7 +49,7 @@ export function WaveButton({ label = "Flow" }) {
     gsap.fromTo(
       ref.current,
       { y: 2, scale: 0.96 },
-      { y: 0, scale: 1, duration: 0.4, ease: "elastic.out(1,0.5)" }
+      { y: 0, scale: 1, duration: 0.4, ease: "elastic.out(1,0.5)" },
     );
   };
 
@@ -87,7 +87,7 @@ export function NebulaButton({ label = "Engage Warp" }) {
         filter: "brightness(1) blur(0px)",
         duration: 0.6,
         ease: "elastic.out(1,0.4)",
-      }
+      },
     );
   };
 
@@ -167,7 +167,7 @@ export function InfernoButton({ label = "Overdrive" }) {
     gsap.fromTo(
       container,
       { scale: 0.9 },
-      { scale: 1, duration: 0.4, ease: "elastic.out(1, 0.4)" }
+      { scale: 1, duration: 0.4, ease: "elastic.out(1, 0.4)" },
     );
   };
 
@@ -229,7 +229,12 @@ export function FrostButton({ label = "Freeze Time" }) {
     gsap.fromTo(
       container,
       { scale: 0.95, filter: "brightness(1.5)" },
-      { scale: 1, filter: "brightness(1)", duration: 0.6, ease: "elastic.out(1,0.3)" }
+      {
+        scale: 1,
+        filter: "brightness(1)",
+        duration: 0.6,
+        ease: "elastic.out(1,0.3)",
+      },
     );
   };
 
@@ -330,7 +335,7 @@ export function SparkButton() {
     gsap.fromTo(
       e.currentTarget,
       { scale: 0.9 },
-      { scale: 1, duration: 0.5, ease: "elastic.out(1, 0.4)" }
+      { scale: 1, duration: 0.5, ease: "elastic.out(1, 0.4)" },
     );
   };
 
@@ -365,7 +370,8 @@ export function MagicButton() {
     const y = e.clientY - rect.top;
 
     const particle = document.createElement("div");
-    particle.className = "absolute rounded-full bg-purple-400 pointer-events-none";
+    particle.className =
+      "absolute rounded-full bg-purple-400 pointer-events-none";
     particle.style.left = `${x}px`;
     particle.style.top = `${y}px`;
     particle.style.width = "8px";
@@ -387,7 +393,7 @@ export function MagicButton() {
     gsap.fromTo(
       e.currentTarget,
       { scale: 0.95, rotate: -3 },
-      { scale: 1, rotate: 0, duration: 0.6, ease: "elastic.out(1, 0.4)" }
+      { scale: 1, rotate: 0, duration: 0.6, ease: "elastic.out(1, 0.4)" },
     );
   };
 
@@ -450,7 +456,7 @@ export function GalaxyButton({ label = "Warp Drive" }) {
         duration: 1.4,
         ease: "power2.out",
         onComplete: () => ripple.remove(),
-      }
+      },
     );
 
     // 💥 Sparkle burst
@@ -479,7 +485,7 @@ export function GalaxyButton({ label = "Warp Drive" }) {
     gsap.fromTo(
       e.currentTarget,
       { scale: 0.9 },
-      { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.4)" }
+      { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.4)" },
     );
   };
 

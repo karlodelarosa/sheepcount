@@ -1,14 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandItem,
+  CommandGroup,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 export type SearchableSelectOption = {
   value: string;
@@ -40,98 +47,91 @@ export function SearchableSelect({
   id,
   disabled,
   emptyMessage = "No results found",
-  pinnedOptions,
+  pinnedOptions = [],
 }: SearchableSelectProps) {
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-
-  const normalizedSearch = search.trim().toLowerCase();
-
   const filteredOptions = useMemo(() => {
-    if (!normalizedSearch) return options;
-    return options.filter(option => {
-      const haystack = `${option.label} ${option.keywords ?? ""}`.toLowerCase();
-      return haystack.includes(normalizedSearch);
-    });
-  }, [options, normalizedSearch]);
-
-  const handleOpenChange = (next: boolean) => {
-    setOpen(next);
-    if (!next) setSearch("");
-  };
-
-  useEffect(() => {
-    if (open) {
-      searchInputRef.current?.focus();
-    }
-  }, [open]);
-
-  const showEmptyState =
-    filteredOptions.length === 0 &&
-    (!pinnedOptions || pinnedOptions.length === 0);
+    const query = search.trim().toLowerCase();
+    const pinnedValues = new Set(pinnedOptions.map(option => option.value));
+    return options.filter(
+      option =>
+        !pinnedValues.has(option.value) &&
+        `${option.label} ${option.keywords ?? ""}`
+          .toLowerCase()
+          .includes(query),
+    );
+  }, [options, pinnedOptions, search]);
+  const selected = [...pinnedOptions, ...options].find(
+    option => option.value === value,
+  );
 
   return (
-    <Select
-      value={value}
-      onValueChange={onValueChange}
+    <Popover
+      modal
       open={open}
-      onOpenChange={handleOpenChange}
-      disabled={disabled}
+      onOpenChange={next => {
+        setOpen(next);
+        if (!next) setSearch("");
+      }}
     >
-      <SelectTrigger id={id} className={triggerClassName}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent
-        className="overflow-hidden p-0"
-        onCloseAutoFocus={event => event.preventDefault()}
+      <PopoverTrigger asChild>
+        <Button
+          id={id}
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          disabled={disabled}
+          className={cn("w-full justify-between font-normal", triggerClassName)}
+        >
+          <span className="truncate">{selected?.label ?? placeholder}</span>
+          <ChevronDown className="size-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="z-[100] w-[var(--radix-popover-trigger-width)] min-w-48 overflow-hidden p-0"
+        onOpenAutoFocus={event => {
+          event.preventDefault();
+          inputRef.current?.focus();
+        }}
       >
-        <div
-          className="shrink-0 border-b bg-popover p-2"
-          onPointerDown={event => event.stopPropagation()}
-        >
-          <Input
-            ref={searchInputRef}
+        <Command shouldFilter={false}>
+          <CommandInput
+            ref={inputRef}
             value={search}
-            onChange={event => setSearch(event.target.value)}
+            onValueChange={setSearch}
             placeholder={searchPlaceholder}
-            className="h-8"
-            onKeyDown={event => event.stopPropagation()}
+            aria-label={searchPlaceholder}
           />
-        </div>
-        <div
-          className="touch-pan-y overscroll-contain overflow-y-auto p-1"
-          style={{
-            maxHeight:
-              "min(300px, calc(var(--radix-select-content-available-height) - 64px))",
-          }}
-        >
-          {pinnedOptions?.map(option => (
-            <SelectItem
-              key={option.value}
-              value={option.value}
-              disabled={option.disabled}
-            >
-              {option.label}
-            </SelectItem>
-          ))}
-          {showEmptyState ? (
-            <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-              {emptyMessage}
-            </div>
-          ) : (
-            filteredOptions.map(option => (
-              <SelectItem
-                key={option.value}
-                value={option.value}
-                disabled={option.disabled}
-              >
-                {option.label}
-              </SelectItem>
-            ))
-          )}
-        </div>
-      </SelectContent>
-    </Select>
+          <CommandList className="max-h-[min(400px,calc(var(--radix-popover-content-available-height)-48px))] touch-pan-y overscroll-contain">
+            <CommandGroup>
+              {[...pinnedOptions, ...filteredOptions].map(option => (
+                <CommandItem
+                  key={option.value}
+                  value={option.value}
+                  disabled={option.disabled}
+                  onSelect={() => {
+                    onValueChange?.(option.value);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                >
+                  <span className="flex-1">{option.label}</span>
+                  {value === option.value && <Check className="size-4" />}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            {pinnedOptions.length + filteredOptions.length === 0 && (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                {emptyMessage}
+              </div>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

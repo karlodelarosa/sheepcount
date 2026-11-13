@@ -26,7 +26,10 @@ import { ArrowLeft } from "lucide-react";
 import { usePeople } from "@/lib/people";
 import { useServiceAttendance } from "@/lib/service-attendance";
 import { buildSessionPath } from "@/lib/supabase/service-attendance";
-import { getMembershipDisplayLabel, getPersonVisitDate } from "@/lib/membership-path";
+import {
+  getMembershipDisplayLabel,
+  getPersonVisitDate,
+} from "@/lib/membership-path";
 
 export default function SearchView() {
   const router = useRouter();
@@ -38,8 +41,8 @@ export default function SearchView() {
   const [date, setDate] = useState("");
 
   const results = useMemo(() => {
-    const joined = attendanceRows.map((r) => {
-      const person = people.find((p) => p.id === r.personId);
+    const joined = attendanceRows.map(r => {
+      const person = people.find(p => p.id === r.personId);
       return {
         attendanceId: r.id,
         serviceId: r.serviceId,
@@ -48,12 +51,15 @@ export default function SearchView() {
         personId: r.personId,
         personName: person?.name ?? "Unknown",
         personStatus: person
-          ? getMembershipDisplayLabel(person.membershipType, getPersonVisitDate(person))
+          ? getMembershipDisplayLabel(
+              person.membershipType,
+              getPersonVisitDate(person),
+            )
           : "Unknown",
       };
     });
 
-    return joined.filter((row) => {
+    return joined.filter(row => {
       if (name && !row.personName.toLowerCase().includes(name.toLowerCase())) {
         return false;
       }
@@ -107,18 +113,18 @@ export default function SearchView() {
                 className="h-8 text-sm"
                 placeholder="Search by name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Status</Label>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={e => setStatus(e.target.value)}
                 className="w-full h-8 rounded-md border px-2 text-sm bg-background"
               >
                 <option value="">Any</option>
-                {statuses.map((s) => (
+                {statuses.map(s => (
                   <option key={s} value={s}>
                     {s}
                   </option>
@@ -131,7 +137,7 @@ export default function SearchView() {
                 className="h-8 text-sm"
                 type="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={e => setDate(e.target.value)}
               />
             </div>
           </div>
@@ -172,7 +178,7 @@ export default function SearchView() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {results.map((row) => (
+                  {results.map(row => (
                     <TableRow key={row.attendanceId}>
                       <TableCell className="text-sm font-medium py-2">
                         {row.personName}

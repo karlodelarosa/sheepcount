@@ -32,12 +32,16 @@ export type RetrospectiveFormData = {
   actionPoints: string[];
 };
 
-function goalToRetrospectiveForm(goal: YearlyGoal | null): RetrospectiveFormData {
+function goalToRetrospectiveForm(
+  goal: YearlyGoal | null,
+): RetrospectiveFormData {
   if (!goal) {
     return { wentWell: [""], couldBeBetter: [""], actionPoints: [""] };
   }
 
-  const toLines = (category: "went_well" | "could_be_better" | "action_point") => {
+  const toLines = (
+    category: "went_well" | "could_be_better" | "action_point",
+  ) => {
     const items = getRetrospectiveItems(goal, category).map(item => item.text);
     return items.length > 0 ? items : [""];
   };
@@ -72,17 +76,20 @@ function RetrospectiveSection({
 }) {
   const styles = {
     emerald: {
-      badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+      badge:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
       icon: "text-emerald-600 dark:text-emerald-400",
       border: "border-emerald-200/60 dark:border-emerald-800/40",
     },
     amber: {
-      badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+      badge:
+        "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
       icon: "text-amber-600 dark:text-amber-400",
       border: "border-amber-200/60 dark:border-amber-800/40",
     },
     violet: {
-      badge: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+      badge:
+        "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
       icon: "text-violet-600 dark:text-violet-400",
       border: "border-violet-200/60 dark:border-violet-800/40",
     },
@@ -91,12 +98,7 @@ function RetrospectiveSection({
   const filledItems = items.filter(item => item.trim());
 
   return (
-    <section
-      className={cn(
-        "rounded-xl border p-4 space-y-3",
-        styles.border,
-      )}
-    >
+    <section className={cn("rounded-xl border p-4 space-y-3", styles.border)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
           <div className={cn("mt-0.5", styles.icon)}>
@@ -105,8 +107,12 @@ function RetrospectiveSection({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-foreground text-sm">{title}</h3>
-              <Badge variant="secondary" className={cn("text-[10px]", styles.badge)}>
-                {filledItems.length} {filledItems.length === 1 ? "item" : "items"}
+              <Badge
+                variant="secondary"
+                className={cn("text-[10px]", styles.badge)}
+              >
+                {filledItems.length}{" "}
+                {filledItems.length === 1 ? "item" : "items"}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-1">{description}</p>
@@ -285,7 +291,9 @@ export function RetrospectiveSheet({
             accent="violet"
             items={form.actionPoints}
             isAdmin={isAdmin}
-            onChange={(index, value) => updateList("actionPoints", index, value)}
+            onChange={(index, value) =>
+              updateList("actionPoints", index, value)
+            }
             onAdd={() => addToList("actionPoints")}
             onRemove={index => removeFromList("actionPoints", index)}
           />

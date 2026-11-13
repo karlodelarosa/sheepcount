@@ -1,10 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { accentSurfaceVariants } from "@/components/ui/accent-surface";
 import { cn } from "@/lib/utils";
 
 export const panelCard =
-  "rounded-xl border border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:border-zinc-700/90 dark:bg-zinc-900/95 dark:shadow-[0_1px_3px_rgba(0,0,0,0.25)]";
+  "rounded-xl border border-border/70 bg-card shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.25)]";
 
 export function SectionHeader({
   icon: Icon,
@@ -24,11 +25,11 @@ export function SectionHeader({
       <div className="flex items-start gap-3 min-w-0">
         <div
           className={cn(
-            "shrink-0 rounded-xl border border-slate-200/80 bg-slate-50 p-2.5 dark:border-zinc-600/80 dark:bg-zinc-800/80",
+            "shrink-0 rounded-xl border border-[var(--accent-color-border)] bg-[var(--accent-color-soft)] p-2.5",
             iconClassName,
           )}
         >
-          <Icon className="w-4 h-4 text-slate-600 dark:text-zinc-300" />
+          <Icon className="size-4 text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]" />
         </div>
         <div className="min-w-0">
           <h3 className="font-semibold text-slate-900 dark:text-white leading-tight">
@@ -43,6 +44,38 @@ export function SectionHeader({
       </div>
       {action}
     </div>
+  );
+}
+
+export function DetailRow({
+  icon: Icon,
+  label,
+  children,
+  onClick,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  children: ReactNode;
+  onClick?: () => void;
+}) {
+  const Wrapper = onClick ? "button" : "div";
+
+  return (
+    <Wrapper
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={cn(
+        "grid min-h-11 w-full grid-cols-[1.25rem_minmax(7rem,0.8fr)_minmax(0,1.2fr)] items-center gap-2 border-b border-border/60 px-1 py-2.5 text-left text-sm last:border-b-0",
+        onClick &&
+          "rounded-lg outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-[var(--accent-color)] motion-reduce:transition-none",
+      )}
+    >
+      <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+      <span className="text-muted-foreground">{label}</span>
+      <span className="min-w-0 break-words font-medium text-foreground">
+        {children}
+      </span>
+    </Wrapper>
   );
 }
 
@@ -132,8 +165,7 @@ export function PersonAvatar({
       "ring-2 ring-amber-400 ring-offset-2 ring-offset-white shadow-[0_0_10px_rgba(251,191,36,0.35)] dark:ring-amber-500 dark:ring-offset-zinc-900",
     training:
       "ring-2 ring-emerald-400 ring-offset-2 ring-offset-white shadow-[0_0_10px_rgba(52,211,153,0.35)] dark:ring-emerald-500 dark:ring-offset-zinc-900",
-    both:
-      "ring-2 ring-amber-400 ring-offset-2 ring-offset-white shadow-[0_0_14px_rgba(251,191,36,0.45)] dark:ring-amber-500 dark:ring-offset-zinc-900",
+    both: "ring-2 ring-amber-400 ring-offset-2 ring-offset-white shadow-[0_0_14px_rgba(251,191,36,0.45)] dark:ring-amber-500 dark:ring-offset-zinc-900",
   };
 
   const achievementTitle =
@@ -146,13 +178,11 @@ export function PersonAvatar({
           : undefined;
 
   return (
-    <div
-      className="relative shrink-0"
-      title={achievementTitle}
-    >
+    <div className="relative shrink-0" title={achievementTitle}>
       <div
         className={cn(
-          "bg-gradient-to-br from-slate-800 to-slate-600 dark:from-purple-700 dark:to-purple-500 flex items-center justify-center font-semibold text-white",
+          accentSurfaceVariants({ tone: "solid" }),
+          "flex items-center justify-center font-semibold",
           sizes[size],
           achievement && ringStyles[achievement],
         )}

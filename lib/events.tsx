@@ -85,10 +85,12 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
   const organizationId = getOrganizationId(tenant);
 
   const [events, setEvents] = useState<ChurchEvent[]>([]);
-  const [registrations, setRegistrations] = useState<ChurchEventRegistration[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<EventAttendanceRecord[]>(
+  const [registrations, setRegistrations] = useState<ChurchEventRegistration[]>(
     [],
   );
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    EventAttendanceRecord[]
+  >([]);
   const [hydrated, setHydrated] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -173,7 +175,9 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const registerPersonForEvent = useCallback(
-    async (input: RegisterForEventInput): Promise<ChurchEventRegistration | null> => {
+    async (
+      input: RegisterForEventInput,
+    ): Promise<ChurchEventRegistration | null> => {
       setIsSaving(true);
       try {
         const registration = await registerForEvent(supabase, input);
@@ -254,7 +258,8 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const getEventRegistrationCount = useCallback(
-    (eventId: string) => registrations.filter(r => r.eventId === eventId).length,
+    (eventId: string) =>
+      registrations.filter(r => r.eventId === eventId).length,
     [registrations],
   );
 
@@ -284,7 +289,8 @@ export function EventsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const getEventSessions = useCallback(
-    (eventId: string) => groupAttendanceIntoSessions(attendanceRecords, eventId),
+    (eventId: string) =>
+      groupAttendanceIntoSessions(attendanceRecords, eventId),
     [attendanceRecords],
   );
 

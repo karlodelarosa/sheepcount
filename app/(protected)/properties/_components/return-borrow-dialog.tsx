@@ -27,8 +27,8 @@ export function ReturnBorrowDialog({
   propertyName: string;
   onConfirm: (returnedAt: string) => Promise<boolean>;
 }) {
-  const [returnedAt, setReturnedAt] = useState(
-    () => new Date().toISOString().slice(0, 10),
+  const [returnedAt, setReturnedAt] = useState(() =>
+    new Date().toISOString().slice(0, 10),
   );
 
   const handleConfirm = async () => {
@@ -42,8 +42,9 @@ export function ReturnBorrowDialog({
         <DialogHeader>
           <DialogTitle>Mark as returned</DialogTitle>
           <DialogDescription>
-            Record the return date for <span className="font-medium">{propertyName}</span>{" "}
-            borrowed by <span className="font-medium">{borrow.borrowerName}</span>.
+            Record the return date for{" "}
+            <span className="font-medium">{propertyName}</span> borrowed by{" "}
+            <span className="font-medium">{borrow.borrowerName}</span>.
           </DialogDescription>
         </DialogHeader>
         <div className="py-2">
@@ -69,7 +70,7 @@ export function ReturnBorrowDialog({
           <Button
             type="button"
             onClick={() => void handleConfirm()}
-            className="rounded-lg bg-slate-900 hover:bg-slate-800"
+            className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             Confirm return
           </Button>

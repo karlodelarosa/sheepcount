@@ -9,6 +9,9 @@ import { isItemEnabled } from "@/lib/subscription/entitlements";
 import { AdminPositionsTab } from "./_components/admin-positions-tab";
 import { OrgChartTab } from "./_components/org-chart-tab";
 
+import { DirectoryTitleCard } from "@/components/ui/directory-page-header";
+import { CollectionLoading } from "@/components/ui/directory-page-header/collection-toolbar";
+
 type LeadershipTab = "positions" | "org-chart";
 
 function parseTab(value: string | null): LeadershipTab {
@@ -27,24 +30,17 @@ export function LeadershipView() {
   };
 
   if (isLoading) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading...
-      </div>
-    );
+    return <CollectionLoading />;
   }
 
   if (!leadershipEnabled) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Leadership
-          </h1>
-          <p className="text-slate-600 dark:text-zinc-400">
-            Administrative roles and ministry organization structure
-          </p>
-        </div>
+        <DirectoryTitleCard
+          title="Leadership"
+          description="Administrative roles and ministry organization structure"
+          icon={Network}
+        />
 
         <Card className="border-slate-200/70 dark:border-zinc-700/70">
           <CardContent className="py-16 text-center">
@@ -64,22 +60,19 @@ export function LeadershipView() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Leadership
-        </h1>
-        <p className="text-slate-600 dark:text-zinc-400">
-          Administrative roles and ministry organization structure
-        </p>
-      </div>
+      <DirectoryTitleCard
+        title="Leadership"
+        description="Administrative roles and ministry organization structure"
+        icon={Network}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="positions" className="gap-1.5">
+          <TabsTrigger value="positions">
             <Shield className="w-4 h-4" />
             Admin Positions
           </TabsTrigger>
-          <TabsTrigger value="org-chart" className="gap-1.5">
+          <TabsTrigger value="org-chart">
             <Network className="w-4 h-4" />
             Organization Chart
           </TabsTrigger>

@@ -1,6 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +24,9 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTenant } from "@/app/providers/tenant-provider";
-import { PageLoader } from "@/components/page-loader";
+import { PageSkeleton } from "@/components/page-skeleton";
+import { DirectoryTitleCard } from "@/components/ui/directory-page-header";
+import { Badge } from "@/components/ui/badge";
 import { getInitials } from "@/app/helpers";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
@@ -80,24 +89,29 @@ function getErrorMessage(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-const tabTriggerClass =
-  "gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-zinc-700 dark:data-[state=active]:text-white";
-
 function ProfilePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, tenant, isLoading, refreshSession } = useTenant();
   const supabase = useMemo(() => createClient(), []);
 
-  const organizations = tenant?.organizations ?? tenant?.tenant.organizations ?? [];
+  const organizations = useMemo(
+    () => tenant?.organizations ?? tenant?.tenant.organizations ?? [],
+    [tenant?.organizations, tenant?.tenant.organizations],
+  );
   const profile = tenant?.profile;
   const subscription = tenant?.subscription;
   const isAdmin = profile?.role === "admin";
   const activeTab = parseTab(searchParams.get("tab"), isAdmin);
 
-  const setActiveTab = (tab: string) => {
-    router.replace(`/profile?tab=${tab}`, { scroll: false });
-  };
+  const setActiveTab = useCallback(
+    (tab: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      router.replace(`/profile?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
 
   const [selectedOrgIndex, setSelectedOrgIndex] = useState(0);
   const [firstName, setFirstName] = useState("");
@@ -124,7 +138,7 @@ function ProfilePageContent() {
     if (!isAdmin && activeTab === "organization") {
       setActiveTab("personal");
     }
-  }, [isAdmin, activeTab]);
+  }, [isAdmin, activeTab, setActiveTab]);
 
   useEffect(() => {
     if (profile) {
@@ -179,7 +193,9 @@ function ProfilePageContent() {
     }
   };
 
-  const handleAvatarFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFileChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -319,7 +335,9 @@ function ProfilePageContent() {
 
     setIsSavingPassword(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
       if (error) throw error;
 
       setNewPassword("");
@@ -344,7 +362,7 @@ function ProfilePageContent() {
   };
 
   if (isLoading) {
-    return <PageLoader message="Loading your profile..." />;
+    return <PageSkeleton message="Loading your profile..." />;
   }
 
   if (!user) return null;
@@ -375,84 +393,121 @@ function ProfilePageContent() {
   const subscriptionCancelling = subscription?.cancel_at_period_end ?? false;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6 overflow-y-auto h-full">
-      <div className="flex items-center gap-6">
-        <Avatar className="w-20 h-20 border-2 border-border">
-          <AvatarImage src={avatarUrl || profile?.avatar_url || ""} />
-          <AvatarFallback>
+    <div className="space-y-4">
+      <DirectoryTitleCard
+        title="Profile"
+        description="Manage your personal details, organization, and account preferences"
+        icon={User}
+        secondaryAction={{
+          label: "Change Photo",
+          icon: Upload,
+          onClick: openAvatarDialog,
+        }}
+      />
+      <section
+        aria-label="Account overview"
+        className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm"
+      >
+        <Avatar className="size-12 shrink-0 border border-[var(--accent-color-border)]">
+          <AvatarImage
+            src={avatarUrl || profile?.avatar_url || ""}
+            alt="Profile photo"
+          />
+          <AvatarFallback className="bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]">
             {getInitials(firstName, lastName) || user.email[0]?.toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <div>
-          <h1 className="text-2xl font-bold">
+        <div className="min-w-0 flex-1">
+          <h2 className="break-words text-base font-semibold">
             {[firstName, lastName].filter(Boolean).join(" ") || user.email}
-          </h1>
-          <p className="text-muted-foreground">
+          </h2>
+          <p className="break-words text-sm text-muted-foreground">
             {tenantName || "No organization linked"}
           </p>
-          <Button size="sm" className="mt-2" onClick={openAvatarDialog}>
-            Change Photo
-          </Button>
         </div>
-      </div>
+        {profile?.role && (
+          <Badge
+            variant="secondary"
+            className="shrink-0 capitalize bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]"
+          >
+            {profile.role}
+          </Badge>
+        )}
+      </section>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
-          <TabsTrigger value="personal" className={tabTriggerClass}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-4">
+        <TabsList>
+          <TabsTrigger value="personal">
             <User className="w-3.5 h-3.5" />
             Personal Details
           </TabsTrigger>
           {isAdmin && (
-            <TabsTrigger value="organization" className={tabTriggerClass}>
+            <TabsTrigger value="organization">
               <Building2 className="w-3.5 h-3.5" />
               Organization
             </TabsTrigger>
           )}
-          <TabsTrigger value="subscription" className={tabTriggerClass}>
+          <TabsTrigger value="subscription">
             <CreditCard className="w-3.5 h-3.5" />
             Subscription
           </TabsTrigger>
-          <TabsTrigger value="security" className={tabTriggerClass}>
+          <TabsTrigger value="security">
             <Lock className="w-3.5 h-3.5" />
             Security
           </TabsTrigger>
-          <TabsTrigger value="activity" className={tabTriggerClass}>
+          <TabsTrigger value="activity">
             <Activity className="w-3.5 h-3.5" />
             Activity Log
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="personal" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle>Personal Details</CardTitle>
+          <Card className="gap-4 border-border/70 shadow-sm">
+            <CardHeader className="px-4 pt-4 sm:px-5 sm:pt-5">
+              <CardTitle className="text-base font-semibold">
+                Personal Details
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>First Name</Label>
-                <Input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
+            <CardContent className="space-y-4 px-4 sm:px-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-first-name">First Name</Label>
+                  <Input
+                    id="profile-first-name"
+                    autoComplete="given-name"
+                    value={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-last-name">Last Name</Label>
+                  <Input
+                    id="profile-last-name"
+                    autoComplete="family-name"
+                    value={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="profile-email">Email (read-only)</Label>
+                  <Input
+                    id="profile-email"
+                    value={user.email}
+                    readOnly
+                    aria-readonly="true"
+                    className="bg-muted/40"
+                  />
+                </div>
               </div>
-              <div>
-                <Label>Last Name</Label>
-                <Input
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
+              <div className="flex justify-end border-t border-border/60 pt-4">
+                <Button
+                  className="w-full sm:w-auto rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] hover:text-[var(--accent-color-foreground)]"
+                  onClick={handleSavePersonalInfo}
+                  disabled={isSavingPersonal}
+                >
+                  {isSavingPersonal ? "Saving..." : "Save Personal Info"}
+                </Button>
               </div>
-              <div>
-                <Label>Email (read-only)</Label>
-                <Input value={user.email} disabled />
-              </div>
-              <Button
-                className="w-full"
-                onClick={handleSavePersonalInfo}
-                disabled={isSavingPersonal}
-              >
-                {isSavingPersonal ? "Saving..." : "Save Personal Info"}
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -460,15 +515,18 @@ function ProfilePageContent() {
         {isAdmin && (
           <TabsContent value="organization" className="mt-0 space-y-4">
             {organizations.length > 1 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Select Organization / Branch</CardTitle>
+              <Card className="gap-4 border-border/70 shadow-sm">
+                <CardHeader className="px-4 pt-4 sm:px-5 sm:pt-5">
+                  <CardTitle className="text-base font-semibold">
+                    Select Organization / Branch
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 sm:px-5">
                   <select
-                    className="w-full border border-input rounded-md p-2"
+                    aria-label="Select organization or branch"
+                    className="h-11 lg:h-9 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-color)]"
                     value={selectedOrgIndex}
-                    onChange={(e) => handleOrgChange(Number(e.target.value))}
+                    onChange={e => handleOrgChange(Number(e.target.value))}
                   >
                     {organizations.map((org, index) => (
                       <option key={org.id} value={index}>
@@ -481,39 +539,52 @@ function ProfilePageContent() {
             )}
 
             {tenant && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Organization Info</CardTitle>
+              <Card className="gap-4 border-border/70 shadow-sm">
+                <CardHeader className="px-4 pt-4 sm:px-5 sm:pt-5">
+                  <CardTitle className="text-base font-semibold">
+                    Organization Info
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Organization Name</Label>
-                    <Input
-                      value={tenantName}
-                      onChange={(e) => setTenantName(e.target.value)}
-                    />
+                <CardContent className="space-y-4 px-4 sm:px-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="profile-organization-name">
+                        Organization Name
+                      </Label>
+                      <Input
+                        id="profile-organization-name"
+                        value={tenantName}
+                        onChange={e => setTenantName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="profile-phone">Phone</Label>
+                      <Input
+                        id="profile-phone"
+                        type="tel"
+                        autoComplete="tel"
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <Label htmlFor="profile-address">Address</Label>
+                      <Input
+                        id="profile-address"
+                        value={orgAddress}
+                        onChange={e => setOrgAddress(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label>Phone</Label>
-                    <Input
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                    />
+                  <div className="flex justify-end border-t border-border/60 pt-4">
+                    <Button
+                      className="w-full sm:w-auto rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] hover:text-[var(--accent-color-foreground)]"
+                      onClick={handleSaveOrganization}
+                      disabled={isSavingOrg}
+                    >
+                      {isSavingOrg ? "Saving..." : "Save Organization"}
+                    </Button>
                   </div>
-                  <div>
-                    <Label>Address</Label>
-                    <Input
-                      value={orgAddress}
-                      onChange={(e) => setOrgAddress(e.target.value)}
-                    />
-                  </div>
-                  <Button
-                    className="w-full"
-                    onClick={handleSaveOrganization}
-                    disabled={isSavingOrg}
-                  >
-                    {isSavingOrg ? "Saving..." : "Save Organization"}
-                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -521,11 +592,13 @@ function ProfilePageContent() {
         )}
 
         <TabsContent value="subscription" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle>Subscription</CardTitle>
+          <Card className="gap-4 border-border/70 shadow-sm">
+            <CardHeader className="px-4 pt-4 sm:px-5 sm:pt-5">
+              <CardTitle className="text-base font-semibold">
+                Subscription
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 sm:px-5">
               <dl className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <dt className="text-sm text-muted-foreground">Plan</dt>
@@ -578,12 +651,17 @@ function ProfilePageContent() {
         </TabsContent>
 
         <TabsContent value="security" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle>Change Password</CardTitle>
+          <Card className="gap-4 border-border/70 shadow-sm">
+            <CardHeader className="px-4 pt-4 sm:px-5 sm:pt-5">
+              <CardTitle className="text-base font-semibold">
+                Change Password
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleChangePassword} className="space-y-4">
+            <CardContent className="px-4 sm:px-5">
+              <form
+                onSubmit={handleChangePassword}
+                className="grid gap-4 sm:grid-cols-2"
+              >
                 <div>
                   <Label htmlFor="new-password">New Password</Label>
                   <Input
@@ -591,7 +669,7 @@ function ProfilePageContent() {
                     type="password"
                     autoComplete="new-password"
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={e => setNewPassword(e.target.value)}
                     placeholder="At least 8 characters"
                     required
                   />
@@ -603,42 +681,48 @@ function ProfilePageContent() {
                     type="password"
                     autoComplete="new-password"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={e => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter your new password"
                     required
                   />
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isSavingPassword}
-                >
-                  {isSavingPassword ? "Updating..." : "Update Password"}
-                </Button>
+                <div className="flex justify-end border-t border-border/60 pt-4 sm:col-span-2">
+                  <Button
+                    type="submit"
+                    className="w-full sm:w-auto rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] hover:text-[var(--accent-color-foreground)]"
+                    disabled={isSavingPassword}
+                  >
+                    {isSavingPassword ? "Updating..." : "Update Password"}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="activity" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle>Activity Log</CardTitle>
+          <Card className="gap-4 border-border/70 shadow-sm">
+            <CardHeader className="px-4 pt-4 sm:px-5 sm:pt-5">
+              <CardTitle className="text-base font-semibold">
+                Activity Log
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4 sm:px-5">
               <ul className="divide-y divide-border text-sm">
-                <li className="flex items-center justify-between py-3 first:pt-0">
+                <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 first:pt-0">
                   <span className="text-muted-foreground">Last login</span>
                   <span className="font-medium">{lastLogin}</span>
                 </li>
-                <li className="flex items-center justify-between py-3">
+                <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3">
                   <span className="text-muted-foreground">Member since</span>
                   <span className="font-medium">{memberSince}</span>
                 </li>
                 {profile?.role && (
-                  <li className="flex items-center justify-between py-3 last:pb-0">
+                  <li className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 last:pb-0">
                     <span className="text-muted-foreground">Role</span>
-                    <span className="font-medium capitalize">{profile.role}</span>
+                    <span className="font-medium capitalize">
+                      {profile.role}
+                    </span>
                   </li>
                 )}
               </ul>
@@ -657,12 +741,14 @@ function ProfilePageContent() {
           </DialogHeader>
 
           <div className="flex flex-col items-center gap-4">
-            <Avatar className="w-24 h-24 border-2 border-border">
+            <Avatar className="size-20 border border-[var(--accent-color-border)]">
               <AvatarImage
                 src={avatarPreviewUrl || avatarUrl || profile?.avatar_url || ""}
+                alt="Profile photo preview"
               />
-              <AvatarFallback>
-                {getInitials(firstName, lastName) || user.email[0]?.toUpperCase()}
+              <AvatarFallback className="bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]">
+                {getInitials(firstName, lastName) ||
+                  user.email[0]?.toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
@@ -714,6 +800,7 @@ function ProfilePageContent() {
               </Button>
               <Button
                 type="button"
+                className="bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] hover:text-[var(--accent-color-foreground)]"
                 onClick={handleSaveAvatar}
                 disabled={!avatarFile || isSavingAvatar}
               >
@@ -739,7 +826,7 @@ function ProfilePageContent() {
 
 export default function ProfilePage() {
   return (
-    <Suspense fallback={<PageLoader message="Loading your profile..." />}>
+    <Suspense fallback={<PageSkeleton message="Loading your profile..." />}>
       <ProfilePageContent />
     </Suspense>
   );

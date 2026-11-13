@@ -8,6 +8,8 @@ import {
   TrendingDown,
   TrendingUp,
   Minus,
+  ChartPie,
+  BarChart3,
 } from "lucide-react";
 import {
   Area,
@@ -24,7 +26,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { OverviewStatCard } from "@/components/overview-stat-card";
+import { FinancialStatCard } from "./financial-stat-card";
 import { formatCurrency, type SupportedCurrency } from "@/lib/currency";
 import { useOrganizationSettings } from "@/lib/organization-settings";
 import type { FinancialGoalConfig } from "../_lib/goal-analysis";
@@ -33,7 +35,6 @@ import {
   computeFinancialOverview,
   fillMonthlyTrendForPeriod,
   buildMonthlyTrend,
-  type FinancialOverview,
 } from "../_lib/financial-overview";
 import {
   DEFAULT_OVERVIEW_PERIOD,
@@ -62,20 +63,6 @@ interface OverviewTabProps {
   auditIncome: AuditIncomeEntry[];
   auditExpenses: AuditExpenseEntry[];
   currency: SupportedCurrency;
-}
-
-function TrendIcon({
-  direction,
-}: {
-  direction: FinancialOverview["trendDirection"];
-}) {
-  if (direction === "up") {
-    return <TrendingUp className="w-5 h-5 text-emerald-600" />;
-  }
-  if (direction === "down") {
-    return <TrendingDown className="w-5 h-5 text-rose-600" />;
-  }
-  return <Minus className="w-5 h-5 text-slate-400" />;
 }
 
 function formatChartLabel(name?: string): string {
@@ -195,7 +182,7 @@ export function OverviewTab({
         : "Stable";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <OverviewPeriodFilterBar
         value={period}
         onChange={setPeriod}
@@ -203,56 +190,59 @@ export function OverviewTab({
         expenses={expenses}
       />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-4 min-w-0">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <OverviewStatCard
-              label="Total Receipts"
-              value={formatCurrency(overview.totalIncome, currency)}
-              hint={periodHint}
-              icon={ArrowUpCircle}
-              variant="emerald"
-            />
-            <OverviewStatCard
-              label="Total Expenses"
-              value={formatCurrency(overview.totalExpenses, currency)}
-              hint={periodHint}
-              icon={ArrowDownCircle}
-              variant="rose"
-            />
-            <OverviewStatCard
-              label="Net Balance"
-              value={formatCurrency(overview.netBalance, currency)}
-              hint="Receipts minus expenses"
-              icon={DollarSign}
-              variant={overview.netBalance >= 0 ? "emerald" : "rose"}
-            />
-            <TithesAverageCard
-              income={income}
-              period={period}
-              periodLabel={periodLabel}
-              currency={currency}
-            />
-          </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <FinancialStatCard
+          label="Total Receipts"
+          value={formatCurrency(overview.totalIncome, currency)}
+          hint={periodHint}
+          icon={ArrowUpCircle}
+          tone="income"
+        />
+        <FinancialStatCard
+          label="Total Expenses"
+          value={formatCurrency(overview.totalExpenses, currency)}
+          hint={periodHint}
+          icon={ArrowDownCircle}
+          tone="expense"
+        />
+        <FinancialStatCard
+          label="Net Balance"
+          value={formatCurrency(overview.netBalance, currency)}
+          hint="Receipts minus expenses"
+          icon={DollarSign}
+          tone={overview.netBalance >= 0 ? "income" : "expense"}
+        />
+        <TithesAverageCard
+          income={income}
+          period={period}
+          periodLabel={periodLabel}
+          currency={currency}
+        />
+      </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200/70 bg-gradient-to-br from-slate-50/90 to-white p-4 dark:from-zinc-900/60 dark:to-zinc-900/30 dark:border-zinc-700/60">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                    Net Trend
-                  </p>
-                  <p className="text-2xl font-bold tabular-nums mt-1 text-slate-900 dark:text-white">
-                    {trendLabel}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
-                    Last 4 weeks vs prior 4 weeks
-                  </p>
-                </div>
-                <TrendIcon direction={overview.trendDirection} />
-              </div>
-            </div>
-            <OverviewStatCard
+      <div className="grid items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-5 min-w-0">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FinancialStatCard
+              label="Net Trend"
+              value={trendLabel}
+              hint="Last 4 weeks vs prior 4 weeks"
+              tone={
+                overview.trendDirection === "up"
+                  ? "income"
+                  : overview.trendDirection === "down"
+                    ? "expense"
+                    : "neutral"
+              }
+              icon={
+                overview.trendDirection === "up"
+                  ? TrendingUp
+                  : overview.trendDirection === "down"
+                    ? TrendingDown
+                    : Minus
+              }
+            />
+            <FinancialStatCard
               label="Offerings & Donations"
               value={formatCurrency(
                 overview.totalOfferings + overview.totalDonations,
@@ -260,17 +250,15 @@ export function OverviewTab({
               )}
               hint={`${formatCurrency(overview.totalOfferings, currency)} offerings · ${formatCurrency(overview.totalDonations, currency)} donations`}
               icon={DollarSign}
-              variant="violet"
+              tone="giving"
             />
           </div>
 
-          <GoalProgressCard overview={overview} currency={currency} />
-
-          <div className="grid gap-4 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
             <ChartPanel
               title="Receipts vs Expenses"
+              icon={TrendingUp}
               description={`${periodLabel} — monthly totals and net`}
-              className="lg:col-span-3"
             >
               {overview.monthlyTrend.length === 0 ? (
                 <ChartEmpty message="No financial records for this period." />
@@ -283,10 +271,15 @@ export function OverviewTab({
                       <YAxis
                         tick={{ fontSize: 10 }}
                         tickFormatter={v =>
-                          formatCurrency(v as number, currency).replace(/\.\d+$/, "")
+                          formatCurrency(v as number, currency).replace(
+                            /\.\d+$/,
+                            "",
+                          )
                         }
                       />
-                      <Tooltip content={<CurrencyTooltip currency={currency} />} />
+                      <Tooltip
+                        content={<CurrencyTooltip currency={currency} />}
+                      />
                       <Legend />
                       <Area
                         type="monotone"
@@ -310,8 +303,8 @@ export function OverviewTab({
                         type="monotone"
                         dataKey="net"
                         name="Net"
-                        stroke="#8b5cf6"
-                        fill="#8b5cf6"
+                        stroke="#3b82f6"
+                        fill="#3b82f6"
                         fillOpacity={0.08}
                         strokeWidth={2}
                         strokeDasharray="4 4"
@@ -324,8 +317,8 @@ export function OverviewTab({
 
             <ChartPanel
               title="Receipts Mix"
+              icon={ChartPie}
               description="Breakdown by giving type"
-              className="lg:col-span-2"
             >
               {overview.incomeBreakdown.length === 0 ? (
                 <ChartEmpty message="No receipts recorded yet." />
@@ -362,6 +355,7 @@ export function OverviewTab({
 
           <ChartPanel
             title="Monthly Net"
+            icon={BarChart3}
             description={`Net giving for ${periodLabel}`}
           >
             {overview.monthlyTrend.length === 0 ? (
@@ -375,10 +369,15 @@ export function OverviewTab({
                     <YAxis
                       tick={{ fontSize: 10 }}
                       tickFormatter={v =>
-                        formatCurrency(v as number, currency).replace(/\.\d+$/, "")
+                        formatCurrency(v as number, currency).replace(
+                          /\.\d+$/,
+                          "",
+                        )
                       }
                     />
-                    <Tooltip content={<CurrencyTooltip currency={currency} />} />
+                    <Tooltip
+                      content={<CurrencyTooltip currency={currency} />}
+                    />
                     <Bar dataKey="net" name="Net" radius={[4, 4, 0, 0]}>
                       {overview.monthlyTrend.map(entry => (
                         <Cell
@@ -392,9 +391,10 @@ export function OverviewTab({
               </div>
             )}
           </ChartPanel>
+          <GoalProgressCard overview={overview} currency={currency} />
         </div>
 
-        <aside className="xl:sticky xl:top-4 xl:self-start">
+        <aside className="min-w-0 2xl:sticky 2xl:top-4 2xl:self-start">
           <OverviewSidebar
             data={sidebarData}
             suggestions={overview.suggestions}

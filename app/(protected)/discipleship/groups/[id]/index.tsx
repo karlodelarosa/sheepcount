@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +42,10 @@ import { usePeople } from "@/lib/people";
 import { useDiscipleship } from "@/lib/discipleship";
 import type { DiscipleshipGroupRole } from "@/lib/supabase/discipleship-groups";
 import { ConfirmDeleteDialog } from "@/app/(protected)/work-ministry/_components/confirm-delete-dialog";
-import { accentForIndex, discipleshipThemes } from "../../_lib/discipleship-themes";
+import {
+  accentForIndex,
+  discipleshipThemes,
+} from "../../_lib/discipleship-themes";
 
 interface GroupDetailsProps {
   groupId: string;
@@ -85,8 +90,14 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
   const accent = accentForIndex(groupIndex < 0 ? 0 : groupIndex);
   const theme = discipleshipThemes[accent];
 
-  const memberships = useMemo(() => getGroupMembers(groupId), [getGroupMembers, groupId]);
-  const meetings = useMemo(() => getGroupMeetings(groupId), [getGroupMeetings, groupId]);
+  const memberships = useMemo(
+    () => getGroupMembers(groupId),
+    [getGroupMembers, groupId],
+  );
+  const meetings = useMemo(
+    () => getGroupMeetings(groupId),
+    [getGroupMeetings, groupId],
+  );
   const prayerItems = useMemo(
     () => getGroupPrayerItems(groupId),
     [getGroupPrayerItems, groupId],
@@ -102,12 +113,16 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
   );
 
   const memberPeople = useMemo(
-    () => members.map(m => m.person).filter((p): p is NonNullable<typeof p> => Boolean(p)),
+    () =>
+      members
+        .map(m => m.person)
+        .filter((p): p is NonNullable<typeof p> => Boolean(p)),
     [members],
   );
 
   const availablePeople = useMemo(
-    () => people.filter(person => !memberships.some(m => m.personId === person.id)),
+    () =>
+      people.filter(person => !memberships.some(m => m.personId === person.id)),
     [people, memberships],
   );
 
@@ -117,7 +132,11 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
 
   const handleAddMember = async () => {
     if (!newPersonId) return;
-    const result = await addGroupMember({ groupId, personId: newPersonId, role: newRole });
+    const result = await addGroupMember({
+      groupId,
+      personId: newPersonId,
+      role: newRole,
+    });
     if (result) {
       setNewPersonId("");
       setNewRole("Member");
@@ -130,7 +149,12 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
 
   const handleLogMeeting = async () => {
     if (!meetingDate || !topic.trim()) return;
-    const result = await addGroupMeeting({ groupId, meetingDate, topic, notes });
+    const result = await addGroupMeeting({
+      groupId,
+      meetingDate,
+      topic,
+      notes,
+    });
     if (result) {
       setMeetingDate(todayDateInputValue());
       setTopic("");
@@ -155,7 +179,10 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
     }
   };
 
-  const handleToggleAnswered = async (prayerItemId: string, isAnswered: boolean) => {
+  const handleToggleAnswered = async (
+    prayerItemId: string,
+    isAnswered: boolean,
+  ) => {
     await setGroupPrayerItemAnswered(prayerItemId, !isAnswered);
   };
 
@@ -176,18 +203,19 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
     "from-slate-900 to-slate-700 dark:from-purple-700 dark:to-purple-500";
 
   if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading group...
-      </div>
-    );
+    return <PageSkeleton message="Loading group..." />;
   }
 
   if (!group) {
     return (
       <div className="space-y-6 p-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={onBack} className="rounded-xl">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onBack}
+            className="rounded-xl"
+          >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-slate-900 dark:text-white">Group Not Found</h1>
@@ -199,7 +227,12 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
   return (
     <div className="space-y-6">
       <section className="relative overflow-hidden rounded-3xl border shadow-xl border-violet-200/50 shadow-violet-200/30 dark:border-zinc-700/50 dark:shadow-slate-900/40">
-        <div className={cn("relative bg-gradient-to-br px-5 py-6 sm:px-8 sm:py-8 text-white", theme.gradient)}>
+        <div
+          className={cn(
+            "relative bg-gradient-to-br px-5 py-6 sm:px-8 sm:py-8 text-white",
+            theme.gradient,
+          )}
+        >
           <div
             className={cn(
               "pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full blur-3xl",
@@ -258,10 +291,12 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
       <div className="grid lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-1 border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 h-fit">
           <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-white">Add Member</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-white">
+              Add Member
+            </CardTitle>
             <CardDescription className="text-slate-600 dark:text-zinc-400">
-              Add anyone to this group. People can belong to more than one
-              group at a time.
+              Add anyone to this group. People can belong to more than one group
+              at a time.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -336,7 +371,9 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
                         <div
                           className={`w-10 h-10 rounded-xl bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center`}
                         >
-                          <span className="text-white">{member.person?.name.charAt(0)}</span>
+                          <span className="text-white">
+                            {member.person?.name.charAt(0)}
+                          </span>
                         </div>
                         <div>
                           <p className="text-slate-900 dark:text-white font-medium">
@@ -348,7 +385,10 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300">
+                        <Badge
+                          variant="secondary"
+                          className="rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300"
+                        >
                           {member.role}
                         </Badge>
                         <Button
@@ -373,7 +413,9 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
       <div className="grid lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-1 border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 h-fit">
           <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-white">Log a Meeting</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-white">
+              Log a Meeting
+            </CardTitle>
             <CardDescription className="text-slate-600 dark:text-zinc-400">
               Record what you covered the next time this group meets up.
             </CardDescription>
@@ -440,11 +482,14 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-500">
                           <CalendarDays className="w-3.5 h-3.5" />
-                          {new Date(meeting.meetingDate).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
+                          {new Date(meeting.meetingDate).toLocaleDateString(
+                            undefined,
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            },
+                          )}
                         </div>
                         <p className="text-slate-900 dark:text-white font-medium mt-1">
                           {meeting.topic}
@@ -476,7 +521,9 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
       <div className="grid lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-1 border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 h-fit">
           <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-white">Add Prayer Request</CardTitle>
+            <CardTitle className="text-slate-900 dark:text-white">
+              Add Prayer Request
+            </CardTitle>
             <CardDescription className="text-slate-600 dark:text-zinc-400">
               Share something this group is praying for.
             </CardDescription>
@@ -539,11 +586,14 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-500">
                             <CalendarDays className="w-3.5 h-3.5" />
-                            {new Date(item.createdAt).toLocaleDateString(undefined, {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
+                            {new Date(item.createdAt).toLocaleDateString(
+                              undefined,
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )}
                             {person && <span>&middot; {person.name}</span>}
                           </div>
                           <p
@@ -569,9 +619,18 @@ export function GroupDetails({ groupId, onBack }: GroupDetailsProps) {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => void handleToggleAnswered(item.id, item.isAnswered)}
+                            onClick={() =>
+                              void handleToggleAnswered(
+                                item.id,
+                                item.isAnswered,
+                              )
+                            }
                             disabled={isSaving}
-                            title={item.isAnswered ? "Mark as unanswered" : "Mark as answered"}
+                            title={
+                              item.isAnswered
+                                ? "Mark as unanswered"
+                                : "Mark as answered"
+                            }
                             className="text-emerald-600 hover:text-emerald-700"
                           >
                             {item.isAnswered ? (

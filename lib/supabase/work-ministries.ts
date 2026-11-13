@@ -92,7 +92,9 @@ function toWorkMinistryTeam(row: DbWorkMinistryTeam): WorkMinistryTeam {
   };
 }
 
-function toWorkMinistryTeamRole(row: DbWorkMinistryTeamRole): WorkMinistryTeamRole {
+function toWorkMinistryTeamRole(
+  row: DbWorkMinistryTeamRole,
+): WorkMinistryTeamRole {
   return {
     id: row.id,
     teamId: row.work_ministry_team_id,
@@ -131,7 +133,9 @@ export async function fetchWorkMinistries(
 
   const { data, error } = await supabase
     .from("work_ministries")
-    .select("id, name, description, color, sort_order, is_default, head_person_id")
+    .select(
+      "id, name, description, color, sort_order, is_default, head_person_id",
+    )
     .eq("organization_id", organizationId)
     .order("sort_order")
     .order("name");
@@ -216,7 +220,9 @@ export async function createWorkMinistry(
       color: input.color ?? "purple",
       sort_order: input.sortOrder ?? 0,
     })
-    .select("id, name, description, color, sort_order, is_default, head_person_id")
+    .select(
+      "id, name, description, color, sort_order, is_default, head_person_id",
+    )
     .single();
 
   if (error) throw error;
@@ -251,7 +257,9 @@ export async function updateWorkMinistry(
     .from("work_ministries")
     .update(updates)
     .eq("id", ministryId)
-    .select("id, name, description, color, sort_order, is_default, head_person_id")
+    .select(
+      "id, name, description, color, sort_order, is_default, head_person_id",
+    )
     .single();
 
   if (error) throw error;
@@ -283,9 +291,12 @@ export async function updateWorkMinistryTeam(
   teamId: string,
   input: Partial<CreateWorkMinistryTeamInput>,
 ): Promise<WorkMinistryTeam> {
-  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  const updates: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
   if (input.name !== undefined) updates.name = input.name.trim();
-  if (input.description !== undefined) updates.description = input.description.trim();
+  if (input.description !== undefined)
+    updates.description = input.description.trim();
   if (input.sortOrder !== undefined) updates.sort_order = input.sortOrder;
 
   const { data, error } = await supabase
@@ -388,7 +399,8 @@ export async function updateWorkMinistryMember(
   const payload: Record<string, unknown> = {};
   if (updates.role !== undefined) payload.role = updates.role;
   if (updates.teamId !== undefined) payload.team_id = updates.teamId;
-  if (updates.serviceRole !== undefined) payload.service_role = updates.serviceRole.trim();
+  if (updates.serviceRole !== undefined)
+    payload.service_role = updates.serviceRole.trim();
 
   const { data, error } = await supabase
     .from("work_ministry_members")

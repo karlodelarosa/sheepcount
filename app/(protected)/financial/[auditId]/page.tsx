@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { Suspense } from "react";
 import { useParams } from "next/navigation";
 import { AuditDetailView } from "../_components/audit-detail-view";
@@ -10,9 +12,7 @@ function AuditDetailPageContent() {
 
   if (!auditId) {
     return (
-      <div className="p-8 text-center text-red-500">
-        Audit ID not found.
-      </div>
+      <div className="p-8 text-center text-red-500">Audit ID not found.</div>
     );
   }
 
@@ -21,7 +21,7 @@ function AuditDetailPageContent() {
 
 export default function AuditDetailPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<PageSkeleton />}>
       <AuditDetailPageContent />
     </Suspense>
   );

@@ -19,6 +19,7 @@ import {
   SectionHeader,
 } from "./person-detail-ui";
 import { cn } from "@/lib/utils";
+import { accentSurfaceVariants } from "@/components/ui/accent-surface";
 
 interface PersonHouseholdSectionProps {
   person: Person;
@@ -91,7 +92,12 @@ export function PersonHouseholdSection({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 min-w-0">
-                <div className="w-11 h-11 rounded-xl bg-slate-800 dark:bg-purple-700 flex items-center justify-center shrink-0">
+                <div
+                  className={cn(
+                    accentSurfaceVariants({ tone: "solid" }),
+                    "flex size-11 shrink-0 items-center justify-center rounded-xl",
+                  )}
+                >
                   <Home className="w-5 h-5 text-white" />
                 </div>
                 <div className="min-w-0">

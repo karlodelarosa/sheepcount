@@ -27,8 +27,5 @@ export function saveReadNotificationIds(
   ids: Set<string>,
 ): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(
-    getStorageKey(organizationId),
-    JSON.stringify([...ids]),
-  );
+  localStorage.setItem(getStorageKey(organizationId), JSON.stringify([...ids]));
 }

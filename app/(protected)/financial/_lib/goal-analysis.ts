@@ -63,7 +63,9 @@ function addMonthsToDate(from: Date, months: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-function computeAverages(monthlyTrend: { income: number; expenses: number; net: number }[]) {
+function computeAverages(
+  monthlyTrend: { income: number; expenses: number; net: number }[],
+) {
   const recentMonths = monthlyTrend.slice(-3);
   if (recentMonths.length === 0) {
     return { avgMonthlyNet: 0, avgMonthlyIncome: 0, avgMonthlyExpenses: 0 };
@@ -103,7 +105,10 @@ function buildScenario(
   }
 
   const requiredMonthlyNet = remaining / months;
-  const additionalMonthlyReceipts = Math.max(0, requiredMonthlyNet - avgMonthlyNet);
+  const additionalMonthlyReceipts = Math.max(
+    0,
+    requiredMonthlyNet - avgMonthlyNet,
+  );
   const receiptIncreasePercent =
     avgMonthlyIncome > 0
       ? Math.round((additionalMonthlyReceipts / avgMonthlyIncome) * 100)
@@ -126,7 +131,8 @@ export function computeGoalProgress(
   const target = isConfigured ? goal.targetAmount! : 0;
   const current = Math.max(netBalance, 0);
   const remaining = isConfigured ? Math.max(target - current, 0) : 0;
-  const percent = isConfigured && target > 0 ? Math.min((current / target) * 100, 100) : 0;
+  const percent =
+    isConfigured && target > 0 ? Math.min((current / target) * 100, 100) : 0;
 
   const { avgMonthlyNet, avgMonthlyIncome, avgMonthlyExpenses } =
     computeAverages(monthlyTrend);
@@ -147,7 +153,10 @@ export function computeGoalProgress(
     daysUntilTarget !== null ? monthsFromDays(daysUntilTarget) : null;
 
   const requiredMonthlyNet =
-    isConfigured && monthsUntilTarget !== null && monthsUntilTarget > 0 && remaining > 0
+    isConfigured &&
+    monthsUntilTarget !== null &&
+    monthsUntilTarget > 0 &&
+    remaining > 0
       ? remaining / monthsUntilTarget
       : null;
 

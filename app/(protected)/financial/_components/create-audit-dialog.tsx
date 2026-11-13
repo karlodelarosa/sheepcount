@@ -95,7 +95,7 @@ export function CreateAuditDialog({
             </Button>
             <Button
               type="submit"
-              className="rounded-lg bg-slate-900 hover:bg-slate-800"
+              className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
             >
               Create schedule
             </Button>

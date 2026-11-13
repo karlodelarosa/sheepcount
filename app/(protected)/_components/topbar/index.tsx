@@ -31,11 +31,16 @@ export function TopBar() {
           : {}),
       });
     }
-  }, [tenant, settings.organizationName, settings.organizationLogo, updateSettings]);
+  }, [
+    tenant,
+    settings.organizationName,
+    settings.organizationLogo,
+    updateSettings,
+  ]);
 
   if (isLoading) {
     return (
-      <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md h-10 px-4 flex items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md h-12 px-4 flex items-center justify-between">
         <Skeleton className="h-4 w-32" />
         <div className="flex items-center gap-2">
           <Skeleton className="h-7 w-7 rounded-lg" />
@@ -49,7 +54,7 @@ export function TopBar() {
   if (!user && !isLoggingOut) return null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md h-10">
+    <header className="sticky top-0 z-50 border-b border-border/60 bg-card/80 backdrop-blur-md h-12">
       <div className="flex items-center justify-between px-4 h-full">
         <WelcomeMessage />
 

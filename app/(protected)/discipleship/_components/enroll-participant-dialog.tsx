@@ -1,9 +1,22 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PersonSelect } from "@/components/person-select";
 import { Label } from "@/components/ui/label";
 import { UserPlus } from "lucide-react";
@@ -23,7 +36,9 @@ interface EnrollParticipantDialogProps {
   people: Person[];
   enrollments: DiscipleshipEnrollment[];
   isSaving: boolean;
-  onEnroll: (input: EnrollInTrackInput) => Promise<DiscipleshipEnrollment | null>;
+  onEnroll: (
+    input: EnrollInTrackInput,
+  ) => Promise<DiscipleshipEnrollment | null>;
 }
 
 export function EnrollParticipantDialog({
@@ -68,7 +83,8 @@ export function EnrollParticipantDialog({
       trackId,
       personId: selectedPersonId,
       role,
-      mentorPersonId: role === "Learner" && mentorPersonId ? mentorPersonId : undefined,
+      mentorPersonId:
+        role === "Learner" && mentorPersonId ? mentorPersonId : undefined,
     });
 
     if (enrollment) {
@@ -77,8 +93,10 @@ export function EnrollParticipantDialog({
     }
   };
 
-  const DualModePrimaryButtonClass = "rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700";
-  const DualModeInputClass = "rounded-lg bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500";
+  const DualModePrimaryButtonClass =
+    "min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] focus-visible:ring-[var(--accent-color)]";
+  const DualModeInputClass =
+    "rounded-lg bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500";
   const DualModeLabelClass = "text-slate-700 dark:text-zinc-300";
 
   return (
@@ -94,7 +112,9 @@ export function EnrollParticipantDialog({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="person" className={DualModeLabelClass}>Select Person</Label>
+            <Label htmlFor="person" className={DualModeLabelClass}>
+              Select Person
+            </Label>
             <PersonSelect
               id="person"
               people={availablePeople}
@@ -106,13 +126,20 @@ export function EnrollParticipantDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="role" className={DualModeLabelClass}>Role in Program</Label>
-            <Select value={role} onValueChange={v => setRole(v as DiscipleshipRole)}>
+            <Label htmlFor="role" className={DualModeLabelClass}>
+              Role in Program
+            </Label>
+            <Select
+              value={role}
+              onValueChange={v => setRole(v as DiscipleshipRole)}
+            >
               <SelectTrigger id="role" className={DualModeInputClass}>
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Learner">Learner (Being Discipled)</SelectItem>
+                <SelectItem value="Learner">
+                  Learner (Being Discipled)
+                </SelectItem>
                 <SelectItem value="Guide">Guide (Discipling Others)</SelectItem>
               </SelectContent>
             </Select>

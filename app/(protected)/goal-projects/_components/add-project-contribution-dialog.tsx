@@ -1,13 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PersonSelect } from "@/components/person-select";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DEFAULT_CURRENCY,
   formatCurrency,
@@ -16,7 +29,10 @@ import {
 import { useOrganizationSettings } from "@/lib/organization-settings";
 import { useGoalProjects } from "@/lib/goal-projects";
 import { usePeople } from "@/lib/people";
-import type { FundraisingContribution, PaymentMethod } from "@/lib/supabase/goal-projects";
+import type {
+  FundraisingContribution,
+  PaymentMethod,
+} from "@/lib/supabase/goal-projects";
 
 interface AddProjectContributionDialogProps {
   open: boolean;
@@ -140,10 +156,7 @@ export function AddProjectContributionDialog({
                 </p>
                 <p className="text-slate-600 mt-1">
                   Remaining:{" "}
-                  {formatCurrency(
-                    progressSummary.remaining,
-                    currency,
-                  )}
+                  {formatCurrency(progressSummary.remaining, currency)}
                 </p>
               </div>
             )}
@@ -156,7 +169,9 @@ export function AddProjectContributionDialog({
                   type="number"
                   placeholder="0.00"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, amount: e.target.value })
+                  }
                   className="rounded-lg"
                   required
                 />
@@ -168,7 +183,9 @@ export function AddProjectContributionDialog({
                   id="contribution-date"
                   type="date"
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, date: e.target.value })
+                  }
                   className="rounded-lg"
                   required
                 />
@@ -181,7 +198,7 @@ export function AddProjectContributionDialog({
                 <PersonSelect
                   people={people}
                   value={formData.personId}
-                  onValueChange={(value) =>
+                  onValueChange={value =>
                     setFormData({ ...formData, personId: value })
                   }
                   placeholder="Select person..."
@@ -192,7 +209,7 @@ export function AddProjectContributionDialog({
                 <Label>Payment method</Label>
                 <Select
                   value={formData.paymentMethod}
-                  onValueChange={(value) =>
+                  onValueChange={value =>
                     setFormData({
                       ...formData,
                       paymentMethod: value as PaymentMethod,
@@ -217,17 +234,27 @@ export function AddProjectContributionDialog({
                 id="contribution-notes"
                 placeholder="Donor name or additional information"
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
                 className="rounded-lg"
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="rounded-lg"
+            >
               Cancel
             </Button>
-            <Button type="submit" className="rounded-lg bg-slate-900 hover:bg-slate-800">
+            <Button
+              type="submit"
+              className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
+            >
               {contribution ? "Save Contribution" : "Add Contribution"}
             </Button>
           </DialogFooter>

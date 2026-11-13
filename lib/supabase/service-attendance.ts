@@ -1,8 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { MembershipType } from "@/lib/people";
-import {
-  promoteFirstTimeSundayAttendees,
-} from "@/lib/supabase/growth-track";
+import { promoteFirstTimeSundayAttendees } from "@/lib/supabase/growth-track";
 
 const DEFAULT_SERVICE_START_TIME = "09:00";
 
@@ -186,7 +184,9 @@ export async function fetchAttendanceRows(
     .order("session_date", { ascending: false });
 
   if (error) throw error;
-  return flattenSessionRows((data ?? []) as unknown as DbSessionWithAttendees[]);
+  return flattenSessionRows(
+    (data ?? []) as unknown as DbSessionWithAttendees[],
+  );
 }
 
 export type AttendanceEntry = {
@@ -220,17 +220,13 @@ export async function recordAttendance(
 
   if (sessionError) throw sessionError;
 
-  const personIds = input.attendees.map((attendee) => attendee.personId);
+  const personIds = input.attendees.map(attendee => attendee.personId);
 
   if (input.serviceCategory === "sunday" && personIds.length > 0) {
-    await promoteFirstTimeSundayAttendees(
-      supabase,
-      organizationId,
-      personIds,
-    );
+    await promoteFirstTimeSundayAttendees(supabase, organizationId, personIds);
   }
 
-  const attendeeRows = input.attendees.map((attendee) => ({
+  const attendeeRows = input.attendees.map(attendee => ({
     session_id: session.id,
     person_id: attendee.personId,
     time_of_arrival: attendee.timeOfArrival ?? null,
@@ -328,7 +324,7 @@ export async function fetchSessionDetail(
 
   const mappedAttendees: SessionAttendee[] = (
     (attendees ?? []) as unknown as DbAttendee[]
-  ).map((row) => {
+  ).map(row => {
     const person = Array.isArray(row.people) ? row.people[0] : row.people;
     const household = person.households
       ? Array.isArray(person.households)
@@ -469,21 +465,19 @@ export async function updateSessionDetails(
     person_id: string;
     time_of_arrival: string | null;
   };
-  const attendeeRows = (current.service_session_attendees ?? []) as DbAttendee[];
-  const personIds = attendeeRows.map((attendee) => attendee.person_id);
+  const attendeeRows = (current.service_session_attendees ??
+    []) as DbAttendee[];
+  const personIds = attendeeRows.map(attendee => attendee.person_id);
   const timeDelta = startTimeChanged
     ? parseTimeToMinutes(input.serviceStartTime) -
       parseTimeToMinutes(currentStartTime)
     : 0;
 
   const buildAttendeeRows = (targetSessionId: string) =>
-    attendeeRows.map((attendee) => ({
+    attendeeRows.map(attendee => ({
       session_id: targetSessionId,
       person_id: attendee.person_id,
-      time_of_arrival: shiftTimeOfArrival(
-        attendee.time_of_arrival,
-        timeDelta,
-      ),
+      time_of_arrival: shiftTimeOfArrival(attendee.time_of_arrival, timeDelta),
     }));
 
   if (
@@ -491,11 +485,7 @@ export async function updateSessionDetails(
     currentCategory !== "sunday" &&
     personIds.length > 0
   ) {
-    await promoteFirstTimeSundayAttendees(
-      supabase,
-      organizationId,
-      personIds,
-    );
+    await promoteFirstTimeSundayAttendees(supabase, organizationId, personIds);
   }
 
   let resultSessionId = input.sessionId;
@@ -577,7 +567,7 @@ export async function updateSessionDetails(
     if (updateError) throw updateError;
 
     if (startTimeChanged && attendeeRows.length > 0) {
-      const updates = attendeeRows.map((attendee) => ({
+      const updates = attendeeRows.map(attendee => ({
         id: attendee.id,
         session_id: input.sessionId,
         person_id: attendee.person_id,

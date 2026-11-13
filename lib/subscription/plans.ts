@@ -98,6 +98,7 @@ export type ModulesConfig = {
 
 export type SubscriptionFeatures = {
   audit_trail?: boolean;
+  circles_access?: boolean;
 };
 
 export type SubscriptionLimits = {

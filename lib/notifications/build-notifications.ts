@@ -72,7 +72,9 @@ export function buildActionNotifications(
   return notifications;
 }
 
-export function buildNewcomerNotifications(people: Person[]): AppNotification[] {
+export function buildNewcomerNotifications(
+  people: Person[],
+): AppNotification[] {
   const newcomers = people
     .filter(
       person =>
@@ -81,8 +83,7 @@ export function buildNewcomerNotifications(people: Person[]): AppNotification[] 
         isAttenderNewComer(getPersonVisitDate(person)),
     )
     .sort(
-      (a, b) =>
-        new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime(),
+      (a, b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime(),
     );
 
   if (newcomers.length === 0) return [];
@@ -141,7 +142,9 @@ export function buildAttendanceNotifications(
   ];
 }
 
-export function buildUpcomingNotifications(events: ChurchEvent[]): AppNotification[] {
+export function buildUpcomingNotifications(
+  events: ChurchEvent[],
+): AppNotification[] {
   return events
     .filter(
       event =>
@@ -175,7 +178,9 @@ export type BuildNotificationsInput = {
   events: ChurchEvent[];
 };
 
-export function buildNotifications(input: BuildNotificationsInput): AppNotification[] {
+export function buildNotifications(
+  input: BuildNotificationsInput,
+): AppNotification[] {
   return [
     ...buildActionNotifications(input.growthPeople),
     ...buildNewcomerNotifications(input.people),

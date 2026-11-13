@@ -7,7 +7,9 @@ export default function Page() {
       <div className="w-full max-w-sm space-y-6 text-center">
         <AppBrand size="lg" className="justify-center" />
         <div className="space-y-2">
-          <h1 className="text-xl font-semibold">Accounts are provisioned by us</h1>
+          <h1 className="text-xl font-semibold">
+            Accounts are provisioned by us
+          </h1>
           <p className="text-sm text-muted-foreground">
             Ministry Lens is invite-only. Contact your administrator if you need
             access to your church account.

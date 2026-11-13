@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,10 @@ export function BaptismCertificateDialog({
   certificateData,
   preview,
 }: BaptismCertificateDialogProps) {
+  const returnFocus = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) returnFocus.current = document.activeElement as HTMLElement;
+  }, [open]);
   const certificateRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [orientation, setOrientation] =
@@ -67,7 +71,10 @@ export function BaptismCertificateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto">
+      <DialogContent
+        onCloseAutoFocus={() => returnFocus.current?.focus()}
+        className="sm:max-w-4xl max-h-[85vh] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle>Baptism certificate</DialogTitle>
         </DialogHeader>
@@ -119,7 +126,7 @@ export function BaptismCertificateDialog({
             {isDownloading ? "Downloading..." : "Download image"}
           </Button>
           <Button
-            className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+            className="rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
             disabled={!certificateData}
             onClick={handlePrint}
           >

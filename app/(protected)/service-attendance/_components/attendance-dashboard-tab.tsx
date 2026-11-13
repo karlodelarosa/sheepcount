@@ -8,15 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { TrendingUp, Users, CalendarDays, UserPlus } from "lucide-react";
 import type { Person } from "@/lib/people";
 import {
@@ -26,11 +17,9 @@ import {
 } from "@/lib/person-demographics";
 import {
   buildDashboardAttendeeSummaries,
-  buildDashboardBreakdownAttendees,
   filterRecordsByDateRange,
   filterRecordsByServiceCategory,
   filterRowsByServiceCategory,
-  getSundayAttendanceTrend,
   getAttendanceByServiceType,
   getSundayStats,
   isSundayRecord,
@@ -39,6 +28,7 @@ import {
   type ServiceAttendanceRow,
   type ServiceCategoryFilter,
 } from "../_lib/group-attendance";
+import { DashboardPrimaryPanels } from "./dashboard-primary-panels";
 import { StatCard } from "./stat-card";
 import { SessionAttendanceBreakdown } from "./session-attendance-breakdown";
 import { DashboardAttendeeList } from "./dashboard-attendee-list";
@@ -48,6 +38,8 @@ import { DashboardHealthAssessment } from "./dashboard-health-assessment";
 import type { AttendanceStatusKey } from "../_lib/attendance-breakdown";
 
 interface AttendanceDashboardTabProps {
+  onOpenSession: (record: GroupedAttendanceRecord) => void;
+  onViewAll: () => void;
   attendanceRecords: GroupedAttendanceRecord[];
   rawAttendance: ServiceAttendanceRow[];
   people: Person[];
@@ -56,11 +48,11 @@ interface AttendanceDashboardTabProps {
 }
 
 function formatRangeLabel(range: DateRangeValue) {
-  const from = new Date(range.from).toLocaleDateString("en-US", {
+  const from = new Date(`${range.from}T00:00:00`).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   });
-  const to = new Date(range.to).toLocaleDateString("en-US", {
+  const to = new Date(`${range.to}T00:00:00`).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -81,6 +73,8 @@ function filterGroupedByPersonIds(
 }
 
 export function AttendanceDashboardTab({
+  onOpenSession,
+  onViewAll,
   attendanceRecords,
   rawAttendance,
   people,
@@ -136,24 +130,8 @@ export function AttendanceDashboardTab({
     return filterGroupedByPersonIds(byService, allowedPersonIds);
   }, [attendanceRecords, dateRange, serviceFilter, allowedPersonIds]);
 
-  const breakdownAttendees = useMemo(
-    () =>
-      buildDashboardBreakdownAttendees(
-        rawAttendance,
-        people,
-        dateRange,
-        serviceFilter,
-      ).filter(row => allowedPersonIds.has(row.personId)),
-    [rawAttendance, people, dateRange, serviceFilter, allowedPersonIds],
-  );
-
   const sundayStats = useMemo(
     () => getSundayStats(filteredRecords),
-    [filteredRecords],
-  );
-
-  const trend = useMemo(
-    () => getSundayAttendanceTrend(filteredRecords),
     [filteredRecords],
   );
 
@@ -174,10 +152,11 @@ export function AttendanceDashboardTab({
   }, [filteredRows, people]);
 
   const totalSessions = filteredRecords.length;
-  const totalAttendees = filteredRows.length;
+  const totalAttendees = attendeeSummaries.length;
 
   const serviceFilterLabel = useMemo(() => {
-    if (serviceFilter.sunday && serviceFilter.lifeGroup) return "All gatherings";
+    if (serviceFilter.sunday && serviceFilter.lifeGroup)
+      return "All gatherings";
     if (serviceFilter.sunday) return "Sunday services only";
     if (serviceFilter.lifeGroup) return "Life groups only";
     return "No gathering type selected";
@@ -196,15 +175,9 @@ export function AttendanceDashboardTab({
   const hasGatheringFilter = serviceFilter.sunday || serviceFilter.lifeGroup;
 
   return (
-    <div className="space-y-4">
-      <Card className="border-border/60 bg-card/50">
-        <CardHeader className="py-3 px-4">
-          <CardTitle className="text-sm">Filters</CardTitle>
-          <CardDescription className="text-xs">
-            Date range, gathering types, and age brackets
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-4 pb-4 pt-0">
+    <div className="space-y-5 [&_.recharts-wrapper]:overflow-hidden">
+      <Card className="rounded-2xl border-border/60 bg-card shadow-sm">
+        <CardContent className="p-5">
           <DashboardFiltersPanel
             dateRange={dateRange}
             onDateRangeChange={onDateRangeChange}
@@ -225,32 +198,34 @@ export function AttendanceDashboardTab({
       ) : attendeeSummaries.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="p-8 text-center text-sm text-muted-foreground">
-            No attendees match the current filters.
+            {rawAttendance.length === 0
+              ? "No attendance recorded yet. Use Record Attendance to add your first service."
+              : "No attendees match the current filters. Adjust your filters or use Reset filters."}
           </CardContent>
         </Card>
       ) : (
         <>
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
-              variant="violet"
+              variant="accent"
               icon={TrendingUp}
-              label="Avg Sunday"
+              label="Avg. Sunday Attendance"
               value={sundayStats.averageAttendance}
               hint={`${sundayStats.sessionCount} service${sundayStats.sessionCount !== 1 ? "s" : ""}`}
             />
             <StatCard
               variant="blue"
               icon={CalendarDays}
-              label="Sessions"
+              label="Total Sessions"
               value={totalSessions}
               hint={serviceFilterLabel}
             />
             <StatCard
               variant="emerald"
               icon={Users}
-              label="Attendees"
+              label="Unique Attendees"
               value={totalAttendees}
-              hint="Headcount total"
+              hint="Individuals in selected filters"
             />
             <StatCard
               variant="amber"
@@ -261,64 +236,33 @@ export function AttendanceDashboardTab({
             />
           </div>
 
-          {breakdownAttendees.length > 0 && (
+          <DashboardPrimaryPanels
+            records={filteredRecords}
+            attendees={attendeeSummaries}
+            activeFilter={statusFilter}
+            onFilterChange={setStatusFilter}
+            onOpenSession={onOpenSession}
+            onViewAll={onViewAll}
+          />
+          <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-2">
             <SessionAttendanceBreakdown
-              attendees={breakdownAttendees}
+              attendees={attendeeSummaries}
               activeFilter={statusFilter}
               onFilterChange={setStatusFilter}
+              hideStatus
             />
-          )}
-
-          <DashboardDemographicsCharts attendees={attendeeSummaries} />
-
-          <DashboardHealthAssessment attendees={attendeeSummaries} />
-
-          <div className="grid gap-4 lg:grid-cols-5">
-            <Card className="lg:col-span-3 border-violet-200/60 dark:border-violet-800/40 bg-gradient-to-br from-violet-50/40 to-transparent dark:from-violet-950/20">
-              <CardHeader className="py-3 px-4">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
-                  Sunday attendance
+            <DashboardHealthAssessment attendees={attendeeSummaries} />
+          </div>
+          <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-2">
+            <Card className="min-w-0 rounded-2xl border-border/60 bg-card shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-base font-bold">
+                  <CalendarDays className="size-5 shrink-0 text-[var(--accent-color)]" />
+                  By Service
                 </CardTitle>
-                <CardDescription className="text-xs">
-                  {formatRangeLabel(dateRange)}
-                </CardDescription>
+                <CardDescription>In selected range</CardDescription>
               </CardHeader>
-              <CardContent className="px-4 pb-4 pt-0">
-                {trend.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={trend}>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        className="stroke-muted"
-                      />
-                      <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
-                      <Tooltip />
-                      <Bar
-                        dataKey="count"
-                        fill="#8b5cf6"
-                        className="dark:fill-violet-400"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <p className="text-xs text-muted-foreground text-center py-12">
-                    No Sunday records in this range
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-2 border-border/60 bg-card/50">
-              <CardHeader className="py-3 px-4">
-                <CardTitle className="text-sm">By service</CardTitle>
-                <CardDescription className="text-xs">
-                  In selected range
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-4 pb-4 pt-0 space-y-2.5">
+              <CardContent className="space-y-5">
                 {serviceBreakdown.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-6">
                     No records in range
@@ -335,7 +279,7 @@ export function AttendanceDashboardTab({
                           <span
                             className={
                               sunday
-                                ? "font-medium text-violet-700 dark:text-violet-300 truncate"
+                                ? "font-medium text-[var(--accent-color-strong)] dark:text-[var(--accent-color)] truncate"
                                 : "text-muted-foreground truncate"
                             }
                           >
@@ -348,7 +292,9 @@ export function AttendanceDashboardTab({
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${
-                              sunday ? "bg-violet-500" : "bg-slate-400/60"
+                              sunday
+                                ? "bg-[var(--accent-color)]"
+                                : "bg-slate-400/60"
                             }`}
                             style={{ width: `${width}%` }}
                           />
@@ -359,21 +305,25 @@ export function AttendanceDashboardTab({
                 )}
               </CardContent>
             </Card>
+            <DashboardDemographicsCharts
+              attendees={attendeeSummaries}
+              hideAge
+            />
           </div>
 
-          <Card className="border-border/60 bg-card/50">
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm flex items-center gap-1.5">
-                <Users className="w-4 h-4" />
+          <Card className="min-w-0 rounded-2xl border-border/60 bg-card shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-base font-bold">
+                <Users className="size-5 shrink-0 text-[var(--accent-color)]" />
                 People in range
               </CardTitle>
-              <CardDescription className="text-xs">
+              <CardDescription>
                 {statusFilter
                   ? `Filtered list · ${formatRangeLabel(dateRange)} · ${serviceFilterLabel}`
                   : `${attendeeSummaries.length} unique people · ${formatRangeLabel(dateRange)} · ${serviceFilterLabel}`}
               </CardDescription>
             </CardHeader>
-            <CardContent className="px-4 pb-4 pt-0">
+            <CardContent>
               <DashboardAttendeeList
                 attendees={attendeeSummaries}
                 statusFilter={statusFilter}

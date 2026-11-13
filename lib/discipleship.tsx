@@ -73,12 +73,16 @@ type DiscipleshipContextValue = {
   hydrated: boolean;
   isSaving: boolean;
   refreshDiscipleship: () => Promise<void>;
-  addTrack: (input: CreateDiscipleshipTrackInput) => Promise<DiscipleshipTrack | null>;
+  addTrack: (
+    input: CreateDiscipleshipTrackInput,
+  ) => Promise<DiscipleshipTrack | null>;
   updateTrack: (
     input: UpdateDiscipleshipTrackInput,
   ) => Promise<DiscipleshipTrack | null>;
   removeTrack: (trackId: string) => Promise<boolean>;
-  enrollPerson: (input: EnrollInTrackInput) => Promise<DiscipleshipEnrollment | null>;
+  enrollPerson: (
+    input: EnrollInTrackInput,
+  ) => Promise<DiscipleshipEnrollment | null>;
   enrollPeople: (
     trackId: string,
     personIds: string[],
@@ -91,9 +95,15 @@ type DiscipleshipContextValue = {
     milestoneId: string,
     completedByPersonId: string | null,
   ) => Promise<boolean>;
-  addMilestone: (input: CreateMilestoneInput) => Promise<DiscipleshipMilestone | null>;
+  addMilestone: (
+    input: CreateMilestoneInput,
+  ) => Promise<DiscipleshipMilestone | null>;
   removeMilestoneById: (milestoneId: string) => Promise<boolean>;
-  moveMilestone: (trackId: string, milestoneId: string, direction: "up" | "down") => Promise<boolean>;
+  moveMilestone: (
+    trackId: string,
+    milestoneId: string,
+    direction: "up" | "down",
+  ) => Promise<boolean>;
   getTrackEnrollments: (trackId: string) => DiscipleshipEnrollment[];
   getTrackMilestones: (trackId: string) => DiscipleshipMilestone[];
   getEnrollmentProgress: (enrollmentId: string) => {
@@ -106,7 +116,9 @@ type DiscipleshipContextValue = {
   groups: DiscipleshipGroup[];
   groupMembers: DiscipleshipGroupMember[];
   groupMeetings: DiscipleshipGroupMeeting[];
-  addGroup: (input: CreateDiscipleshipGroupInput) => Promise<DiscipleshipGroup | null>;
+  addGroup: (
+    input: CreateDiscipleshipGroupInput,
+  ) => Promise<DiscipleshipGroup | null>;
   removeGroup: (groupId: string) => Promise<boolean>;
   addGroupMember: (
     input: AddDiscipleshipGroupMemberInput,
@@ -130,7 +142,9 @@ type DiscipleshipContextValue = {
   getGroupPrayerItems: (groupId: string) => DiscipleshipGroupPrayerItem[];
 };
 
-const DiscipleshipContext = createContext<DiscipleshipContextValue | null>(null);
+const DiscipleshipContext = createContext<DiscipleshipContextValue | null>(
+  null,
+);
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -156,8 +170,12 @@ export function DiscipleshipProvider({
     DiscipleshipMilestoneCompletion[]
   >([]);
   const [groups, setGroups] = useState<DiscipleshipGroup[]>([]);
-  const [groupMembers, setGroupMembers] = useState<DiscipleshipGroupMember[]>([]);
-  const [groupMeetings, setGroupMeetings] = useState<DiscipleshipGroupMeeting[]>([]);
+  const [groupMembers, setGroupMembers] = useState<DiscipleshipGroupMember[]>(
+    [],
+  );
+  const [groupMeetings, setGroupMeetings] = useState<
+    DiscipleshipGroupMeeting[]
+  >([]);
   const [groupPrayerItems, setGroupPrayerItems] = useState<
     DiscipleshipGroupPrayerItem[]
   >([]);
@@ -222,7 +240,9 @@ export function DiscipleshipProvider({
   }, [refreshDiscipleship, tenantLoading]);
 
   const addTrack = useCallback(
-    async (input: CreateDiscipleshipTrackInput): Promise<DiscipleshipTrack | null> => {
+    async (
+      input: CreateDiscipleshipTrackInput,
+    ): Promise<DiscipleshipTrack | null> => {
       if (!organizationId) {
         toast.error("No organization found");
         return null;
@@ -230,7 +250,11 @@ export function DiscipleshipProvider({
 
       setIsSaving(true);
       try {
-        const track = await createDiscipleshipTrack(supabase, organizationId, input);
+        const track = await createDiscipleshipTrack(
+          supabase,
+          organizationId,
+          input,
+        );
         await refreshDiscipleship();
         toast.success("Discipleship track created", {
           description: `${track.name} was added.`,
@@ -249,7 +273,9 @@ export function DiscipleshipProvider({
   );
 
   const updateTrack = useCallback(
-    async (input: UpdateDiscipleshipTrackInput): Promise<DiscipleshipTrack | null> => {
+    async (
+      input: UpdateDiscipleshipTrackInput,
+    ): Promise<DiscipleshipTrack | null> => {
       setIsSaving(true);
       try {
         const track = await updateDiscipleshipTrack(supabase, input);
@@ -297,7 +323,9 @@ export function DiscipleshipProvider({
   );
 
   const enrollPerson = useCallback(
-    async (input: EnrollInTrackInput): Promise<DiscipleshipEnrollment | null> => {
+    async (
+      input: EnrollInTrackInput,
+    ): Promise<DiscipleshipEnrollment | null> => {
       setIsSaving(true);
       try {
         const enrollment = await enrollInTrack(supabase, input);
@@ -458,8 +486,12 @@ export function DiscipleshipProvider({
   );
 
   const addMilestone = useCallback(
-    async (input: CreateMilestoneInput): Promise<DiscipleshipMilestone | null> => {
-      const trackMilestones = milestones.filter(m => m.trackId === input.trackId);
+    async (
+      input: CreateMilestoneInput,
+    ): Promise<DiscipleshipMilestone | null> => {
+      const trackMilestones = milestones.filter(
+        m => m.trackId === input.trackId,
+      );
       const nextSortOrder =
         input.sortOrder ??
         (trackMilestones.length > 0
@@ -548,9 +580,7 @@ export function DiscipleshipProvider({
 
   const getTrackEnrollments = useCallback(
     (trackId: string) =>
-      enrollments.filter(
-        e => e.trackId === trackId && e.status !== "paused",
-      ),
+      enrollments.filter(e => e.trackId === trackId && e.status !== "paused"),
     [enrollments],
   );
 
@@ -628,7 +658,9 @@ export function DiscipleshipProvider({
   );
 
   const addGroup = useCallback(
-    async (input: CreateDiscipleshipGroupInput): Promise<DiscipleshipGroup | null> => {
+    async (
+      input: CreateDiscipleshipGroupInput,
+    ): Promise<DiscipleshipGroup | null> => {
       if (!organizationId) {
         toast.error("No organization found");
         return null;
@@ -636,7 +668,11 @@ export function DiscipleshipProvider({
 
       setIsSaving(true);
       try {
-        const group = await createDiscipleshipGroup(supabase, organizationId, input);
+        const group = await createDiscipleshipGroup(
+          supabase,
+          organizationId,
+          input,
+        );
         await refreshDiscipleship();
         toast.success("Group created", {
           description: `${group.name} was added.`,
@@ -769,7 +805,8 @@ export function DiscipleshipProvider({
         .filter(m => m.groupId === groupId)
         .sort(
           (a, b) =>
-            new Date(b.meetingDate).getTime() - new Date(a.meetingDate).getTime(),
+            new Date(b.meetingDate).getTime() -
+            new Date(a.meetingDate).getTime(),
         ),
     [groupMeetings],
   );
@@ -780,7 +817,10 @@ export function DiscipleshipProvider({
     ): Promise<DiscipleshipGroupPrayerItem | null> => {
       setIsSaving(true);
       try {
-        const prayerItem = await createDiscipleshipGroupPrayerItem(supabase, input);
+        const prayerItem = await createDiscipleshipGroupPrayerItem(
+          supabase,
+          input,
+        );
         await refreshDiscipleship();
         toast.success("Prayer request added");
         return prayerItem;
@@ -800,7 +840,11 @@ export function DiscipleshipProvider({
     async (prayerItemId: string, isAnswered: boolean): Promise<boolean> => {
       setIsSaving(true);
       try {
-        await setDiscipleshipGroupPrayerItemAnswered(supabase, prayerItemId, isAnswered);
+        await setDiscipleshipGroupPrayerItemAnswered(
+          supabase,
+          prayerItemId,
+          isAnswered,
+        );
         await refreshDiscipleship();
         return true;
       } catch (error) {
@@ -904,5 +948,17 @@ export function useDiscipleship() {
   return ctx;
 }
 
-export type { DiscipleshipRole, DiscipleshipTrack, DiscipleshipEnrollment, DiscipleshipBadge, DiscipleshipTrackStatus };
-export type { DiscipleshipGroup, DiscipleshipGroupMember, DiscipleshipGroupMeeting, DiscipleshipGroupPrayerItem, DiscipleshipGroupRole } from "@/lib/supabase/discipleship-groups";
+export type {
+  DiscipleshipRole,
+  DiscipleshipTrack,
+  DiscipleshipEnrollment,
+  DiscipleshipBadge,
+  DiscipleshipTrackStatus,
+};
+export type {
+  DiscipleshipGroup,
+  DiscipleshipGroupMember,
+  DiscipleshipGroupMeeting,
+  DiscipleshipGroupPrayerItem,
+  DiscipleshipGroupRole,
+} from "@/lib/supabase/discipleship-groups";

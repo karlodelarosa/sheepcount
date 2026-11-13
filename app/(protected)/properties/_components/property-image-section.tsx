@@ -51,7 +51,12 @@ export function PropertyImageSection({
   };
 
   return (
-    <div className={cn("relative aspect-square bg-slate-50 dark:bg-zinc-900", className)}>
+    <div
+      className={cn(
+        "relative aspect-square bg-slate-50 dark:bg-zinc-900",
+        className,
+      )}
+    >
       {property.imageUrl ? (
         <Image
           src={property.imageUrl}

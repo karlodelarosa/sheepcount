@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { PageSkeleton } from "@/components/page-skeleton";
 import { AppBrand } from "@/components/app-brand";
 
 type PageLoaderProps = {
@@ -14,6 +15,13 @@ export function PageLoader({
   className,
   fullScreen = false,
 }: PageLoaderProps) {
+  if (!fullScreen)
+    return (
+      <div className={className}>
+        <PageSkeleton message={message} />
+      </div>
+    );
+
   return (
     <div
       className={cn(

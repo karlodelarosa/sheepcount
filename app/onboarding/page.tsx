@@ -72,7 +72,9 @@ export default function OnboardingPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="organization-name">Church / organization name</Label>
+              <Label htmlFor="organization-name">
+                Church / organization name
+              </Label>
               <Input
                 id="organization-name"
                 value={organizationName}
@@ -82,9 +84,7 @@ export default function OnboardingPage() {
                 disabled={isLoading}
               />
             </div>
-            {error ? (
-              <p className="text-sm text-destructive">{error}</p>
-            ) : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creating..." : "Continue"}
             </Button>

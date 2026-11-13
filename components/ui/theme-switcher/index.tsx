@@ -80,10 +80,7 @@ const ThemeSwitcher = () => {
         align="end"
         className="w-40 rounded-xl border-border/60"
       >
-        <DropdownMenuRadioGroup
-          value={theme}
-          onValueChange={handleThemeChange}
-        >
+        <DropdownMenuRadioGroup value={theme} onValueChange={handleThemeChange}>
           {items.map(({ key, label, icon: Icon }) => (
             <DropdownMenuRadioItem
               key={key}

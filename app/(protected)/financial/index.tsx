@@ -1,9 +1,12 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BarChart3, ClipboardList, DollarSign, Settings2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DirectoryTitleCard } from "@/components/ui/directory-page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { DEFAULT_CURRENCY } from "@/lib/currency";
 import { useOrganizationSettings } from "@/lib/organization-settings";
@@ -61,11 +64,7 @@ export function FinancialView() {
   };
 
   if (isLoading || !hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading...
-      </div>
-    );
+    return <PageSkeleton message="Loading..." />;
   }
 
   if (!financialEnabled) {
@@ -97,27 +96,24 @@ export function FinancialView() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Financial
-        </h1>
-        <p className="text-slate-600 dark:text-zinc-400">
-          Overview, audit schedules, and detailed financial records
-        </p>
-      </div>
+    <div className="space-y-6">
+      <DirectoryTitleCard
+        title="Financial"
+        description="Monitor giving, expenses, and balances across your audit schedules."
+        icon={DollarSign}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-xl grid-cols-3 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
-          <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm">
+        <TabsList>
+          <TabsTrigger value="overview">
             <BarChart3 className="w-4 h-4" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="audits" className="gap-1.5 text-xs sm:text-sm">
+          <TabsTrigger value="audits">
             <ClipboardList className="w-4 h-4" />
             Audits
           </TabsTrigger>
-          <TabsTrigger value="manage" className="gap-1.5 text-xs sm:text-sm">
+          <TabsTrigger value="manage">
             <Settings2 className="w-4 h-4" />
             Manage
           </TabsTrigger>

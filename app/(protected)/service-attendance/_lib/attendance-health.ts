@@ -88,7 +88,8 @@ export function assessAttendanceHealth(
       severity: "action",
       title: "All newcomers & visitors",
       detail: "No workers, members, or regular attenders were present.",
-      action: "Assign a greeting team and follow-up owners before the next service.",
+      action:
+        "Assign a greeting team and follow-up owners before the next service.",
     });
   }
 
@@ -99,7 +100,8 @@ export function assessAttendanceHealth(
       severity: "action",
       title: "No workers attended",
       detail: "Your serving team was absent from this attendance mix.",
-      action: "Confirm rosters and encourage workers to model consistent presence.",
+      action:
+        "Confirm rosters and encourage workers to model consistent presence.",
     });
   }
 
@@ -110,7 +112,8 @@ export function assessAttendanceHealth(
       severity: "warning",
       title: "No new faces",
       detail: "No newcomers or visitors appeared in this period.",
-      action: "Consider personal invites, community events, or follow-up campaigns.",
+      action:
+        "Consider personal invites, community events, or follow-up campaigns.",
     });
   }
 
@@ -121,7 +124,8 @@ export function assessAttendanceHealth(
       severity: "action",
       title: "Many guests, few workers",
       detail: `${guests} guest${guests !== 1 ? "s" : ""} with only ${workers} worker${workers !== 1 ? "s" : ""} present.`,
-      action: "Strengthen the welcome team and assign follow-up within 48 hours.",
+      action:
+        "Strengthen the welcome team and assign follow-up within 48 hours.",
     });
   }
 

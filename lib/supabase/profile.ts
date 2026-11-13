@@ -1,8 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  getImageExtension,
-  validateImageFile,
-} from "@/lib/upload-validation";
+import { getImageExtension, validateImageFile } from "@/lib/upload-validation";
 
 export const AVATAR_BUCKET = "avatars";
 export const ORGANIZATION_LOGO_BUCKET = "organization-logos";

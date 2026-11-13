@@ -54,16 +54,25 @@ export function ProspectDirectory() {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
 
   if (selectedPersonId) {
-    const person = mockPeople.find((p) => p.id === selectedPersonId) ?? undefined;
-    return <ProspectDetails person={person} onBack={() => setSelectedPersonId(null)} />;
+    const person = mockPeople.find(p => p.id === selectedPersonId) ?? undefined;
+    return (
+      <ProspectDetails
+        person={person}
+        onBack={() => setSelectedPersonId(null)}
+      />
+    );
   }
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Prospect Directory</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+        Prospect Directory
+      </h1>
       <Card className="border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800">
         <CardHeader>
-          <CardTitle className="text-slate-900 dark:text-white">List of Prospects</CardTitle>
+          <CardTitle className="text-slate-900 dark:text-white">
+            List of Prospects
+          </CardTitle>
           <CardDescription className="text-slate-600 dark:text-zinc-400">
             Click on a prospect to view details or convert to member.
           </CardDescription>
@@ -82,18 +91,30 @@ export function ProspectDirectory() {
                 </tr>
               </thead>
               <tbody>
-                {mockPeople.map((person) => (
-                  <tr key={person.id} className="hover:bg-slate-50 dark:hover:bg-zinc-700">
-                    <td className="border px-4 py-2 text-slate-900 dark:text-white">{person.name}</td>
-                    <td className="border px-4 py-2 text-slate-900 dark:text-white">{person.email ?? "-"}</td>
-                    <td className="border px-4 py-2 text-slate-900 dark:text-white">{person.phone ?? "-"}</td>
+                {mockPeople.map(person => (
+                  <tr
+                    key={person.id}
+                    className="hover:bg-slate-50 dark:hover:bg-zinc-700"
+                  >
+                    <td className="border px-4 py-2 text-slate-900 dark:text-white">
+                      {person.name}
+                    </td>
+                    <td className="border px-4 py-2 text-slate-900 dark:text-white">
+                      {person.email ?? "-"}
+                    </td>
+                    <td className="border px-4 py-2 text-slate-900 dark:text-white">
+                      {person.phone ?? "-"}
+                    </td>
                     <td className="border px-4 py-2">
                       <Badge className="rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300">
                         {person.status ?? "—"}
                       </Badge>
                     </td>
                     <td className="border px-4 py-2">
-                      <Button size="sm" onClick={() => setSelectedPersonId(person.id)}>
+                      <Button
+                        size="sm"
+                        onClick={() => setSelectedPersonId(person.id)}
+                      >
                         View / Convert
                       </Button>
                     </td>
@@ -108,7 +129,13 @@ export function ProspectDirectory() {
   );
 }
 
-function ProspectDetails({ person, onBack }: { person?: Person; onBack: () => void }) {
+function ProspectDetails({
+  person,
+  onBack,
+}: {
+  person?: Person;
+  onBack: () => void;
+}) {
   if (!person) {
     return (
       <div className="p-6 text-center text-slate-600 dark:text-zinc-400">
@@ -141,7 +168,9 @@ function ProspectDetails({ person, onBack }: { person?: Person; onBack: () => vo
 
         <div>
           <h1 className="text-slate-900 dark:text-white">Prospect Details</h1>
-          <p className="text-slate-600 dark:text-zinc-400">View and convert prospect information</p>
+          <p className="text-slate-600 dark:text-zinc-400">
+            View and convert prospect information
+          </p>
         </div>
       </div>
 
@@ -150,11 +179,17 @@ function ProspectDetails({ person, onBack }: { person?: Person; onBack: () => vo
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-600 to-amber-400 dark:from-amber-700 dark:to-amber-500 flex items-center justify-center shadow-lg">
-                <span className="text-white text-3xl">{person.name.charAt(0)}</span>
+                <span className="text-white text-3xl">
+                  {person.name.charAt(0)}
+                </span>
               </div>
               <div>
-                <CardTitle className="text-2xl text-slate-900 dark:text-white">{person.name}</CardTitle>
-                <CardDescription className="text-slate-600 dark:text-zinc-400">Prospect Record</CardDescription>
+                <CardTitle className="text-2xl text-slate-900 dark:text-white">
+                  {person.name}
+                </CardTitle>
+                <CardDescription className="text-slate-600 dark:text-zinc-400">
+                  Prospect Record
+                </CardDescription>
                 <div className="flex gap-2 mt-2">
                   <Badge className="rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300">
                     {person.status}
@@ -172,7 +207,9 @@ function ProspectDetails({ person, onBack }: { person?: Person; onBack: () => vo
                 <Mail className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
                 <div>
                   <p className="text-slate-500 dark:text-zinc-500">Email</p>
-                  <p className="text-slate-900 dark:text-white">{person.email ?? "Not provided"}</p>
+                  <p className="text-slate-900 dark:text-white">
+                    {person.email ?? "Not provided"}
+                  </p>
                 </div>
               </div>
 
@@ -180,7 +217,9 @@ function ProspectDetails({ person, onBack }: { person?: Person; onBack: () => vo
                 <Phone className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
                 <div>
                   <p className="text-slate-500 dark:text-zinc-500">Phone</p>
-                  <p className="text-slate-900 dark:text-white">{person.phone ?? "Not provided"}</p>
+                  <p className="text-slate-900 dark:text-white">
+                    {person.phone ?? "Not provided"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -190,31 +229,54 @@ function ProspectDetails({ person, onBack }: { person?: Person; onBack: () => vo
                 <ClipboardList className="w-5 h-5 text-slate-500 dark:text-zinc-500" />
                 <div>
                   <p className="text-slate-500 dark:text-zinc-500">Status</p>
-                  <p className="text-slate-900 dark:text-white">{person.status}</p>
+                  <p className="text-slate-900 dark:text-white">
+                    {person.status}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 border-t mt-6 pt-6">
-            <h2 className="font-semibold text-slate-900 dark:text-white">Convert to Member</h2>
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4 border-t mt-6 pt-6"
+          >
+            <h2 className="font-semibold text-slate-900 dark:text-white">
+              Convert to Member
+            </h2>
 
             <div>
-              <label className="block mb-1 text-slate-600 dark:text-zinc-400">Joining Date</label>
-              <input type="date" className="w-full border p-2 rounded dark:bg-zinc-700 dark:border-zinc-600" />
+              <label className="block mb-1 text-slate-600 dark:text-zinc-400">
+                Joining Date
+              </label>
+              <input
+                type="date"
+                className="w-full border p-2 rounded dark:bg-zinc-700 dark:border-zinc-600"
+              />
             </div>
 
             <div>
-              <label className="block mb-1 text-slate-600 dark:text-zinc-400">Role / Position</label>
-              <input type="text" placeholder="e.g., Worship Team" className="w-full border p-2 rounded dark:bg-zinc-700 dark:border-zinc-600" />
+              <label className="block mb-1 text-slate-600 dark:text-zinc-400">
+                Role / Position
+              </label>
+              <input
+                type="text"
+                placeholder="e.g., Worship Team"
+                className="w-full border p-2 rounded dark:bg-zinc-700 dark:border-zinc-600"
+              />
             </div>
 
             <div>
-              <label className="block mb-1 text-slate-600 dark:text-zinc-400">Notes</label>
+              <label className="block mb-1 text-slate-600 dark:text-zinc-400">
+                Notes
+              </label>
               <textarea className="w-full border p-2 rounded dark:bg-zinc-700 dark:border-zinc-600" />
             </div>
 
-            <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">
+            <Button
+              type="submit"
+              className="bg-blue-600 text-white hover:bg-blue-700"
+            >
               Convert to Member
             </Button>
           </form>

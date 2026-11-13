@@ -8,10 +8,7 @@ import { usePeople } from "@/lib/people";
 import { getOrganizationId } from "@/lib/supabase/tenant";
 import { useServiceAttendance } from "@/lib/service-attendance";
 import { buildNotifications } from "./build-notifications";
-import {
-  loadReadNotificationIds,
-  saveReadNotificationIds,
-} from "./read-state";
+import { loadReadNotificationIds, saveReadNotificationIds } from "./read-state";
 import type { AppNotification, NotificationTab } from "./types";
 
 export function useNotifications() {

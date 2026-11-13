@@ -8,6 +8,10 @@ import {
   useMemo,
   useState,
 } from "react";
+import {
+  matchesThemeCadence,
+  type ThemeCadence,
+} from "@/lib/church-theme-periods";
 import { toast } from "sonner";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
@@ -33,7 +37,9 @@ type ChurchGoalsContextValue = {
   isSaving: boolean;
   refreshChurchGoals: () => Promise<void>;
   saveYearlyGoal: (input: SaveYearlyGoalInput) => Promise<YearlyGoal | null>;
-  saveRetrospective: (input: SaveRetrospectiveInput) => Promise<YearlyGoal | null>;
+  saveRetrospective: (
+    input: SaveRetrospectiveInput,
+  ) => Promise<YearlyGoal | null>;
   toggleObjective: (
     objectiveId: string,
     completed: boolean,
@@ -42,7 +48,11 @@ type ChurchGoalsContextValue = {
     input: SaveMonthlyThemeInput,
   ) => Promise<MonthlyTheme | null>;
   getYearlyGoal: (year: number) => YearlyGoal | null;
-  getMonthlyTheme: (year: number, month: number) => MonthlyTheme | null;
+  getMonthlyTheme: (
+    year: number,
+    month: number,
+    cadence?: ThemeCadence,
+  ) => MonthlyTheme | null;
   getPriorYearActionPoints: (year: number) => string | null;
   availableYears: number[];
 };
@@ -98,8 +108,13 @@ export function ChurchGoalsProvider({
   );
 
   const getMonthlyTheme = useCallback(
-    (year: number, month: number) =>
-      monthlyThemes.find(t => t.year === year && t.month === month) ?? null,
+    (year: number, month: number, cadence: ThemeCadence = "monthly") =>
+      monthlyThemes.find(
+        t =>
+          t.year === year &&
+          t.month === month &&
+          matchesThemeCadence(t, cadence),
+      ) ?? null,
     [monthlyThemes],
   );
 
@@ -207,14 +222,21 @@ export function ChurchGoalsProvider({
         const saved = await upsertMonthlyTheme(supabase, organizationId, input);
         setMonthlyThemes(prev => {
           const next = prev.filter(
-            t => !(t.year === saved.year && t.month === saved.month),
+            t =>
+              !(
+                t.year === saved.year &&
+                t.month === saved.month &&
+                matchesThemeCadence(t, saved.cadence ?? "monthly")
+              ),
           );
           return [...next, saved].sort((a, b) => {
             if (a.year !== b.year) return b.year - a.year;
             return a.month - b.month;
           });
         });
-        toast.success("Monthly theme saved");
+        toast.success(
+          `${input.cadence === "quarterly" ? "Quarterly" : "Monthly"} theme saved`,
+        );
         return saved;
       } catch (error) {
         toast.error(getErrorMessage(error));

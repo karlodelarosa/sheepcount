@@ -79,9 +79,7 @@ export function AssignMinistryDialog({
   );
 
   const canSubmit =
-    ministryId &&
-    role &&
-    (!hasTeams || (teamId && serviceRole));
+    ministryId && role && (!hasTeams || (teamId && serviceRole));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -227,7 +225,7 @@ export function AssignMinistryDialog({
             <Button
               type="submit"
               disabled={!canSubmit}
-              className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+              className="rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] focus-visible:ring-[var(--accent-color)]"
             >
               Assign
             </Button>

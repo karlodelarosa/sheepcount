@@ -98,7 +98,8 @@ export function EditHouseholdDialog({
               <Label htmlFor="household-head">Head of Family</Label>
               {members.length === 0 ? (
                 <p className="text-sm text-slate-500 dark:text-zinc-500">
-                  Add church members to this household first, then assign a head.
+                  Add church members to this household first, then assign a
+                  head.
                 </p>
               ) : (
                 <Select

@@ -10,7 +10,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Trash2, UserPlus, Save, UserX, UserCheck } from "lucide-react";
+import {
+  Loader2,
+  Trash2,
+  UserPlus,
+  Save,
+  UserX,
+  UserCheck,
+} from "lucide-react";
 
 export type ConfirmPersonVariant =
   | "add"
@@ -112,7 +119,7 @@ export function ConfirmPersonDialog({
             className={
               config.destructive
                 ? "rounded-xl bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                : "rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+                : "rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] focus:ring-[var(--accent-color)]"
             }
           >
             {isLoading ? (

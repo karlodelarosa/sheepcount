@@ -35,8 +35,9 @@ export function DeleteCampaignDialog({
         <DialogHeader>
           <DialogTitle>Delete campaign</DialogTitle>
           <DialogDescription>
-            This will permanently delete <span className="font-medium">{title}</span>{" "}
-            and all of its contributions. This cannot be undone.
+            This will permanently delete{" "}
+            <span className="font-medium">{title}</span> and all of its
+            contributions. This cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -62,4 +63,3 @@ export function DeleteCampaignDialog({
     </Dialog>
   );
 }
-

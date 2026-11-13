@@ -114,7 +114,10 @@ export function EnrollTrainingDialog({
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="person" className="text-slate-700 dark:text-zinc-300">
+              <Label
+                htmlFor="person"
+                className="text-slate-700 dark:text-zinc-300"
+              >
                 Person
               </Label>
               <PersonSelect

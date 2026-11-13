@@ -22,7 +22,11 @@ import type {
   AuditIncomeEntry,
   AuditSchedule,
 } from "../_lib/types";
-import type { AuditPrintOrganization, AuditSummary, ReportSignatory } from "../_lib/audit-overview";
+import type {
+  AuditPrintOrganization,
+  AuditSummary,
+  ReportSignatory,
+} from "../_lib/audit-overview";
 import { openFinancialAuditReportPrint } from "../_lib/financial-print";
 
 type SignatoryRow = {
@@ -196,13 +200,9 @@ export function PrintReportDialog({
                   })
                 }
               >
-                <TabsList className="grid w-full grid-cols-2 h-9">
-                  <TabsTrigger value="person" className="text-xs">
-                    From People
-                  </TabsTrigger>
-                  <TabsTrigger value="manual" className="text-xs">
-                    Manual name
-                  </TabsTrigger>
+                <TabsList>
+                  <TabsTrigger value="person">From People</TabsTrigger>
+                  <TabsTrigger value="manual">Manual name</TabsTrigger>
                 </TabsList>
               </Tabs>
 
@@ -210,9 +210,7 @@ export function PrintReportDialog({
                 <PersonSelect
                   people={people}
                   value={row.personId || undefined}
-                  onValueChange={value =>
-                    updateRow(index, { personId: value })
-                  }
+                  onValueChange={value => updateRow(index, { personId: value })}
                   placeholder={
                     hydrated ? "Select a person" : "Loading people..."
                   }
@@ -244,7 +242,7 @@ export function PrintReportDialog({
           <Button
             type="button"
             onClick={handlePrint}
-            className="rounded-lg bg-slate-900 hover:bg-slate-800"
+            className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             Print report
           </Button>

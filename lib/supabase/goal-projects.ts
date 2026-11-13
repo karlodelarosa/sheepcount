@@ -215,7 +215,10 @@ export async function fetchFundraisingCampaignById(
   const contributionsByCampaign = await loadContributionsByCampaign(supabase, [
     campaignId,
   ]);
-  return toCampaign(data as DbCampaignRow, contributionsByCampaign.get(campaignId) ?? []);
+  return toCampaign(
+    data as DbCampaignRow,
+    contributionsByCampaign.get(campaignId) ?? [],
+  );
 }
 
 export async function createFundraisingCampaign(
@@ -266,7 +269,10 @@ export async function updateFundraisingCampaign(
   const contributionsByCampaign = await loadContributionsByCampaign(supabase, [
     input.id,
   ]);
-  return toCampaign(data as DbCampaignRow, contributionsByCampaign.get(input.id) ?? []);
+  return toCampaign(
+    data as DbCampaignRow,
+    contributionsByCampaign.get(input.id) ?? [],
+  );
 }
 
 export async function deleteFundraisingCampaign(
@@ -365,4 +371,3 @@ export async function deleteContribution(
     .eq("id", contributionId);
   if (error) throw error;
 }
-

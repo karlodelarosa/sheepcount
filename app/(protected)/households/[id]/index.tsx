@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -28,13 +30,16 @@ import {
   BookOpen,
   UserPlus,
   Edit2,
-  Loader2,
   Pencil,
   Trash2,
   Crown,
   GitBranch,
 } from "lucide-react";
-import { usePeople, type HouseholdOtherResident, type Person } from "@/lib/people";
+import {
+  usePeople,
+  type HouseholdOtherResident,
+  type Person,
+} from "@/lib/people";
 import { useBibleStudy } from "@/lib/bible-study";
 import { AddBibleStudyGroupDialog } from "@/app/(protected)/bible-study/_components/add-bible-group-dialog";
 import type { BibleStudyStatus } from "@/lib/supabase/bible-study";
@@ -185,12 +190,7 @@ export function HouseholdDetails({
   const [membersTab, setMembersTab] = useState("directory");
 
   if (!hydrated) {
-    return (
-      <div className="flex items-center justify-center py-24 text-slate-500 dark:text-zinc-400">
-        <Loader2 className="w-6 h-6 animate-spin mr-2" />
-        Loading household...
-      </div>
-    );
+    return <PageSkeleton message="Loading household..." />;
   }
 
   const household = getHousehold(householdId);
@@ -284,9 +284,6 @@ export function HouseholdDetails({
   const DualModeButtonClass =
     "rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700";
 
-  const tabTriggerClass =
-    "rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm dark:data-[state=active]:bg-zinc-700 dark:data-[state=active]:text-white";
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -325,7 +322,8 @@ export function HouseholdDetails({
               <div className={bibleStudyStatusClass[hostedBibleStudy.status]}>
                 <div className="flex items-center justify-between">
                   <p className="text-slate-900 font-medium dark:text-white">
-                    {hostedBibleStudy.meetingDay} at {hostedBibleStudy.meetingTime}
+                    {hostedBibleStudy.meetingDay} at{" "}
+                    {hostedBibleStudy.meetingTime}
                   </p>
                   <Badge className="rounded-lg">
                     {bibleStudyStatusLabels[hostedBibleStudy.status]}
@@ -334,7 +332,8 @@ export function HouseholdDetails({
                 <p className="text-slate-600 text-sm mt-1 dark:text-zinc-400">
                   {bibleStudyMemberRows.length} participant
                   {bibleStudyMemberRows.length !== 1 ? "s" : ""}:{" "}
-                  {bibleStudyMemberRows.map(p => p.name).join(", ") || "None yet"}
+                  {bibleStudyMemberRows.map(p => p.name).join(", ") ||
+                    "None yet"}
                 </p>
                 {hostedBibleStudy.statusNotes &&
                   (hostedBibleStudy.status === "paused" ||
@@ -466,12 +465,12 @@ export function HouseholdDetails({
             onValueChange={setMembersTab}
             className="space-y-6"
           >
-            <TabsList className="grid h-10 w-full max-w-md grid-cols-2 bg-slate-100/80 p-1 dark:bg-zinc-800/80">
-              <TabsTrigger value="directory" className={tabTriggerClass}>
+            <TabsList>
+              <TabsTrigger value="directory">
                 <Users className="mr-1.5 hidden h-4 w-4 sm:inline" />
                 Directory
               </TabsTrigger>
-              <TabsTrigger value="tree" className={tabTriggerClass}>
+              <TabsTrigger value="tree">
                 <GitBranch className="mr-1.5 hidden h-4 w-4 sm:inline" />
                 Family Tree
               </TabsTrigger>
@@ -511,7 +510,9 @@ export function HouseholdDetails({
                               <button
                                 type="button"
                                 className="flex items-center gap-3 text-left hover:underline"
-                                onClick={() => router.push(`/people/${member.id}`)}
+                                onClick={() =>
+                                  router.push(`/people/${member.id}`)
+                                }
                               >
                                 <div className="w-8 h-8 rounded-lg bg-indigo-600 dark:bg-purple-600 flex items-center justify-center shadow-sm">
                                   <span className="text-white">
@@ -524,7 +525,9 @@ export function HouseholdDetails({
                             <TableCell>
                               <Badge
                                 variant={
-                                  member.role === "Head" ? "default" : "secondary"
+                                  member.role === "Head"
+                                    ? "default"
+                                    : "secondary"
                                 }
                                 className="rounded-lg"
                               >
@@ -632,7 +635,9 @@ export function HouseholdDetails({
                                   size="sm"
                                   className="rounded-lg"
                                   disabled={isSaving}
-                                  onClick={() => handleOpenOtherResident(resident)}
+                                  onClick={() =>
+                                    handleOpenOtherResident(resident)
+                                  }
                                 >
                                   <Pencil className="w-4 h-4" />
                                 </Button>
@@ -641,7 +646,9 @@ export function HouseholdDetails({
                                   size="sm"
                                   className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
                                   disabled={isSaving}
-                                  onClick={() => handleDeleteResident(resident.id)}
+                                  onClick={() =>
+                                    handleDeleteResident(resident.id)
+                                  }
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>

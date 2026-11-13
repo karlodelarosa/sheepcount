@@ -4,58 +4,31 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Award,
-  AtSign,
   BookOpen,
-  Calendar,
   CalendarCheck,
   CalendarDays,
   GraduationCap,
-  Home,
-  Mail,
-  Phone,
-  Save,
   Sparkles,
   User,
   Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BirthdateField } from "@/components/birthdate-field";
 import type { PersonProfileDetails } from "@/lib/supabase/person-profile";
 import type { Person, PersonGender } from "@/lib/people";
 import type { Household } from "@/lib/people";
-import {
-  getMembershipDisplayColor,
-  getMembershipDisplayLabel,
-  getPersonVisitDate,
-} from "@/lib/membership-path";
 import type {
   WorkMinistry,
   WorkMinistryMember,
   WorkMinistryTeam,
 } from "@/lib/supabase/work-ministries";
 import { formatMinistryAssignmentLabel } from "@/lib/work-ministry-labels";
-import {
-  EmptyState,
-  InfoTile,
-  panelCard,
-  SectionHeader,
-} from "./person-detail-ui";
-import { PersonHouseholdSection } from "./person-household-section";
+import { EmptyState, panelCard, SectionHeader } from "./person-detail-ui";
 import { PersonAttendanceSection } from "./person-attendance-section";
-import { PersonPastoralAlert } from "./person-pastoral-alert";
 import { PersonBaptismSection } from "./person-baptism-section";
 import { PersonMemorialSection } from "./person-memorial-section";
+import { PersonOverviewSection } from "./person-overview-section";
 import type { PersonAttendanceRow } from "../_lib/person-attendance";
 import type { PersonPastoralStatus } from "../_lib/person-pastoral-status";
 import { isPastoralAlertLevel } from "../_lib/person-pastoral-status";
@@ -202,324 +175,64 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="h-auto w-full flex-wrap justify-start gap-1 p-1">
-        <TabsTrigger
-          value="overview"
-          className="gap-1.5 text-xs sm:text-sm px-2.5 sm:px-3"
-          disabled={isEditing && activeTab !== "overview"}
-        >
-          <User className="w-3.5 h-3.5" />
-          Overview
-          {isPastoralAlertLevel(pastoralStatus.level) && (
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-          )}
-        </TabsTrigger>
-        <TabsTrigger
-          value="community"
-          className="gap-1.5 text-xs sm:text-sm px-2.5 sm:px-3"
-          disabled={isEditing}
-        >
-          <Users className="w-3.5 h-3.5" />
-          Community
-          {communityCount > 0 && (
-            <span className="text-[10px] tabular-nums opacity-70">
-              ({communityCount})
-            </span>
-          )}
-        </TabsTrigger>
-        <TabsTrigger
-          value="attendance"
-          className="gap-1.5 text-xs sm:text-sm px-2.5 sm:px-3"
-          disabled={isEditing}
-        >
-          <CalendarCheck className="w-3.5 h-3.5" />
-          Attendance
-        </TabsTrigger>
-        <TabsTrigger
-          value="growth"
-          className="gap-1.5 text-xs sm:text-sm px-2.5 sm:px-3"
-          disabled={isEditing}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          Growth
-          {growthCount > 0 && (
-            <span className="text-[10px] tabular-nums opacity-70">
-              ({growthCount})
-            </span>
-          )}
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="overview" className="mt-4 space-y-5">
-        <PersonPastoralAlert status={pastoralStatus} />
-
-        <div className={cn(panelCard, "p-5")}>
-          <SectionHeader
-            icon={Mail}
-            title="Contact & Details"
-            description={
-              isEditing ? "Update profile information" : "How to reach them"
-            }
-          />
-          <div className="mt-4">
-            {isEditing ? (
-              <form onSubmit={onUpdate} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="firstName">First Name</Label>
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      defaultValue={person.firstName}
-                      required
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      defaultValue={person.lastName}
-                      required
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="col-span-2 grid gap-2">
-                    <Label htmlFor="middleName">
-                      Middle Name{" "}
-                      <span className="text-muted-foreground font-normal">
-                        (optional)
-                      </span>
-                    </Label>
-                    <Input
-                      id="middleName"
-                      name="middleName"
-                      defaultValue={person.middleName}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      defaultValue={person.phone}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="socialContact">Social media contact</Label>
-                    <Input
-                      id="socialContact"
-                      name="socialContact"
-                      defaultValue={person.socialContact}
-                      placeholder="Name, @handle, or profile link"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <BirthdateField
-                      key={`${personId}-${isEditing}-birthdate`}
-                      name="birthdate"
-                      defaultValue={person.birthdate}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <BirthdateField
-                      key={`${personId}-${isEditing}-first-attendance`}
-                      name="firstAttendance"
-                      label="First attendance"
-                      defaultValue={person.firstAttendance || person.joinDate}
-                      showLabel
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <BirthdateField
-                      key={`${personId}-${isEditing}-member-since`}
-                      name="memberSince"
-                      label="Member since"
-                      defaultValue={person.memberSince}
-                      showLabel
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      defaultValue={person.email}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="gender">Gender</Label>
-                    <Select
-                      value={editGender || "unset"}
-                      onValueChange={value =>
-                        onEditGenderChange(
-                          value === "unset" ? "" : (value as PersonGender),
-                        )
-                      }
-                    >
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue placeholder="Not specified" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unset">Not specified</SelectItem>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="role">Household role</Label>
-                    <Select value={editRole} onValueChange={onEditRoleChange}>
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Head">Head of Household</SelectItem>
-                        <SelectItem value="Spouse">Spouse</SelectItem>
-                        <SelectItem value="Child">Child</SelectItem>
-                        <SelectItem value="Single">Single</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={editStatus}
-                      onValueChange={onEditStatusChange}
-                    >
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                        <SelectItem value="Exited">Exited</SelectItem>
-                        <SelectItem value="Deceased">Deceased</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="flex justify-end">
-                  <Button
-                    type="submit"
-                    disabled={isSaving}
-                    className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <InfoTile icon={Mail} label="Email">
-                  {person.email || (
-                    <span className="text-slate-400 font-normal">
-                      Not provided
-                    </span>
-                  )}
-                </InfoTile>
-                <InfoTile icon={Phone} label="Phone">
-                  {person.phone || (
-                    <span className="text-slate-400 font-normal">
-                      Not provided
-                    </span>
-                  )}
-                </InfoTile>
-                <InfoTile icon={AtSign} label="Social media">
-                  {person.socialContact || (
-                    <span className="text-slate-400 font-normal">
-                      Not provided
-                    </span>
-                  )}
-                </InfoTile>
-                <InfoTile icon={Calendar} label="Birthdate">
-                  {person.birthdate
-                    ? new Date(person.birthdate).toLocaleDateString()
-                    : "Not provided"}
-                </InfoTile>
-                <InfoTile icon={User} label="Gender">
-                  {person.gender || (
-                    <span className="text-slate-400 font-normal">
-                      Not provided
-                    </span>
-                  )}
-                </InfoTile>
-                <InfoTile icon={Sparkles} label="Membership">
-                  <Badge
-                    className={`rounded-lg font-normal ${getMembershipDisplayColor(
-                      person.membershipType,
-                      getPersonVisitDate(person),
-                    )}`}
-                  >
-                    {getMembershipDisplayLabel(
-                      person.membershipType,
-                      getPersonVisitDate(person),
-                    )}
-                  </Badge>
-                </InfoTile>
-                <InfoTile icon={Calendar} label="First attendance">
-                  {person.firstAttendance || person.joinDate
-                    ? new Date(
-                        person.firstAttendance || person.joinDate,
-                      ).toLocaleDateString()
-                    : "Not recorded"}
-                </InfoTile>
-                <InfoTile icon={CalendarCheck} label="Member since">
-                  {person.memberSince ? (
-                    new Date(person.memberSince).toLocaleDateString()
-                  ) : (
-                    <span className="text-slate-400 font-normal">
-                      Not a member yet
-                    </span>
-                  )}
-                </InfoTile>
-                <InfoTile icon={Calendar} label="Directory entry date">
-                  {new Date(person.joinDate).toLocaleDateString()}
-                </InfoTile>
-                <InfoTile
-                  icon={Home}
-                  label="Household"
-                  onClick={
-                    hasHousehold
-                      ? () => router.push(`/households/${person.householdId}`)
-                      : undefined
-                  }
-                >
-                  {hasHousehold ? (
-                    <>
-                      {person.householdName || household?.name}
-                      <span className="block text-xs font-normal text-slate-500 dark:text-zinc-500 mt-0.5">
-                        {person.role}
-                        {!inFamilyHousehold && " · Solo household"}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-slate-400 font-normal">
-                      Not assigned
-                    </span>
-                  )}
-                </InfoTile>
-              </div>
+      <div className="overflow-x-auto rounded-xl border border-border/70 bg-card shadow-sm">
+        <TabsList>
+          <TabsTrigger
+            value="overview"
+            disabled={isEditing && activeTab !== "overview"}
+          >
+            <User className="w-3.5 h-3.5" />
+            Overview
+            {isPastoralAlertLevel(pastoralStatus.level) && (
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
             )}
-          </div>
-        </div>
+          </TabsTrigger>
+          <TabsTrigger value="community" disabled={isEditing}>
+            <Users className="w-3.5 h-3.5" />
+            Community
+            {communityCount > 0 && (
+              <span className="text-[10px] tabular-nums opacity-70">
+                ({communityCount})
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="attendance" disabled={isEditing}>
+            <CalendarCheck className="w-3.5 h-3.5" />
+            Attendance
+          </TabsTrigger>
+          <TabsTrigger value="growth" disabled={isEditing}>
+            <Sparkles className="w-3.5 h-3.5" />
+            Growth
+            {growthCount > 0 && (
+              <span className="text-[10px] tabular-nums opacity-70">
+                ({growthCount})
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
-        <PersonHouseholdSection
+      <TabsContent value="overview" className="mt-4">
+        <PersonOverviewSection
+          personId={personId}
           person={person}
+          pastoralStatus={pastoralStatus}
+          isEditing={isEditing}
+          isSaving={isSaving}
+          editRole={editRole}
+          editStatus={editStatus}
+          editGender={editGender}
+          onEditRoleChange={onEditRoleChange}
+          onEditStatusChange={onEditStatusChange}
+          onEditGenderChange={onEditGenderChange}
+          onUpdate={onUpdate}
           household={household}
           householdMembers={householdMembers}
           hasHousehold={hasHousehold}
           inFamilyHousehold={inFamilyHousehold}
-          onAssignClick={onHouseholdAssignClick}
+          onHouseholdAssignClick={onHouseholdAssignClick}
+          lifeGroups={lifeGroups}
+          cellGroup={cellGroup}
         />
       </TabsContent>
 
@@ -757,7 +470,7 @@ export function PersonDetailTabs(props: PersonDetailTabsProps) {
                         key={badge.progressId}
                         className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/40 dark:border-zinc-700/70 dark:bg-zinc-800/30"
                       >
-                        <Award className="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0" />
+                        <Award className="size-5 shrink-0 text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]" />
                         <div className="min-w-0">
                           <p className="font-medium text-slate-900 dark:text-white truncate">
                             {badge.courseName}

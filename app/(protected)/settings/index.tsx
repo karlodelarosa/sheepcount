@@ -1,16 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DirectoryTitleCard } from "@/components/ui/directory-page-header";
+import Link from "next/link";
 import { useTheme } from "@/context/theme-context";
-import { Moon, Sun, Palette, Building2, Upload, LayoutGrid } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Moon, Sun, Upload, LayoutGrid, Settings, Check } from "lucide-react";
 import { useTenant } from "@/app/providers/tenant-provider";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
@@ -21,11 +27,9 @@ import {
 import { validateAvatarFile } from "@/lib/upload-validation";
 import { toast } from "sonner";
 import { NavigationVisibilitySettings } from "./_components/navigation-visibility";
+import { DEFAULT_ACCENT_COLOR } from "@/lib/accent-color";
 
 type SettingsTab = "general" | "menu";
-
-const tabTriggerClass =
-  "gap-1.5 text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-zinc-700 dark:data-[state=active]:text-white";
 
 function parseTab(value: string | null, isAdmin: boolean): SettingsTab {
   if (value === "menu" && isAdmin) {
@@ -43,9 +47,8 @@ function getErrorMessage(error: unknown): string {
 }
 
 export function SettingsView() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const { settings, updateSettings, toggleMode } = useTheme();
+  const { settings, updateSettings, resolvedMode } = useTheme();
   const { tenant, refreshSession } = useTenant();
   const supabase = useMemo(() => createClient(), []);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -53,17 +56,6 @@ export function SettingsView() {
 
   const isAdmin = tenant?.profile?.role === "admin";
   const activeTab = parseTab(searchParams.get("tab"), isAdmin);
-
-  const setActiveTab = (tab: string) => {
-    const nextTab = tab === "menu" && isAdmin ? "menu" : "general";
-    router.replace(`/settings?tab=${nextTab}`, { scroll: false });
-  };
-
-  useEffect(() => {
-    if (!isAdmin && activeTab === "menu") {
-      setActiveTab("general");
-    }
-  }, [isAdmin, activeTab]);
 
   const organizationId = getOrganizationId(tenant);
 
@@ -124,202 +116,260 @@ export function SettingsView() {
     { name: "Blue", value: "#2563eb" },
     { name: "Purple", value: "#7c3aed" },
     { name: "Green", value: "#059669" },
-    { name: "Orange", value: "#ea580c" },
+    { name: "Orange", value: DEFAULT_ACCENT_COLOR },
     { name: "Pink", value: "#db2777" },
     { name: "Indigo", value: "#4f46e5" },
   ];
 
+  const cardClass = "rounded-xl border-border/60 bg-card shadow-none";
+  const rowClass =
+    "grid min-w-0 gap-4 py-5 md:grid-cols-[minmax(0,0.6fr)_minmax(0,1fr)] md:items-center md:gap-8";
+  const titleClass = "text-base font-semibold text-foreground";
+  const descriptionClass = "mt-1 text-sm text-muted-foreground";
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1>Settings</h1>
-        <p className="text-muted-foreground">
-          Customize your organization&apos;s appearance and navigation
-        </p>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
-          <TabsTrigger value="general" className={tabTriggerClass}>
-            <Palette className="w-3.5 h-3.5" />
-            General
-          </TabsTrigger>
-          {isAdmin ? (
-            <TabsTrigger value="menu" className={tabTriggerClass}>
-              <LayoutGrid className="w-3.5 h-3.5" />
-              Menu Settings
-            </TabsTrigger>
-          ) : null}
-        </TabsList>
-
-        <TabsContent value="general" className="mt-0">
-          <div className="grid gap-6 lg:grid-cols-2">
-        {/* Theme Mode */}
-        <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 flex items-center justify-center">
-                {settings.mode === 'dark' ? (
-                  <Moon className="w-5 h-5 text-white dark:text-slate-900" />
-                ) : (
-                  <Sun className="w-5 h-5 text-white" />
-                )}
-              </div>
-              <div>
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>Toggle between light and dark mode</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-background/50">
-              <div>
-                <p className="text-foreground">Dark Mode</p>
-                <p className="text-muted-foreground">Use dark theme throughout the app</p>
-              </div>
-              <Switch 
-                checked={settings.mode === 'dark'} 
-                onCheckedChange={toggleMode}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Organization Details */}
-        <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <CardTitle>Organization</CardTitle>
-                <CardDescription>Update your organization details</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Organization Name</Label>
-              <Input 
-                value={settings.organizationName}
-                onChange={(e) => updateSettings({ organizationName: e.target.value })}
-                placeholder="Enter organization name"
-                className="bg-background/50"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Organization Logo</Label>
-              <div className="flex items-center gap-3">
-                {settings.organizationLogo ? (
-                  <img
-                    src={settings.organizationLogo}
-                    alt="Organization logo"
-                    className="h-12 w-12 rounded-lg border border-border/60 object-cover"
-                  />
-                ) : null}
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  className="hidden"
-                  onChange={handleLogoFileChange}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="gap-2"
-                  disabled={!organizationId || isUploadingLogo}
-                  onClick={() => logoInputRef.current?.click()}
-                >
-                  <Upload className="w-4 h-4" />
-                  {isUploadingLogo ? "Uploading..." : "Upload Logo"}
-                </Button>
-                {settings.organizationLogo ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    disabled={!organizationId || isUploadingLogo}
-                    onClick={handleRemoveLogo}
-                  >
-                    Remove
-                  </Button>
-                ) : null}
-                {settings.organizationLogo && !isUploadingLogo ? (
-                  <Badge variant="secondary">Logo uploaded</Badge>
-                ) : null}
-              </div>
-              <p className="text-muted-foreground">Recommended: Square image, at least 200x200px</p>
-            </div>
-
-            <div className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-background/50">
-              <div>
-                <p className="text-foreground">Use organization logo</p>
-                <p className="text-muted-foreground">
-                  Show your logo in the sidebar instead of the Ministry Lens icon
-                </p>
-              </div>
-              <Switch
-                checked={settings.useOrganizationLogo}
-                disabled={!settings.organizationLogo}
-                onCheckedChange={(checked) =>
-                  updateSettings({ useOrganizationLogo: checked })
-                }
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Accent Color */}
-        <Card className="border-border/60 bg-card/50 backdrop-blur-sm lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
-                <Palette className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <CardTitle>Accent Color</CardTitle>
-                <CardDescription>Choose a primary color for your application</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-              {accentColors.map((color) => (
-                <button
-                  key={color.value}
-                  onClick={() => updateSettings({ accentColor: color.value })}
-                  className={`
-                    group relative p-4 rounded-xl border-2 transition-all duration-200
-                    ${settings.accentColor === color.value 
-                      ? 'border-foreground shadow-lg' 
-                      : 'border-border/60 hover:border-border'
-                    }
-                  `}
-                >
-                  <div 
-                    className="w-full h-16 rounded-lg shadow-sm"
-                    style={{ backgroundColor: color.value }}
-                  />
-                  <p className="mt-3 text-foreground">{color.name}</p>
-                  {settings.accentColor === color.value && (
-                    <Badge className="mt-2 w-full">Selected</Badge>
-                  )}
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+    <div>
+      <DirectoryTitleCard
+        title="Settings"
+        description="Manage your organization and personalize Ministry Lens."
+        icon={Settings}
+      />
+      <nav
+        aria-label="Settings sections"
+        className="flex gap-6 overflow-x-auto border-b border-border/60 sm:gap-8"
+      >
+        {[
+          { value: "general", label: "General", icon: Settings },
+          ...(isAdmin
+            ? [{ value: "menu", label: "Menu Settings", icon: LayoutGrid }]
+            : []),
+        ].map(({ value, label, icon: Icon }) => (
+          <Link
+            key={value}
+            href={`/settings?tab=${value}`}
+            scroll={false}
+            aria-current={activeTab === value ? "page" : undefined}
+            className={`relative flex min-h-14 shrink-0 items-center gap-3 px-4 py-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent-color)] ${activeTab === value ? "text-[var(--accent-color-strong)] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-[var(--accent-color)] dark:text-[var(--accent-color)]" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Icon className="size-5" aria-hidden="true" />
+            {label}
+          </Link>
+        ))}
+      </nav>
+      <div className="min-w-0 py-6">
+        {activeTab === "general" ? (
+          <div className="space-y-6">
+            <Card className={cardClass}>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold tracking-tight">
+                  Organization
+                </CardTitle>
+                <CardDescription>
+                  Update your organization details.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="divide-y divide-border/60">
+                  <div className={rowClass}>
+                    <div>
+                      <Label htmlFor="organization-name" className={titleClass}>
+                        Organization name
+                      </Label>
+                      <p
+                        id="organization-name-description"
+                        className={descriptionClass}
+                      >
+                        Displayed across your workspace.
+                      </p>
+                    </div>
+                    <Input
+                      id="organization-name"
+                      aria-describedby="organization-name-description"
+                      value={settings.organizationName}
+                      onChange={e =>
+                        updateSettings({ organizationName: e.target.value })
+                      }
+                      placeholder="Enter organization name"
+                    />
+                  </div>
+                  <div className={rowClass}>
+                    <div>
+                      <p id="organization-logo-label" className={titleClass}>
+                        Organization logo
+                      </p>
+                      <p className={descriptionClass}>
+                        Square image, at least 200 × 200 px.
+                      </p>
+                    </div>
+                    <div
+                      role="group"
+                      aria-labelledby="organization-logo-label"
+                      aria-busy={isUploadingLogo}
+                      className="flex flex-wrap items-center gap-4"
+                    >
+                      {settings.organizationLogo ? (
+                        <img
+                          src={settings.organizationLogo}
+                          alt="Organization logo"
+                          className="size-16 rounded-xl border border-border/60 bg-muted/30 object-contain"
+                        />
+                      ) : null}
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        aria-label="Upload organization logo"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="hidden"
+                        onChange={handleLogoFileChange}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="min-h-11 gap-2 px-5"
+                        disabled={!organizationId || isUploadingLogo}
+                        onClick={() => logoInputRef.current?.click()}
+                      >
+                        <Upload className="size-4" aria-hidden="true" />
+                        {isUploadingLogo
+                          ? "Uploading..."
+                          : settings.organizationLogo
+                            ? "Change logo"
+                            : "Upload logo"}
+                      </Button>
+                      {settings.organizationLogo ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={!organizationId || isUploadingLogo}
+                          onClick={handleRemoveLogo}
+                        >
+                          Remove
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 pt-5">
+                    <div>
+                      <Label
+                        htmlFor="use-organization-logo"
+                        className={titleClass}
+                      >
+                        Use organization logo
+                      </Label>
+                      <p
+                        id="organization-logo-description"
+                        className={descriptionClass}
+                      >
+                        Replace the default Ministry Lens icon in the sidebar.
+                      </p>
+                    </div>
+                    <Switch
+                      id="use-organization-logo"
+                      aria-describedby="organization-logo-description"
+                      checked={settings.useOrganizationLogo}
+                      disabled={!settings.organizationLogo}
+                      onCheckedChange={checked =>
+                        updateSettings({ useOrganizationLogo: checked })
+                      }
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className={cardClass}>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold tracking-tight">
+                  Appearance
+                </CardTitle>
+                <CardDescription>
+                  Customize how Ministry Lens looks and feels.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="divide-y divide-border/60">
+                  <div className={rowClass}>
+                    <div>
+                      <p className={titleClass}>Color mode</p>
+                      <p className={descriptionClass}>
+                        Choose how the application appears.
+                      </p>
+                    </div>
+                    <div
+                      role="group"
+                      aria-label="Color mode"
+                      className="flex w-full max-w-xs rounded-full border border-border/60 md:justify-self-end"
+                    >
+                      {(
+                        [
+                          { mode: "light", label: "Light", icon: Sun },
+                          { mode: "dark", label: "Dark", icon: Moon },
+                        ] as const
+                      ).map(({ mode, label, icon: Icon }) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          aria-pressed={resolvedMode === mode}
+                          onClick={() => updateSettings({ mode })}
+                          className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-full border px-5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-color)] ${resolvedMode === mode ? "border-[var(--accent-color)] bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]" : "border-transparent text-foreground hover:bg-muted"}`}
+                        >
+                          <Icon className="size-5" aria-hidden="true" />
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={`${rowClass} pb-0 md:items-start`}>
+                    <div>
+                      <p className={titleClass}>Accent color</p>
+                      <p className={descriptionClass}>
+                        Applied to selected navigation, controls, and
+                        highlights.
+                      </p>
+                    </div>
+                    <div
+                      role="group"
+                      aria-label="Accent color"
+                      className="grid grid-cols-4 gap-x-2 gap-y-4 lg:grid-cols-7"
+                    >
+                      {accentColors.map(color => {
+                        const selected = settings.accentColor === color.value;
+                        return (
+                          <button
+                            key={color.value}
+                            type="button"
+                            aria-label={color.name}
+                            aria-pressed={selected}
+                            onClick={() =>
+                              updateSettings({ accentColor: color.value })
+                            }
+                            className="flex min-w-0 flex-col items-center gap-2 rounded-lg py-1 text-xs transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-color)] sm:text-sm"
+                          >
+                            <span
+                              className={`flex size-11 shrink-0 items-center justify-center rounded-full border border-black/10 ${selected ? "ring-2 ring-[var(--accent-color)] ring-offset-2 ring-offset-card" : ""}`}
+                              style={{ backgroundColor: color.value }}
+                            >
+                              {selected ? (
+                                <Check
+                                  className="size-6 text-white"
+                                  strokeWidth={3}
+                                  aria-hidden="true"
+                                />
+                              ) : null}
+                            </span>
+                            <span>{color.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </TabsContent>
-
-        {isAdmin ? (
-          <TabsContent value="menu" className="mt-0">
-            <NavigationVisibilitySettings />
-          </TabsContent>
+        ) : isAdmin ? (
+          <NavigationVisibilitySettings />
         ) : null}
-      </Tabs>
+      </div>
     </div>
   );
 }

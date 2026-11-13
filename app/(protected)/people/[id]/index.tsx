@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,8 +9,11 @@ import {
   ArrowRight,
   Home,
   Award,
+  BriefcaseBusiness,
+  CalendarCheck,
   Sparkles,
   UserCheck,
+  UsersRound,
   Pencil,
   X,
   Trash2,
@@ -50,8 +54,10 @@ import { ConfirmPersonDialog } from "../_components/confirm-person-dialog";
 import { PersonProfileHero } from "../_components/person-profile-hero";
 import { PersonDetailTabs } from "../_components/person-detail-tabs";
 import { SpiritualFootprintTimeline } from "../_components/spiritual-footprint-timeline";
+import { PersonQuickActions } from "../_components/person-quick-actions";
 import { useOrganizationSettings } from "@/lib/organization-settings";
 import { useBaptism } from "@/lib/baptism";
+import { Skeleton } from "@/components/ui/skeleton";
 import { buildPersonAttendanceStats } from "../_lib/person-attendance";
 import { getPersonPastoralStatus } from "../_lib/person-pastoral-status";
 import { loadPeopleListNavigation } from "../_lib/list-state";
@@ -62,11 +68,44 @@ interface PersonDetailsProps {
   onNavigateToPerson?: (personId: string) => void;
 }
 
+function PersonDetailsSkeleton() {
+  return (
+    <div
+      className="space-y-5"
+      role="status"
+      aria-label="Loading person profile"
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-10 rounded-xl" />
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-6 w-44" />
+          </div>
+        </div>
+        <Skeleton className="h-10 w-36 rounded-xl" />
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-5">
+          <Skeleton className="h-52 rounded-xl" />
+          <Skeleton className="h-12 rounded-xl" />
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Skeleton className="h-80 rounded-xl" />
+            <Skeleton className="h-80 rounded-xl" />
+          </div>
+        </div>
+        <Skeleton className="h-[30rem] rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
 export function PersonDetails({
   personId,
   onBack,
   onNavigateToPerson,
 }: PersonDetailsProps) {
+  const router = useRouter();
   const {
     hydrated,
     getPerson,
@@ -208,7 +247,7 @@ export function PersonDetails({
       )
     : null;
 
-  if (!hydrated) return null;
+  if (!hydrated) return <PersonDetailsSkeleton />;
 
   if (!person) {
     return (
@@ -218,14 +257,15 @@ export function PersonDetails({
             variant="outline"
             size="icon"
             onClick={onBack}
-            className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:text-white dark:hover:bg-zinc-700"
+            aria-label="Back to people directory"
+            className="rounded-xl border-[var(--accent-color-border)] bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] hover:bg-[var(--accent-color-soft)] dark:text-[var(--accent-color)]"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-slate-900 dark:text-white">Person Not Found</h1>
         </div>
-        <Card className="bg-white border-slate-200 dark:bg-zinc-800 dark:border-zinc-700">
-          <CardContent className="p-8 text-center text-slate-500 dark:text-zinc-500">
+        <Card className="border-border/70 bg-card">
+          <CardContent className="p-8 text-center text-muted-foreground">
             The requested person could not be found.
           </CardContent>
         </Card>
@@ -327,7 +367,8 @@ export function PersonDetails({
             variant="outline"
             size="icon"
             onClick={onBack}
-            className="shrink-0 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-zinc-700 dark:text-white dark:hover:bg-zinc-700"
+            aria-label="Back to people directory"
+            className="shrink-0 rounded-xl border-[var(--accent-color-border)] bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] hover:bg-[var(--accent-color-soft)] dark:text-[var(--accent-color)]"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -341,7 +382,7 @@ export function PersonDetails({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex max-w-full shrink-0 items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
           {listNavigation && onNavigateToPerson && (
             <>
               <Button
@@ -380,7 +421,7 @@ export function PersonDetails({
 
           <Button
             onClick={() => (isEditing ? setIsEditing(false) : startEditing())}
-            className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700"
+            className="rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             {isEditing ? (
               <>
@@ -485,11 +526,11 @@ export function PersonDetails({
         </div>
       </div>
 
-      <div className="flex flex-col xl:flex-row gap-5 items-start">
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="flex-1 min-w-0 space-y-5 w-full">
           <PersonProfileHero
             name={person.name}
-            role={person.role}
+            gender={person.gender}
             age={person.age}
             status={person.status}
             statusColorClass={getStatusColor(person.status)}
@@ -507,15 +548,25 @@ export function PersonDetails({
             discipleshipBadges={discipleshipBadges}
             trackBadgeColors={trackBadgeColors}
             quickStats={[
-              { label: "Ministries", value: ministriesList.length },
-              { label: "Life groups", value: lifeGroups.length },
+              {
+                label: "Ministries",
+                value: ministriesList.length,
+                icon: BriefcaseBusiness,
+              },
+              {
+                label: "Life groups",
+                value: lifeGroups.length,
+                icon: UsersRound,
+              },
               {
                 label: "Badges",
                 value: discipleshipBadges.length + trainingBadges.length,
+                icon: Award,
               },
               {
                 label: "Services",
                 value: attendanceStats.totalAttended,
+                icon: CalendarCheck,
                 hint:
                   attendanceStats.sundayRate > 0
                     ? `${attendanceStats.sundayRate}% Sun`
@@ -564,8 +615,20 @@ export function PersonDetails({
           />
         </div>
 
-        <aside className="w-full xl:w-72 shrink-0 xl:sticky xl:top-4 self-start">
+        <aside className="grid w-full gap-4 sm:grid-cols-2 xl:sticky xl:top-4 xl:grid-cols-1">
           <SpiritualFootprintTimeline timeline={profileDetails.timeline} />
+          {!isEditing && (
+            <PersonQuickActions
+              onChangeMembership={() => setChangeMembershipOpen(true)}
+              onAssignHousehold={() => setHouseholdOpen(true)}
+              onAssignMinistry={() => setAssignOpen(true)}
+              onOpenGrowth={() =>
+                router.replace(`/people/${personId}?tab=growth`, {
+                  scroll: false,
+                })
+              }
+            />
+          )}
         </aside>
       </div>
 

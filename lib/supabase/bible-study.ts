@@ -201,7 +201,12 @@ export async function addBibleStudyMember(
 ): Promise<BibleStudyMember> {
   let resolvedRole = role;
 
-  if (!resolvedRole && options?.leaderPersonId && options?.hostHouseholdId && options?.personHouseholdId) {
+  if (
+    !resolvedRole &&
+    options?.leaderPersonId &&
+    options?.hostHouseholdId &&
+    options?.personHouseholdId
+  ) {
     resolvedRole = memberRoleForPerson(
       personId,
       options.leaderPersonId,
@@ -298,8 +303,12 @@ export async function replaceBibleStudyLeader(
   if (membersError) throw membersError;
 
   const membershipRows = (memberships ?? []) as DbBibleStudyMember[];
-  const oldLeaderMembership = membershipRows.find(m => m.person_id === oldLeaderId);
-  const newLeaderMembership = membershipRows.find(m => m.person_id === newLeaderPersonId);
+  const oldLeaderMembership = membershipRows.find(
+    m => m.person_id === oldLeaderId,
+  );
+  const newLeaderMembership = membershipRows.find(
+    m => m.person_id === newLeaderPersonId,
+  );
 
   if (oldLeaderMembership) {
     const demotedRole = memberRoleForPerson(
@@ -308,11 +317,19 @@ export async function replaceBibleStudyLeader(
       group.householdId,
       personHouseholdById.get(oldLeaderId) ?? "",
     );
-    await updateBibleStudyMemberRole(supabase, oldLeaderMembership.id, demotedRole);
+    await updateBibleStudyMemberRole(
+      supabase,
+      oldLeaderMembership.id,
+      demotedRole,
+    );
   }
 
   if (newLeaderMembership) {
-    await updateBibleStudyMemberRole(supabase, newLeaderMembership.id, "Leader");
+    await updateBibleStudyMemberRole(
+      supabase,
+      newLeaderMembership.id,
+      "Leader",
+    );
   } else {
     await addBibleStudyMember(supabase, group.id, newLeaderPersonId, "Leader");
   }

@@ -9,10 +9,7 @@ import {
   useState,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  fetchTenantMembership,
-  toAuthUser,
-} from "@/lib/supabase/tenant";
+import { fetchTenantMembership, toAuthUser } from "@/lib/supabase/tenant";
 import type { AuthUser, TenantMembership } from "@/lib/types/tenant";
 
 type TenantContextType = {
@@ -40,40 +37,41 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const supabase = useMemo(() => createClient(), []);
 
-  const loadSession = useCallback(async (): Promise<TenantMembership | null> => {
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
+  const loadSession =
+    useCallback(async (): Promise<TenantMembership | null> => {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
 
-    if (!authUser) {
-      setUser(null);
-      setTenant(null);
-      return null;
-    }
+      if (!authUser) {
+        setUser(null);
+        setTenant(null);
+        return null;
+      }
 
-    setUser(toAuthUser(authUser));
+      setUser(toAuthUser(authUser));
 
-    let membership = await fetchTenantMembership(supabase, authUser.id);
+      let membership = await fetchTenantMembership(supabase, authUser.id);
 
-    if (!membership) {
-      const organizationName = authUser.user_metadata?.organization_name as
-        | string
-        | undefined;
+      if (!membership) {
+        const organizationName = authUser.user_metadata?.organization_name as
+          | string
+          | undefined;
 
-      if (organizationName) {
-        const { error } = await supabase.rpc("setup_organization", {
-          org_name: organizationName,
-        });
+        if (organizationName) {
+          const { error } = await supabase.rpc("setup_organization", {
+            org_name: organizationName,
+          });
 
-        if (!error) {
-          membership = await fetchTenantMembership(supabase, authUser.id);
+          if (!error) {
+            membership = await fetchTenantMembership(supabase, authUser.id);
+          }
         }
       }
-    }
 
-    setTenant(membership);
-    return membership;
-  }, [supabase]);
+      setTenant(membership);
+      return membership;
+    }, [supabase]);
 
   const refreshSession = useCallback(async () => {
     setIsLoading(true);

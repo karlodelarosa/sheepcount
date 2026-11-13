@@ -17,12 +17,13 @@ export const MEMBERSHIP_PATH_LABELS: Record<MembershipPathType, string> = {
   Worker: "Worker",
 };
 
-export const MEMBERSHIP_PATH_DESCRIPTIONS: Record<MembershipPathType, string> = {
-  Attender: "Regular attendee, not yet a member",
-  Member: "Official church member",
-  "Volunteer Worker": "Serves in ministry as a volunteer",
-  Worker: "Committed ministry worker or leader",
-};
+export const MEMBERSHIP_PATH_DESCRIPTIONS: Record<MembershipPathType, string> =
+  {
+    Attender: "Regular attendee, not yet a member",
+    Member: "Official church member",
+    "Volunteer Worker": "Serves in ministry as a volunteer",
+    Worker: "Committed ministry worker or leader",
+  };
 
 export function isMembershipPathType(
   type: MembershipType,

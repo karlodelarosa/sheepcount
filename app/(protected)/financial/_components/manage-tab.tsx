@@ -5,9 +5,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  type SupportedCurrency,
-} from "@/lib/currency";
+import { type SupportedCurrency } from "@/lib/currency";
 import { useFinancialAudits } from "../financial-context";
 
 import { SavingsGoalSection } from "./savings-goal-section";
@@ -34,10 +32,12 @@ function OptionListSection({
   placeholder: string;
 }) {
   return (
-    <Card className="border-slate-200/60 dark:border-zinc-700/60">
+    <Card className="rounded-2xl border-border/60 bg-card shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-base">{title}</CardTitle>
-        <p className="text-sm text-slate-500 dark:text-zinc-400">{description}</p>
+        <p className="text-sm text-slate-500 dark:text-zinc-400">
+          {description}
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">
@@ -57,7 +57,7 @@ function OptionListSection({
             type="button"
             onClick={onAdd}
             disabled={isSaving || !newValue.trim()}
-            className="rounded-lg shrink-0 bg-slate-900 hover:bg-slate-800"
+            className="min-h-11 shrink-0 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             <Plus className="w-4 h-4 mr-1" />
             Add
@@ -65,13 +65,15 @@ function OptionListSection({
         </div>
 
         {items.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center py-4">No items yet.</p>
+          <p className="text-sm text-slate-500 text-center py-4">
+            No items yet.
+          </p>
         ) : (
           <div className="space-y-2">
             {items.map(item => (
               <div
                 key={item.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200/60 px-3 py-2 dark:border-zinc-700/60"
+                className="flex items-center justify-between gap-3 min-h-12 rounded-xl border border-border/60 px-3 py-3"
               >
                 <span className="text-sm font-medium text-slate-900 dark:text-white">
                   {item.name}
@@ -120,7 +122,7 @@ export function ManageTab({ currency }: { currency: SupportedCurrency }) {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid items-start gap-5 xl:grid-cols-2">
       <SavingsGoalSection currency={currency} />
       <OptionListSection
         title="Receipt types"

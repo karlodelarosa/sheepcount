@@ -122,8 +122,7 @@ export function EditYearlyGoalDialog({
     onOpenChange(false);
   };
 
-  const isValid =
-    form.title.trim().length > 0 || form.theme.trim().length > 0;
+  const isValid = form.title.trim().length > 0 || form.theme.trim().length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -135,7 +134,9 @@ export function EditYearlyGoalDialog({
             </div>
             <div>
               <DialogTitle>
-                {goal ? `Edit ${year} Church Goal` : `Set up ${year} Church Goal`}
+                {goal
+                  ? `Edit ${year} Church Goal`
+                  : `Set up ${year} Church Goal`}
               </DialogTitle>
               <DialogDescription>
                 Define the yearly theme, vision, and key objectives. Use the

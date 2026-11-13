@@ -78,15 +78,18 @@ export function OverviewPeriodFilterBar({
     value.year === DEFAULT_OVERVIEW_PERIOD.year;
 
   return (
-    <div className="rounded-xl border border-slate-200/70 bg-white/80 p-3 dark:border-zinc-700/60 dark:bg-zinc-900/40">
+    <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
           <div className="space-y-1.5 min-w-[140px]">
             <Label className="text-xs text-slate-500 dark:text-zinc-400">
               Period
             </Label>
-            <Select value={value.mode} onValueChange={v => setMode(v as OverviewPeriodMode)}>
-              <SelectTrigger className="h-9 rounded-lg">
+            <Select
+              value={value.mode}
+              onValueChange={v => setMode(v as OverviewPeriodMode)}
+            >
+              <SelectTrigger className="h-11 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -110,7 +113,7 @@ export function OverviewPeriodFilterBar({
                   onChange({ mode: "year", year: Number(year) })
                 }
               >
-                <SelectTrigger className="h-9 rounded-lg">
+                <SelectTrigger className="h-11 rounded-xl">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

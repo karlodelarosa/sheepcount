@@ -1,54 +1,51 @@
 "use client";
 
-import { Award, Droplets } from "lucide-react";
+import { Award, Droplets, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   PersonAvatar,
   panelCard,
   type PersonAchievementKind,
 } from "./person-detail-ui";
-import {
-  PersonPastoralBadge,
-  PersonPastoralAlert,
-} from "./person-pastoral-alert";
+import { PersonPastoralBadge } from "./person-pastoral-alert";
 import type { PersonPastoralStatus } from "../_lib/person-pastoral-status";
-import { isPastoralAlertLevel } from "../_lib/person-pastoral-status";
 import { cn } from "@/lib/utils";
 
 type QuickStat = {
   label: string;
   value: string | number;
   hint?: string;
+  icon: LucideIcon;
 };
 
 function ProfileQuickStats({ items }: { items: QuickStat[] }) {
   return (
-    <div
-      className={cn(
-        "grid grid-cols-4 gap-px overflow-hidden rounded-lg shrink-0",
-        "bg-slate-200/70 dark:bg-zinc-700/70",
-        "sm:flex sm:gap-0 sm:divide-x sm:divide-slate-200/80 sm:dark:divide-zinc-700/80 sm:rounded-lg sm:bg-slate-100/80 sm:dark:bg-zinc-800/50",
-      )}
-    >
-      {items.map(item => (
+    <div className="grid grid-cols-2 border-t border-border/70 bg-background/75 sm:grid-cols-4">
+      {items.map((item, index) => (
         <div
           key={item.label}
           className={cn(
-            "bg-slate-50/90 px-2.5 py-1.5 text-center dark:bg-zinc-800/90",
-            "sm:bg-transparent sm:min-w-[3.25rem] sm:px-2.5",
+            "flex min-h-20 items-center gap-3 px-4 py-3",
+            "border-border/70 odd:border-r sm:border-r sm:last:border-r-0",
+            index > 1 && "border-t sm:border-t-0",
           )}
         >
-          <p className="text-sm font-semibold tabular-nums leading-none text-slate-900 dark:text-white">
-            {item.value}
-          </p>
-          <p className="text-[10px] text-slate-500 dark:text-zinc-500 mt-0.5 truncate">
-            {item.label}
-          </p>
-          {item.hint && (
-            <p className="text-[9px] text-slate-400 dark:text-zinc-600 truncate hidden sm:block">
-              {item.hint}
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]">
+            <item.icon className="size-4.5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-base font-semibold tabular-nums leading-none text-foreground">
+              {item.value}
             </p>
-          )}
+            <p className="mt-1 truncate text-xs font-medium text-muted-foreground">
+              {item.label}
+            </p>
+            {item.hint && (
+              <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                {item.hint}
+              </p>
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -57,7 +54,7 @@ function ProfileQuickStats({ items }: { items: QuickStat[] }) {
 
 type PersonProfileHeroProps = {
   name: string;
-  role: string;
+  gender?: string | null;
   age: number;
   status: string;
   statusColorClass: string;
@@ -81,7 +78,7 @@ type PersonProfileHeroProps = {
 
 export function PersonProfileHero({
   name,
-  role,
+  gender,
   age,
   status,
   statusColorClass,
@@ -102,89 +99,91 @@ export function PersonProfileHero({
   const extraBadgeCount = discipleshipBadges.length - visibleBadges.length;
 
   return (
-    <div className={cn(panelCard, "overflow-hidden")}>
-      <div className="px-4 py-3 space-y-2.5">
-        <div className="flex items-start gap-3 min-w-0">
-          <PersonAvatar name={name} size="profile" achievement={achievement} />
-          <div className="flex-1 min-w-0 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-            <div className="min-w-0 pt-0.5">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-white leading-tight truncate">
-                  {name}
-                </h2>
-                <span className="text-xs text-slate-500 dark:text-zinc-400 shrink-0">
-                  {role} · {age} yo
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-1 mt-1.5">
-                <Badge
-                  className={cn(
-                    "rounded-md px-1.5 py-0 text-[10px] h-5",
-                    statusColorClass,
-                  )}
-                >
-                  {status}
-                </Badge>
-                <Badge
-                  className={cn(
-                    "rounded-md px-1.5 py-0 text-[10px] h-5",
-                    membershipColorClass,
-                  )}
-                >
-                  {membershipLabel}
-                </Badge>
-                {!isEditing && <PersonPastoralBadge status={pastoralStatus} />}
-                {isProspect && (
-                  <Badge className="rounded-md px-1.5 py-0 text-[10px] h-5 bg-amber-100 text-amber-700 dark:bg-amber-800 dark:text-amber-300">
-                    Prospect
-                  </Badge>
-                )}
-                {cellGroupRole && (
-                  <Badge className="h-5 rounded-md bg-teal-100 px-1.5 py-0 text-[10px] text-teal-800 dark:bg-teal-950 dark:text-teal-200">
-                    {cellGroupRole === "Leader"
-                      ? "Cell Group Leader"
-                      : "Cell Group Member"}
-                  </Badge>
-                )}
-                {showBaptismBadge && baptizedAt && (
-                  <Badge className="rounded-md px-1.5 py-0 text-[10px] h-5 bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200">
-                    <Droplets className="w-2.5 h-2.5 mr-0.5 inline" />
-                    Baptized
-                  </Badge>
-                )}
-                {visibleBadges.map(badge => (
-                  <Badge
-                    key={badge.enrollmentId}
-                    className={cn(
-                      "rounded-md border-0 px-1.5 py-0 text-[10px] h-5 bg-gradient-to-r text-white",
-                      trackBadgeColors[badge.color] ?? trackBadgeColors.blue,
-                    )}
-                  >
-                    <Award className="w-2.5 h-2.5 mr-0.5 inline" />
-                    {badge.trackName}
-                  </Badge>
-                ))}
-                {extraBadgeCount > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="rounded-md px-1.5 py-0 text-[10px] h-5"
-                  >
-                    +{extraBadgeCount}
-                  </Badge>
-                )}
-              </div>
+    <section
+      className={cn(panelCard, "overflow-hidden")}
+      aria-label="Person summary"
+    >
+      <div className="relative overflow-hidden px-5 py-5 sm:px-6 sm:py-6">
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[var(--accent-color-soft)] via-transparent to-[var(--accent-color-soft)] opacity-70"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -right-12 -top-20 size-56 rounded-full bg-[var(--accent-color-soft)] blur-3xl"
+          aria-hidden="true"
+        />
+        <div className="relative flex min-w-0 items-start gap-4 sm:items-center">
+          <PersonAvatar name={name} size="lg" achievement={achievement} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h2 className="truncate text-2xl font-bold leading-tight text-foreground">
+                {name}
+              </h2>
+              <span className="shrink-0 text-sm text-muted-foreground">
+                {gender || "Gender not specified"} · {age} years old
+              </span>
             </div>
-
-            {!isEditing && <ProfileQuickStats items={quickStats} />}
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              <Badge
+                className={cn(
+                  "h-6 rounded-full px-2.5 py-0 text-xs",
+                  statusColorClass,
+                )}
+              >
+                {status}
+              </Badge>
+              <Badge
+                className={cn(
+                  "h-6 rounded-full px-2.5 py-0 text-xs",
+                  membershipColorClass,
+                )}
+              >
+                {membershipLabel}
+              </Badge>
+              {!isEditing && <PersonPastoralBadge status={pastoralStatus} />}
+              {isProspect && (
+                <Badge className="h-6 rounded-full bg-amber-100 px-2.5 py-0 text-xs text-amber-700 dark:bg-amber-800 dark:text-amber-300">
+                  Prospect
+                </Badge>
+              )}
+              {cellGroupRole && (
+                <Badge className="h-6 rounded-full bg-teal-100 px-2.5 py-0 text-xs text-teal-800 dark:bg-teal-950 dark:text-teal-200">
+                  {cellGroupRole === "Leader"
+                    ? "Cell Group Leader"
+                    : "Cell Group Member"}
+                </Badge>
+              )}
+              {showBaptismBadge && baptizedAt && (
+                <Badge className="h-6 rounded-full bg-cyan-100 px-2.5 py-0 text-xs text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200">
+                  <Droplets className="mr-1 size-3 inline" />
+                  Baptized
+                </Badge>
+              )}
+              {visibleBadges.map(badge => (
+                <Badge
+                  key={badge.enrollmentId}
+                  className={cn(
+                    "h-6 rounded-full border-0 bg-gradient-to-r px-2.5 py-0 text-xs text-white",
+                    trackBadgeColors[badge.color] ?? trackBadgeColors.blue,
+                  )}
+                >
+                  <Award className="mr-1 size-3 inline" />
+                  {badge.trackName}
+                </Badge>
+              ))}
+              {extraBadgeCount > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="h-6 rounded-full px-2.5 py-0 text-xs"
+                >
+                  +{extraBadgeCount}
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
-
-        {!isEditing &&
-          (isPastoralAlertLevel(pastoralStatus.level) ||
-            pastoralStatus.level === "new_member") && (
-            <PersonPastoralAlert status={pastoralStatus} compact />
-          )}
       </div>
-    </div>
+      {!isEditing && <ProfileQuickStats items={quickStats} />}
+    </section>
   );
 }

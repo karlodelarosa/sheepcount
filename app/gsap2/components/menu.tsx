@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { HomeIcon, UserIcon, MusicIcon } from "lucide-react";
 
@@ -14,8 +14,8 @@ export default function ButtonMenu() {
   const springX = useSpring(rawX, { stiffness: 1200, damping: 50 });
   const springY = useSpring(rawY, { stiffness: 1200, damping: 50 });
 
-  const left = useTransform(springX, (v) => `${v}px`);
-  const top = useTransform(springY, (v) => `${v}px`);
+  const left = useTransform(springX, v => `${v}px`);
+  const top = useTransform(springY, v => `${v}px`);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -43,7 +43,7 @@ export default function ButtonMenu() {
               setActiveButton(null);
               setIsInside(false);
             }}
-            onMouseMove={(e) => {
+            onMouseMove={e => {
               if (activeButton === i) {
                 setIsInside(true);
                 handleMouseMove(e);

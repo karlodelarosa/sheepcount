@@ -49,7 +49,7 @@ export function getPersonAttendanceRows(
   personId: string,
 ): PersonAttendanceRow[] {
   return rows
-    .filter((row) => row.personId === personId)
+    .filter(row => row.personId === personId)
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
@@ -73,7 +73,7 @@ function getLookbackSundaySessions(
   cutoff.setDate(cutoff.getDate() - weeks * 7);
   const cutoffStr = cutoff.toISOString().slice(0, 10);
 
-  return sundaySessions.filter((session) => session.date >= cutoffStr);
+  return sundaySessions.filter(session => session.date >= cutoffStr);
 }
 
 function computeStreak(
@@ -103,7 +103,7 @@ export function buildPersonAttendanceStats(
   const personRows = getPersonAttendanceRows(allRows, personId);
   const grouped = groupAttendanceBySession(allRows);
   const lookbackSessions = getLookbackSundaySessions(grouped);
-  const sundayAttended = lookbackSessions.filter((session) =>
+  const sundayAttended = lookbackSessions.filter(session =>
     session.attendees.includes(personId),
   ).length;
 
@@ -133,7 +133,7 @@ export function getPersonSundayTrend(
   const grouped = groupAttendanceBySession(allRows);
   const lookbackSessions = getLookbackSundaySessions(grouped, weeks);
 
-  return lookbackSessions.map((session) => ({
+  return lookbackSessions.map(session => ({
     date: session.date,
     label: new Date(session.date).toLocaleDateString("en-US", {
       month: "short",
@@ -146,20 +146,21 @@ export function getPersonSundayTrend(
 export function getPersonServiceBreakdown(
   personRows: PersonAttendanceRow[],
 ): PersonServiceBreakdown[] {
-  const byService = personRows.reduce<
-    Record<string, PersonServiceBreakdown>
-  >((acc, row) => {
-    if (!acc[row.serviceId]) {
-      acc[row.serviceId] = {
-        serviceId: row.serviceId,
-        serviceType: row.serviceType,
-        serviceCategory: row.serviceCategory,
-        count: 0,
-      };
-    }
-    acc[row.serviceId].count += 1;
-    return acc;
-  }, {});
+  const byService = personRows.reduce<Record<string, PersonServiceBreakdown>>(
+    (acc, row) => {
+      if (!acc[row.serviceId]) {
+        acc[row.serviceId] = {
+          serviceId: row.serviceId,
+          serviceType: row.serviceType,
+          serviceCategory: row.serviceCategory,
+          count: 0,
+        };
+      }
+      acc[row.serviceId].count += 1;
+      return acc;
+    },
+    {},
+  );
 
   return Object.values(byService).sort((a, b) => b.count - a.count);
 }
@@ -168,7 +169,7 @@ export function getPersonRecentAttendance(
   personRows: PersonAttendanceRow[],
   limit = 8,
 ): PersonRecentAttendance[] {
-  return personRows.slice(0, limit).map((row) => ({
+  return personRows.slice(0, limit).map(row => ({
     date: row.date,
     serviceType: row.serviceType,
     serviceCategory: row.serviceCategory,

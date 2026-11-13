@@ -22,7 +22,7 @@ export function PropertyImageField({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [cleared, setCleared] = useState(false);
 
-  const displayUrl = cleared ? null : previewUrl ?? currentImageUrl ?? null;
+  const displayUrl = cleared ? null : (previewUrl ?? currentImageUrl ?? null);
 
   const handleFile = (file: File | null) => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -43,7 +43,12 @@ export function PropertyImageField({
   return (
     <div className="space-y-2">
       <Label>Image (optional)</Label>
-      <div className={cn("flex items-start gap-4", isLarge && "flex-col sm:flex-row")}>
+      <div
+        className={cn(
+          "flex items-start gap-4",
+          isLarge && "flex-col sm:flex-row",
+        )}
+      >
         <div
           className={cn(
             "relative rounded-xl border border-slate-200/70 dark:border-zinc-700/70 overflow-hidden bg-slate-50 dark:bg-zinc-900 flex items-center justify-center shrink-0",
@@ -98,7 +103,9 @@ export function PropertyImageField({
               Remove
             </Button>
           )}
-          <p className="text-xs text-slate-500">JPEG, PNG, WebP, or GIF up to 5 MB</p>
+          <p className="text-xs text-slate-500">
+            JPEG, PNG, WebP, or GIF up to 5 MB
+          </p>
         </div>
       </div>
     </div>

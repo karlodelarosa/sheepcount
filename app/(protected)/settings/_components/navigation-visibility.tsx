@@ -25,12 +25,8 @@ import {
 
 export function NavigationVisibilitySettings() {
   const { entitlements, isLoading: entitlementsLoading } = useEntitlements();
-  const {
-    settings,
-    hydrated,
-    isSaving,
-    setMenuItemVisibility,
-  } = useOrganizationSettings();
+  const { settings, hydrated, isSaving, setMenuItemVisibility } =
+    useOrganizationSettings();
 
   const configurableMenuGroups = useMemo(() => {
     const dashboardConfigurable = isMenuItemConfigurableInSettings(
@@ -55,11 +51,11 @@ export function NavigationVisibilitySettings() {
   const isReady = hydrated && !entitlementsLoading;
 
   return (
-    <Card className="border-border/60 bg-card/50 backdrop-blur-sm">
+    <Card className="rounded-2xl border-border/60 bg-card shadow-none">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center">
-            <LayoutGrid className="w-5 h-5 text-white" />
+          <div className="size-12 shrink-0 rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
+            <LayoutGrid className="size-5" />
           </div>
           <div>
             <CardTitle>Menu Settings</CardTitle>
@@ -71,7 +67,9 @@ export function NavigationVisibilitySettings() {
       </CardHeader>
       <CardContent className="space-y-6">
         {!isReady ? (
-          <p className="text-sm text-muted-foreground">Loading menu options...</p>
+          <p className="text-sm text-muted-foreground">
+            Loading menu options...
+          </p>
         ) : (
           <>
             {configurableMenuGroups.dashboardConfigurable ? (
@@ -138,7 +136,7 @@ function MenuItemRow({
   onVisibleChange: (visible: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-background/50 p-4">
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-muted/30 p-4">
       <div className="min-w-0">
         <p className="text-foreground">{title}</p>
         <p className="text-muted-foreground text-sm">

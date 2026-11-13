@@ -116,7 +116,9 @@ export function RecordEventAttendanceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base">Record Event Attendance</DialogTitle>
+          <DialogTitle className="text-base">
+            Record Event Attendance
+          </DialogTitle>
           <DialogDescription className="text-xs">
             Track who attended a session within an event
           </DialogDescription>

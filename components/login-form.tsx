@@ -90,14 +90,14 @@ export function LoginForm({
       return;
     }
     const timer = setTimeout(() => {
-      setModuleIdx((i) => (i + 1) % MODULES.length);
+      setModuleIdx(i => (i + 1) % MODULES.length);
     }, ROTATE_MS);
     return () => clearTimeout(timer);
   }, [moduleIdx]);
 
   // Map a dot (color) index back to its module and jump to it.
   const selectDot = (dotIndex: number) => {
-    const idx = MODULES.findIndex((m) => m.dot === dotIndex);
+    const idx = MODULES.findIndex(m => m.dot === dotIndex);
     if (idx >= 0) setModuleIdx(idx);
   };
 
@@ -150,7 +150,10 @@ export function LoginForm({
 
   return (
     <div
-      className={cn("login-bg relative min-h-svh w-full overflow-hidden", className)}
+      className={cn(
+        "login-bg relative min-h-svh w-full overflow-hidden",
+        className,
+      )}
       {...props}
     >
       {/* Decorative floating blobs */}
@@ -215,7 +218,7 @@ export function LoginForm({
                         autoComplete="email"
                         required
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={e => setEmail(e.target.value)}
                         className="h-11 rounded-xl border-slate-200 bg-white pr-10 text-slate-900 placeholder:text-slate-400 focus-visible:ring-indigo-500 dark:border-slate-200 dark:bg-white dark:text-slate-900 dark:placeholder:text-slate-400"
                       />
                       {emailValid && (
@@ -235,12 +238,12 @@ export function LoginForm({
                         autoComplete="current-password"
                         required
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={e => setPassword(e.target.value)}
                         className="h-11 rounded-xl border-slate-200 bg-white pr-10 text-slate-900 placeholder:text-slate-400 focus-visible:ring-indigo-500 dark:border-slate-200 dark:bg-white dark:text-slate-900 dark:placeholder:text-slate-400"
                       />
                       <button
                         type="button"
-                        onClick={() => setShowPassword((v) => !v)}
+                        onClick={() => setShowPassword(v => !v)}
                         aria-label={
                           showPassword ? "Hide password" : "Show password"
                         }

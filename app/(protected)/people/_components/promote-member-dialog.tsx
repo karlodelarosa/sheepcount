@@ -36,15 +36,16 @@ export function PromoteMemberDialog({
             Promote to {nextStepLabel}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Move <strong>{personName}</strong> to <strong>{nextStepLabel}</strong>{" "}
-            on their journey? This updates their membership type in your directory.
+            Move <strong>{personName}</strong> to{" "}
+            <strong>{nextStepLabel}</strong> on their journey? This updates
+            their membership type in your directory.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+            className="rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] focus-visible:ring-[var(--accent-color)]"
           >
             Promote to {nextStepLabel}
           </AlertDialogAction>

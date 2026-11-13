@@ -1,145 +1,168 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Home, MapPin, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { usePeople } from "@/lib/people";
 import { AddHouseholdDialog } from "./_components/add-household-dialog";
+import { HouseholdDirectoryCard } from "./_components/household-directory-card";
+import { HouseholdDirectoryControls } from "./_components/household-directory-controls";
+import { HouseholdDirectoryHeader } from "./_components/household-directory-header";
+import { HouseholdDirectoryPagination } from "./_components/household-directory-pagination";
+import {
+  EmptyHouseholdDirectory,
+  HouseholdDirectorySkeleton,
+  NoMatchingHouseholds,
+} from "./_components/household-directory-states";
+import {
+  buildHouseholdDirectoryEntries,
+  buildHouseholdDirectoryQuery,
+  buildHouseholdDirectorySummary,
+  filterHouseholdDirectory,
+  getHouseholdDirectoryState,
+  type HouseholdDirectoryFilter,
+  type HouseholdDirectoryState,
+  type HouseholdPageSize,
+} from "./_lib/directory";
+
+const SEARCH_DEBOUNCE_MS = 250;
 
 export function HouseholdsList() {
   const router = useRouter();
-  const { households, hydrated, getHouseholdMembers } = usePeople();
-  const [searchTerm, setSearchTerm] = useState("");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { households, people, hydrated } = usePeople();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const filteredHouseholds = useMemo(
+  const directoryState = useMemo(
     () =>
-      households.filter(
-        household =>
-          household.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          household.address.toLowerCase().includes(searchTerm.toLowerCase()),
-      ),
-    [households, searchTerm],
+      getHouseholdDirectoryState(new URLSearchParams(searchParams.toString())),
+    [searchParams],
+  );
+  const [searchInput, setSearchInput] = useState(directoryState.search);
+  const debouncedSearch = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS);
+
+  useEffect(() => {
+    setSearchInput(directoryState.search);
+  }, [directoryState.search]);
+
+  useEffect(() => {
+    if (debouncedSearch === directoryState.search) return;
+
+    const query = buildHouseholdDirectoryQuery({
+      ...directoryState,
+      search: debouncedSearch,
+      page: 1,
+    });
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  }, [debouncedSearch, directoryState, pathname, router]);
+
+  const updateListState = useCallback(
+    (updates: Partial<HouseholdDirectoryState>) => {
+      const query = buildHouseholdDirectoryQuery({
+        ...directoryState,
+        search: searchInput,
+        ...updates,
+      });
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    },
+    [directoryState, pathname, router, searchInput],
   );
 
-  const DualModeButtonClass =
-    "rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 dark:bg-purple-600 dark:hover:bg-purple-700 dark:shadow-purple-900/40";
+  const entries = useMemo(
+    () => buildHouseholdDirectoryEntries(households, people),
+    [households, people],
+  );
+  const summary = useMemo(
+    () => buildHouseholdDirectorySummary(entries),
+    [entries],
+  );
+  const missingAddressCount = useMemo(
+    () => entries.filter(entry => !entry.household.address.trim()).length,
+    [entries],
+  );
+  const filteredEntries = useMemo(
+    () =>
+      filterHouseholdDirectory(entries, debouncedSearch, directoryState.filter),
+    [debouncedSearch, directoryState.filter, entries],
+  );
 
-  if (!hydrated) {
-    return (
-      <div className="flex items-center justify-center py-24 text-slate-500 dark:text-zinc-400">
-        <Loader2 className="w-6 h-6 animate-spin mr-2" />
-        Loading households...
-      </div>
-    );
-  }
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredEntries.length / directoryState.pageSize),
+  );
+  const safePage = Math.min(directoryState.page, totalPages);
+  const visibleEntries = filteredEntries.slice(
+    (safePage - 1) * directoryState.pageSize,
+    safePage * directoryState.pageSize,
+  );
+
+  const handleFilterChange = (filter: HouseholdDirectoryFilter) => {
+    updateListState({ filter, page: 1 });
+  };
+
+  const handlePageSizeChange = (pageSize: HouseholdPageSize) => {
+    updateListState({ pageSize, page: 1 });
+  };
+
+  const clearFilters = () => {
+    setSearchInput("");
+    updateListState({ search: "", filter: "all", page: 1 });
+  };
+
+  if (!hydrated) return <HouseholdDirectorySkeleton />;
 
   return (
-    <div className="space-y-6">
-      <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50 dark:text-white">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-slate-900 dark:text-white">
-                Households
-              </CardTitle>
-              <CardDescription className="text-slate-600 dark:text-zinc-400">
-                Manage household information and members ({households.length}{" "}
-                total)
-              </CardDescription>
-            </div>
-            <Button
-              onClick={() => setIsAddDialogOpen(true)}
-              className={DualModeButtonClass}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Household
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-200/60 dark:bg-zinc-700 dark:border-zinc-600/60">
-            <Search className="w-4 h-4 text-slate-400 dark:text-zinc-400" />
-            <Input
-              placeholder="Search households..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400 text-slate-900 dark:placeholder:text-zinc-400 dark:text-white"
-            />
-          </div>
+    <div className="space-y-5 pb-4">
+      <HouseholdDirectoryHeader
+        summary={summary}
+        onAddHousehold={() => setIsAddDialogOpen(true)}
+      />
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredHouseholds.length === 0 ? (
-              <div className="col-span-full text-center text-slate-500 dark:text-zinc-500 py-8">
-                {households.length === 0
-                  ? "No households yet. Add one or create people in the directory."
-                  : "No households match your search"}
-              </div>
-            ) : (
-              filteredHouseholds.map(household => {
-                const members = getHouseholdMembers(household.id);
-                return (
-                  <Card
-                    key={household.id}
-                    className="border-slate-200/60 bg-white hover:bg-slate-50/70 hover:shadow-lg transition-all duration-200 cursor-pointer dark:border-zinc-700/60 dark:bg-zinc-800 dark:hover:bg-zinc-700/70"
-                    onClick={() => router.push(`/households/${household.id}`)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 dark:from-purple-500 dark:to-purple-700 flex items-center justify-center shadow-sm">
-                            <Home className="w-6 h-6 text-white" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-slate-900 dark:text-white">
-                              {household.name}
-                            </CardTitle>
-                            <Badge
-                              variant="secondary"
-                              className="mt-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
-                            >
-                              {members.length}{" "}
-                              {members.length === 1 ? "member" : "members"}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-slate-600 dark:text-zinc-400">
-                        {household.address ? (
-                          <div className="flex items-start gap-2">
-                            <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-500 dark:text-zinc-500" />
-                            <p>{household.address}</p>
-                          </div>
-                        ) : (
-                          <p className="text-slate-400 dark:text-zinc-500 text-sm italic">
-                            No address on file
-                          </p>
-                        )}
-                        <p className="text-slate-500 dark:text-zinc-500 text-sm">
-                          Created:{" "}
-                          {new Date(household.createdDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {entries.length === 0 ? (
+        <EmptyHouseholdDirectory
+          onAddHousehold={() => setIsAddDialogOpen(true)}
+        />
+      ) : (
+        <section aria-label="Household directory" className="space-y-4">
+          <HouseholdDirectoryControls
+            search={searchInput}
+            activeFilter={directoryState.filter}
+            summary={summary}
+            missingAddressCount={missingAddressCount}
+            onSearchChange={setSearchInput}
+            onFilterChange={handleFilterChange}
+          />
+
+          {filteredEntries.length === 0 ? (
+            <NoMatchingHouseholds onClearFilters={clearFilters} />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {visibleEntries.map(entry => (
+                <HouseholdDirectoryCard
+                  key={entry.household.id}
+                  entry={entry}
+                />
+              ))}
+            </div>
+          )}
+
+          {filteredEntries.length > 0 ? (
+            <HouseholdDirectoryPagination
+              page={safePage}
+              pageSize={directoryState.pageSize}
+              totalItems={filteredEntries.length}
+              onPageChange={page => updateListState({ page })}
+              onPageSizeChange={handlePageSizeChange}
+            />
+          ) : null}
+        </section>
+      )}
 
       <AddHouseholdDialog
         open={isAddDialogOpen}

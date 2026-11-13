@@ -72,7 +72,9 @@ export function ManageMembersDialog({
 
   const toggleMember = (personId: string) => {
     setSelectedMemberIds(prev =>
-      isMember(personId) ? prev.filter(id => id !== personId) : [...prev, personId],
+      isMember(personId)
+        ? prev.filter(id => id !== personId)
+        : [...prev, personId],
     );
   };
 

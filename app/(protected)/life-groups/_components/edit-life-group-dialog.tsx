@@ -77,7 +77,10 @@ export function EditLifeGroupDialog({
 
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-name" className="text-slate-700 dark:text-zinc-300">
+            <Label
+              htmlFor="edit-name"
+              className="text-slate-700 dark:text-zinc-300"
+            >
               Group Name
             </Label>
             <Input

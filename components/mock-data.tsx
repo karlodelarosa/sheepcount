@@ -1809,7 +1809,7 @@ export const mockProspects = [
     membershipType: "For Evangelism",
     evangelismStage: "First-time Attendee",
     lastAttendance: "2024-10-20",
-    social: "Instagram"
+    social: "Instagram",
   },
   {
     id: "p2",
@@ -1825,7 +1825,7 @@ export const mockProspects = [
     membershipType: "For Evangelism",
     evangelismStage: "Follow-up",
     lastAttendance: "2024-10-18",
-    social: "Instagram"
+    social: "Instagram",
   },
   {
     id: "p3",
@@ -1841,7 +1841,7 @@ export const mockProspects = [
     membershipType: "For Evangelism",
     evangelismStage: "Follow-up",
     lastAttendance: "2024-10-17",
-    social: "Instagram"
+    social: "Instagram",
   },
   {
     id: "p4",
@@ -1857,7 +1857,7 @@ export const mockProspects = [
     membershipType: "For Evangelism",
     evangelismStage: "First-time Attendee",
     lastAttendance: "2024-10-15",
-    social: "Instagram"
+    social: "Instagram",
   },
   {
     id: "p5",
@@ -1873,6 +1873,6 @@ export const mockProspects = [
     membershipType: "For Evangelism",
     evangelismStage: "Follow-up",
     lastAttendance: "2024-10-19",
-    social: "Instagram"
+    social: "Instagram",
   },
 ];

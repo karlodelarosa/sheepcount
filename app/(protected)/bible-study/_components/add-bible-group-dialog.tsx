@@ -11,7 +11,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -86,7 +85,12 @@ export function AddBibleStudyGroupDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!householdId || !leaderPersonId || !meetingDay.trim() || !meetingTime.trim()) {
+    if (
+      !householdId ||
+      !leaderPersonId ||
+      !meetingDay.trim() ||
+      !meetingTime.trim()
+    ) {
       return;
     }
 
@@ -129,7 +133,9 @@ export function AddBibleStudyGroupDialog({
                 {availableHouseholds.map(household => (
                   <SelectItem key={household.id} value={household.id}>
                     {household.name}
-                    {household.address ? ` — ${household.address.split(",")[0]}` : ""}
+                    {household.address
+                      ? ` — ${household.address.split(",")[0]}`
+                      : ""}
                   </SelectItem>
                 ))}
               </SelectContent>

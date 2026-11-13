@@ -71,7 +71,7 @@ export function BorrowLogTable({
 
   if (borrowRows.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200/60 dark:border-zinc-700/60 bg-card py-16 text-center text-slate-500 dark:text-zinc-400">
+      <div className="rounded-2xl border border-border/60 bg-card shadow-sm py-16 text-center text-slate-500 dark:text-zinc-400">
         <ClipboardList className="w-12 h-12 mx-auto mb-4 text-slate-300 dark:text-zinc-600" />
         <p>No borrow records yet.</p>
       </div>
@@ -80,10 +80,10 @@ export function BorrowLogTable({
 
   return (
     <>
-      <div className="rounded-xl border border-slate-200/60 dark:border-zinc-700/60 overflow-hidden bg-card">
+      <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50 dark:bg-zinc-800/50">
+            <TableRow className="bg-muted/50">
               <TableHead>Property</TableHead>
               <TableHead>Borrower</TableHead>
               <TableHead>Borrow date</TableHead>
@@ -98,7 +98,9 @@ export function BorrowLogTable({
               const isActive = !row.returnedAt;
               return (
                 <TableRow key={row.id}>
-                  <TableCell className="font-medium">{row.property.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {row.property.name}
+                  </TableCell>
                   <TableCell>{row.borrowerName}</TableCell>
                   <TableCell>{formatDate(row.borrowedAt)}</TableCell>
                   <TableCell>{formatDate(row.dueAt)}</TableCell>

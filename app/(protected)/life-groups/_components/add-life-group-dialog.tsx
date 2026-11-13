@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,10 @@ export function AddLifeGroupDialog({
   open,
   onOpenChange,
 }: AddLifeGroupDialogProps) {
+  const returnFocus = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) returnFocus.current = document.activeElement as HTMLElement;
+  }, [open]);
   const { addLifeGroup, isSaving } = useGroupsMinistry();
   const [groupName, setGroupName] = useState("");
   const [description, setDescription] = useState("");
@@ -47,7 +51,7 @@ export function AddLifeGroupDialog({
   };
 
   const handleSave = async () => {
-    if (!groupName.trim() || !category) return;
+    if (!groupName.trim() || !category || isSaving) return;
 
     const group = await addLifeGroup({
       name: groupName,
@@ -65,11 +69,19 @@ export function AddLifeGroupDialog({
   const isFormValid = groupName.trim() !== "" && category !== "";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] border-slate-200/60 bg-white dark:bg-zinc-800 dark:border-zinc-700/60 dark:text-white">
+    <Dialog
+      open={open}
+      onOpenChange={value => {
+        if (!isSaving) onOpenChange(value);
+      }}
+    >
+      <DialogContent
+        onCloseAutoFocus={() => returnFocus.current?.focus()}
+        className="max-h-[90dvh] overflow-y-auto sm:max-w-[425px] border-slate-200/60 bg-white dark:bg-zinc-800 dark:border-zinc-700/60 dark:text-white"
+      >
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <Users className="w-5 h-5 text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]" />
             <div>
               <DialogTitle className="text-slate-900 dark:text-white">
                 Add New Life Group
@@ -81,7 +93,7 @@ export function AddLifeGroupDialog({
           </div>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <fieldset disabled={isSaving} className="grid min-w-0 gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-slate-700 dark:text-zinc-300">
               Group Name
@@ -104,9 +116,13 @@ export function AddLifeGroupDialog({
             </Label>
             <Select
               value={category}
+              disabled={isSaving}
               onValueChange={v => setCategory(v as LifeGroupCategory)}
             >
-              <SelectTrigger className="rounded-lg border-slate-200 dark:bg-zinc-700 dark:border-zinc-600 dark:text-white">
+              <SelectTrigger
+                id="category"
+                className="rounded-lg border-slate-200 dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
+              >
                 <SelectValue placeholder="Select Category" />
               </SelectTrigger>
               <SelectContent>
@@ -134,11 +150,17 @@ export function AddLifeGroupDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="color" className="text-slate-700 dark:text-zinc-300">
+            <Label
+              htmlFor="color"
+              className="text-slate-700 dark:text-zinc-300"
+            >
               Group Color
             </Label>
-            <Select value={color} onValueChange={setColor}>
-              <SelectTrigger className="rounded-lg border-slate-200 dark:bg-zinc-700 dark:border-zinc-600 dark:text-white">
+            <Select value={color} onValueChange={setColor} disabled={isSaving}>
+              <SelectTrigger
+                id="color"
+                className="rounded-lg border-slate-200 dark:bg-zinc-700 dark:border-zinc-600 dark:text-white"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -150,11 +172,12 @@ export function AddLifeGroupDialog({
               </SelectContent>
             </Select>
           </div>
-        </div>
+        </fieldset>
 
         <DialogFooter>
           <Button
             variant="outline"
+            disabled={isSaving}
             onClick={() => onOpenChange(false)}
             className="rounded-lg dark:border-zinc-600 dark:text-zinc-300"
           >
@@ -163,7 +186,7 @@ export function AddLifeGroupDialog({
           <Button
             onClick={() => void handleSave()}
             disabled={!isFormValid || isSaving}
-            className="rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+            className="rounded-lg bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Group

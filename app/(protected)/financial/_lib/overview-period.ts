@@ -40,7 +40,9 @@ function formatMonthShort(monthKey: string): string {
   return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
 
-export function formatOverviewPeriodLabel(filter: OverviewPeriodFilter): string {
+export function formatOverviewPeriodLabel(
+  filter: OverviewPeriodFilter,
+): string {
   if (filter.mode === "year" && filter.year) {
     return String(filter.year);
   }
@@ -116,7 +118,10 @@ export function listAvailableYears(
   return Array.from(years).sort((a, b) => b - a);
 }
 
-export function enumerateMonthKeys(fromMonth: string, toMonth: string): string[] {
+export function enumerateMonthKeys(
+  fromMonth: string,
+  toMonth: string,
+): string[] {
   const [fromYear, fromMonthNum] = fromMonth.split("-").map(Number);
   const [toYear, toMonthNum] = toMonth.split("-").map(Number);
   const months: string[] = [];

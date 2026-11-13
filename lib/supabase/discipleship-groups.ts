@@ -80,7 +80,9 @@ function toGroup(row: DbDiscipleshipGroup): DiscipleshipGroup {
   };
 }
 
-function toGroupMember(row: DbDiscipleshipGroupMember): DiscipleshipGroupMember {
+function toGroupMember(
+  row: DbDiscipleshipGroupMember,
+): DiscipleshipGroupMember {
   return {
     id: row.id,
     groupId: row.group_id,
@@ -90,7 +92,9 @@ function toGroupMember(row: DbDiscipleshipGroupMember): DiscipleshipGroupMember 
   };
 }
 
-function toGroupMeeting(row: DbDiscipleshipGroupMeeting): DiscipleshipGroupMeeting {
+function toGroupMeeting(
+  row: DbDiscipleshipGroupMeeting,
+): DiscipleshipGroupMeeting {
   return {
     id: row.id,
     groupId: row.group_id,
@@ -306,7 +310,9 @@ export async function createDiscipleshipGroupPrayerItem(
       person_id: input.personId ?? null,
       content: input.content.trim(),
     })
-    .select("id, group_id, person_id, content, is_answered, answered_at, created_at")
+    .select(
+      "id, group_id, person_id, content, is_answered, answered_at, created_at",
+    )
     .single();
 
   if (error) throw error;
@@ -325,7 +331,9 @@ export async function setDiscipleshipGroupPrayerItemAnswered(
       answered_at: isAnswered ? new Date().toISOString() : null,
     })
     .eq("id", prayerItemId)
-    .select("id, group_id, person_id, content, is_answered, answered_at, created_at")
+    .select(
+      "id, group_id, person_id, content, is_answered, answered_at, created_at",
+    )
     .single();
 
   if (error) throw error;

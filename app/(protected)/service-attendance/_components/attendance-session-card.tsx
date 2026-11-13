@@ -62,7 +62,9 @@ export function AttendanceRecordCard({
               <Calendar className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{record.serviceType}</p>
+              <p className="text-sm font-medium truncate">
+                {record.serviceType}
+              </p>
               <p className="text-[11px] text-muted-foreground truncate">
                 {formatLongDate(record.date)}
               </p>
@@ -97,10 +99,10 @@ export function AttendanceDetailsPanel({
   onOpenFullView: () => void;
 }) {
   const attendees = record.attendees
-    .map((id) => people.find((p) => p.id === id))
+    .map(id => people.find(p => p.id === id))
     .filter(Boolean);
   const evangelismCount = attendees.filter(
-    (p) => p?.membershipType === "For Evangelism",
+    p => p?.membershipType === "For Evangelism",
   ).length;
 
   return (
@@ -108,7 +110,9 @@ export function AttendanceDetailsPanel({
       <CardHeader className="py-3 px-4">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <CardTitle className="text-sm truncate">{record.serviceType}</CardTitle>
+            <CardTitle className="text-sm truncate">
+              {record.serviceType}
+            </CardTitle>
             <CardDescription className="text-xs">
               {formatLongDate(record.date)}
             </CardDescription>
@@ -127,7 +131,7 @@ export function AttendanceDetailsPanel({
         )}
 
         <div className="space-y-1.5 max-h-64 overflow-y-auto">
-          {attendees.map((person) => (
+          {attendees.map(person => (
             <div
               key={person!.id}
               className="flex items-center gap-2 p-2 rounded-lg border border-border/50 bg-background/50 text-sm"
@@ -139,7 +143,7 @@ export function AttendanceDetailsPanel({
                 <Link
                   href={`/people/${person!.id}`}
                   className="truncate text-sm font-medium hover:text-violet-600 dark:hover:text-violet-400 hover:underline"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={e => e.stopPropagation()}
                 >
                   {person!.name}
                 </Link>

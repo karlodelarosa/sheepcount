@@ -47,10 +47,7 @@ export function BulletText({
   return (
     <div className={cn("space-y-2", className)}>
       {paragraphs.map((paragraph, index) => (
-        <p
-          key={`p-${index}`}
-          className="text-muted-foreground leading-relaxed"
-        >
+        <p key={`p-${index}`} className="text-muted-foreground leading-relaxed">
           {paragraph}
         </p>
       ))}

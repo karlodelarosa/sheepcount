@@ -29,7 +29,10 @@ import { PropertyImageField } from "./property-image-field";
 interface AddPropertyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (input: CreatePropertyInput, imageFile?: File | null) => Promise<unknown>;
+  onSubmit: (
+    input: CreatePropertyInput,
+    imageFile?: File | null,
+  ) => Promise<unknown>;
   isAdmin: boolean;
 }
 
@@ -106,7 +109,11 @@ export function AddPropertyDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
-            <PropertyImageField onFileChange={setImageFile} disabled={!isAdmin} variant="large" />
+            <PropertyImageField
+              onFileChange={setImageFile}
+              disabled={!isAdmin}
+              variant="large"
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -115,7 +122,9 @@ export function AddPropertyDialog({
                   id="property-name"
                   placeholder="e.g., Main Church Building"
                   value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="rounded-lg"
                   required
                 />
@@ -195,7 +204,9 @@ export function AddPropertyDialog({
                 id="notes"
                 placeholder="Internal notes (condition, storage location, etc.)"
                 value={formData.notes}
-                onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
                 className="rounded-lg"
                 rows={2}
               />
@@ -212,7 +223,7 @@ export function AddPropertyDialog({
             </Button>
             <Button
               type="submit"
-              className="rounded-lg bg-slate-900 hover:bg-slate-800"
+              className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
               disabled={!isAdmin || !formData.propertyTypeId}
             >
               Add Property

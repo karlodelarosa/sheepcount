@@ -103,9 +103,10 @@ const MEMBERSHIP_COLORS: Record<string, string> = {
   Worker: "#a855f7",
 };
 
-function computeTrendDirection(
-  trend: AttendanceTrendPoint[],
-): { direction: "up" | "down" | "flat"; percent: number } {
+function computeTrendDirection(trend: AttendanceTrendPoint[]): {
+  direction: "up" | "down" | "flat";
+  percent: number;
+} {
   if (trend.length < 2) {
     return { direction: "flat", percent: 0 };
   }
@@ -117,8 +118,7 @@ function computeTrendDirection(
     return { direction: "flat", percent: 0 };
   }
 
-  const recentAvg =
-    recent.reduce((sum, p) => sum + p.count, 0) / recent.length;
+  const recentAvg = recent.reduce((sum, p) => sum + p.count, 0) / recent.length;
   const priorAvg = prior.reduce((sum, p) => sum + p.count, 0) / prior.length;
 
   if (priorAvg === 0) {
@@ -163,7 +163,9 @@ function buildFunnelData(
 }
 
 function buildOutreachPieData(growthPeople: GrowthTrackPerson[]): ChartSlice[] {
-  const contact = growthPeople.filter(p => p.outreachPriority === "contact").length;
+  const contact = growthPeople.filter(
+    p => p.outreachPriority === "contact",
+  ).length;
   const followUp = growthPeople.filter(
     p => p.outreachPriority === "follow_up",
   ).length;
@@ -174,8 +176,16 @@ function buildOutreachPieData(growthPeople: GrowthTrackPerson[]): ChartSlice[] {
 
   return [
     { name: "Needs Contact", value: contact, fill: OUTREACH_COLORS.contact },
-    { name: "Needs Follow-up", value: followUp, fill: OUTREACH_COLORS.follow_up },
-    { name: "Needs Visitation", value: visitation, fill: OUTREACH_COLORS.visitation },
+    {
+      name: "Needs Follow-up",
+      value: followUp,
+      fill: OUTREACH_COLORS.follow_up,
+    },
+    {
+      name: "Needs Visitation",
+      value: visitation,
+      fill: OUTREACH_COLORS.visitation,
+    },
     { name: "On Track", value: onTrack, fill: OUTREACH_COLORS.on_track },
   ].filter(d => d.value > 0);
 }
@@ -235,10 +245,6 @@ function buildMonthlyTrend(
   for (const record of grouped) {
     const date = new Date(record.date);
     const sortKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-    const month = date.toLocaleDateString("en-US", {
-      month: "short",
-      year: "numeric",
-    });
     const count = record.attendees.length;
 
     const existing = byMonth.get(sortKey) ?? {

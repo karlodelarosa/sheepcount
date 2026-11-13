@@ -191,12 +191,12 @@ export function MobileDiscipleship() {
         value={activeTab}
         onValueChange={value => setActiveTab(value as DetailTab)}
       >
-        <TabsList className="grid h-[52px] w-full grid-cols-2 gap-1 rounded-[16px] p-1">
-          <TabsTrigger value="meeting" className="gap-1.5">
+        <TabsList>
+          <TabsTrigger value="meeting">
             <BookOpen className="h-4 w-4" />
             Meeting
           </TabsTrigger>
-          <TabsTrigger value="prayer" className="gap-1.5">
+          <TabsTrigger value="prayer">
             <HeartHandshake className="h-4 w-4" />
             Prayer Wall
           </TabsTrigger>

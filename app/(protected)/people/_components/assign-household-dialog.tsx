@@ -159,8 +159,13 @@ export function AssignHouseholdDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={!householdId || !role || isSubmitting || households.length === 0}
-                className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+                disabled={
+                  !householdId ||
+                  !role ||
+                  isSubmitting ||
+                  households.length === 0
+                }
+                className="rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] focus-visible:ring-[var(--accent-color)]"
               >
                 {isSubmitting ? "Saving…" : "Assign"}
               </Button>

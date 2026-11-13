@@ -83,7 +83,10 @@ export function computeAuditChartData(
 
   const expenseMap = new Map<string, number>();
   for (const line of auditExpenses) {
-    expenseMap.set(line.category, (expenseMap.get(line.category) ?? 0) + line.amount);
+    expenseMap.set(
+      line.category,
+      (expenseMap.get(line.category) ?? 0) + line.amount,
+    );
   }
 
   const expenseBreakdown: AuditExpenseBreakdown[] = Array.from(
@@ -96,7 +99,10 @@ export function computeAuditChartData(
 
   const incomeTypeMap = new Map<string, number>();
   for (const line of auditIncome) {
-    incomeTypeMap.set(line.type, (incomeTypeMap.get(line.type) ?? 0) + line.amount);
+    incomeTypeMap.set(
+      line.type,
+      (incomeTypeMap.get(line.type) ?? 0) + line.amount,
+    );
   }
 
   const incomeColors: Record<string, string> = {
@@ -105,11 +111,13 @@ export function computeAuditChartData(
     Donation: "#8b5cf6",
   };
 
-  const incomeByType = Array.from(incomeTypeMap.entries()).map(([name, value]) => ({
-    name,
-    value,
-    fill: incomeColors[name] ?? "#94a3b8",
-  }));
+  const incomeByType = Array.from(incomeTypeMap.entries()).map(
+    ([name, value]) => ({
+      name,
+      value,
+      fill: incomeColors[name] ?? "#94a3b8",
+    }),
+  );
 
   return { comparison, expenseBreakdown, incomeByType };
 }

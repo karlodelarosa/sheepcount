@@ -2,7 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type ChurchEventType = "VBS" | "Camp" | "Retreat" | "Conference";
 
-export type ChurchEventStatus = "draft" | "published" | "completed" | "cancelled";
+export type ChurchEventStatus =
+  | "draft"
+  | "published"
+  | "completed"
+  | "cancelled";
 
 export type EventRole = "Attendee" | "Volunteer" | "Core_Leader";
 
@@ -69,7 +73,9 @@ function toEvent(row: DbChurchEvent): ChurchEvent {
   };
 }
 
-function toRegistration(row: DbChurchEventRegistration): ChurchEventRegistration {
+function toRegistration(
+  row: DbChurchEventRegistration,
+): ChurchEventRegistration {
   return {
     id: row.id,
     eventId: row.event_id,
@@ -160,7 +166,8 @@ export async function updateChurchEvent(
 ): Promise<ChurchEvent> {
   const payload: Record<string, unknown> = {};
   if (input.title !== undefined) payload.title = input.title.trim();
-  if (input.description !== undefined) payload.description = input.description.trim();
+  if (input.description !== undefined)
+    payload.description = input.description.trim();
   if (input.type !== undefined) payload.type = input.type;
   if (input.startDate !== undefined) payload.start_date = input.startDate;
   if (input.endDate !== undefined) payload.end_date = input.endDate;
@@ -365,7 +372,7 @@ export async function recordEventSessionAttendance(
   if (deleteError) throw deleteError;
 
   if (input.personIds.length > 0) {
-    const attendeeRows = input.personIds.map((personId) => ({
+    const attendeeRows = input.personIds.map(personId => ({
       session_id: session.id,
       person_id: personId,
     }));
@@ -385,7 +392,7 @@ export function groupAttendanceIntoSessions(
   eventId: string,
 ): EventSessionSummary[] {
   const sessions = records
-    .filter((record) => record.eventId === eventId)
+    .filter(record => record.eventId === eventId)
     .reduce(
       (acc, record) => {
         const key = `${record.date}---${record.sessionLabel}`;
@@ -415,7 +422,7 @@ export function getUniqueAttendeeIds(
 ): string[] {
   return [
     ...new Set(
-      records.filter((record) => record.eventId === eventId).map((r) => r.personId),
+      records.filter(record => record.eventId === eventId).map(r => r.personId),
     ),
   ];
 }

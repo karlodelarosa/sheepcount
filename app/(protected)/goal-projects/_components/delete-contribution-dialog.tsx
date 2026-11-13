@@ -33,7 +33,8 @@ export function DeleteContributionDialog({
         <DialogHeader>
           <DialogTitle>Delete contribution</DialogTitle>
           <DialogDescription>
-            This will permanently delete this contribution. This cannot be undone.
+            This will permanently delete this contribution. This cannot be
+            undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -59,4 +60,3 @@ export function DeleteContributionDialog({
     </Dialog>
   );
 }
-

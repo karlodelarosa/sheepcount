@@ -226,11 +226,16 @@ export async function fetchDiscipleshipMilestoneCompletions(
     .select(
       "id, enrollment_id, milestone_id, completed_at, notes, completed_by_person_id, discipleship_enrollments!inner(track_id, discipleship_tracks!inner(organization_id, is_active))",
     )
-    .eq("discipleship_enrollments.discipleship_tracks.organization_id", organizationId)
+    .eq(
+      "discipleship_enrollments.discipleship_tracks.organization_id",
+      organizationId,
+    )
     .eq("discipleship_enrollments.discipleship_tracks.is_active", true);
 
   if (error) throw error;
-  return (data as DbDiscipleshipMilestoneCompletion[]).map(toMilestoneCompletion);
+  return (data as DbDiscipleshipMilestoneCompletion[]).map(
+    toMilestoneCompletion,
+  );
 }
 
 export type CreateDiscipleshipTrackInput = {

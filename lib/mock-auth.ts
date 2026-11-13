@@ -1,6 +1,7 @@
 import type { TenantMembership } from "@/lib/types/tenant";
 import { DEMO_EMAIL, DEMO_ORG_NAME, DEMO_TENANT_SLUG } from "@/lib/branding";
 import { PRO_ENTITLEMENTS_FALLBACK } from "@/lib/subscription/entitlements";
+import { DEFAULT_ACCENT_COLOR } from "@/lib/accent-color";
 
 export const mockUser = {
   id: "mock-user-id",
@@ -30,14 +31,14 @@ const mockSubscription = {
 
 const mockThemeSettings = {
   mode: "system" as const,
-  accentColor: "#030213",
+  accentColor: DEFAULT_ACCENT_COLOR,
   organizationName: DEMO_ORG_NAME,
   organizationLogo: null,
   useOrganizationLogo: false,
 };
 
 export const mockTenantMembership: TenantMembership & {
-  organizations: typeof mockOrganization[];
+  organizations: (typeof mockOrganization)[];
   status: string;
 } = {
   id: "mock-member-id",

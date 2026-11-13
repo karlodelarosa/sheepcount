@@ -16,5 +16,7 @@ export function getCurrentMilestone(
       .map(completion => completion.milestoneId),
   );
 
-  return trackMilestones.find(milestone => !completedIds.has(milestone.id)) ?? null;
+  return (
+    trackMilestones.find(milestone => !completedIds.has(milestone.id)) ?? null
+  );
 }

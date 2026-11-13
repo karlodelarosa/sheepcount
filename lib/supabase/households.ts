@@ -57,7 +57,8 @@ export async function updateHousehold(
   };
 
   if (input.name !== undefined) updates.name = input.name.trim();
-  if (input.address !== undefined) updates.address = input.address.trim() || null;
+  if (input.address !== undefined)
+    updates.address = input.address.trim() || null;
 
   const { data, error } = await supabase
     .from("households")

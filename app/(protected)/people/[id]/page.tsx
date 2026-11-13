@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { Suspense } from "react";
 import { PersonDetails } from "../[id]/index";
 import { useParams, useRouter } from "next/navigation";
@@ -42,7 +44,7 @@ function PersonDetailsPageContent() {
 
 export default function PersonDetailsPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<PageSkeleton />}>
       <PersonDetailsPageContent />
     </Suspense>
   );

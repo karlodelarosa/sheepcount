@@ -29,7 +29,7 @@ export function ProspectDirectory() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const filteredProspects = mockProspects.filter(prospect =>
-    prospect.name.toLowerCase().includes(searchTerm.toLowerCase())
+    prospect.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -108,7 +108,9 @@ export function ProspectDirectory() {
                       className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800/80 text-slate-900 dark:text-white transition-colors"
                       onClick={() => router.push(`/prospect/${prospect.id}`)}
                     >
-                      <TableCell className="font-medium">{prospect.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {prospect.name}
+                      </TableCell>
                       <TableCell>{prospect.age || "N/A"}</TableCell>
                       <TableCell>{prospect.phone || "N/A"}</TableCell>
                       <TableCell>{prospect.social || "N/A"}</TableCell>

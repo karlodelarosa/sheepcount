@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,10 @@ export function AddWorkMinistryDialog({
   open,
   onOpenChange,
 }: AddWorkMinistryDialogProps) {
+  const returnFocus = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) returnFocus.current = document.activeElement as HTMLElement;
+  }, [open]);
   const { addWorkMinistry, workMinistries, isSaving } = useGroupsMinistry();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -44,7 +48,7 @@ export function AddWorkMinistryDialog({
   };
 
   const handleSave = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || isSaving) return;
 
     const ministry = await addWorkMinistry({
       name,
@@ -62,11 +66,19 @@ export function AddWorkMinistryDialog({
   const isFormValid = name.trim() !== "";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] border-slate-200/60 bg-white dark:bg-zinc-800 dark:border-zinc-700/60 dark:text-white">
+    <Dialog
+      open={open}
+      onOpenChange={value => {
+        if (!isSaving) onOpenChange(value);
+      }}
+    >
+      <DialogContent
+        onCloseAutoFocus={() => returnFocus.current?.focus()}
+        className="max-h-[90dvh] overflow-y-auto sm:max-w-[425px] border-slate-200/60 bg-white dark:bg-zinc-800 dark:border-zinc-700/60 dark:text-white"
+      >
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <Users className="w-5 h-5 text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]" />
             <div>
               <DialogTitle className="text-slate-900 dark:text-white">
                 Add Work Ministry
@@ -81,7 +93,10 @@ export function AddWorkMinistryDialog({
 
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="ministry-name" className="text-slate-700 dark:text-zinc-300">
+            <Label
+              htmlFor="ministry-name"
+              className="text-slate-700 dark:text-zinc-300"
+            >
               Ministry Name
             </Label>
             <Input
@@ -110,7 +125,10 @@ export function AddWorkMinistryDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ministry-color" className="text-slate-700 dark:text-zinc-300">
+            <Label
+              htmlFor="ministry-color"
+              className="text-slate-700 dark:text-zinc-300"
+            >
               Color
             </Label>
             <Select value={color} onValueChange={setColor}>
@@ -131,6 +149,7 @@ export function AddWorkMinistryDialog({
         <DialogFooter>
           <Button
             variant="outline"
+            disabled={isSaving}
             onClick={() => onOpenChange(false)}
             className="rounded-lg dark:border-zinc-600 dark:text-zinc-300"
           >
@@ -139,7 +158,7 @@ export function AddWorkMinistryDialog({
           <Button
             onClick={() => void handleSave()}
             disabled={!isFormValid || isSaving}
-            className="rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+            className="rounded-lg bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Ministry

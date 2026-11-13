@@ -10,8 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Cross, FileText, Plus, Search, X } from "lucide-react";
+import { Cross, FileText } from "lucide-react";
 import { useTheme } from "@/context/theme-context";
 import { usePeople } from "@/lib/people";
 import { useMemorial } from "@/lib/memorials";
@@ -22,9 +21,19 @@ import type { MemorialRecord } from "@/lib/supabase/memorials";
 import {
   DEFAULT_MEMORIAL_REGISTRY_FILTERS,
   filterMemorialRecords,
-  hasActiveMemorialFilters,
   type MemorialRegistryFilters,
 } from "../_lib/filters";
+
+import {
+  LifeEventRegistryLayout,
+  LifeEventRecordCard,
+} from "@/components/life-event-registry";
+import {
+  filterLifeEventQuickRecords,
+  getLifeEventCounts,
+  formatLifeEventDate,
+  type LifeEventQuickFilter,
+} from "@/lib/life-event-registry";
 
 export function MemorialRegistry() {
   const { settings } = useTheme();
@@ -37,9 +46,19 @@ export function MemorialRegistry() {
   const [certificateRecord, setCertificateRecord] =
     useState<MemorialRecord | null>(null);
 
+  const [quick, setQuick] = useState<LifeEventQuickFilter>("all");
+  const year = new Date().getFullYear();
+  const counts = getLifeEventCounts(records, record => record.deathDate, year);
+
   const rows = useMemo(
-    () => filterMemorialRecords(records, filters),
-    [records, filters],
+    () =>
+      filterLifeEventQuickRecords(
+        filterMemorialRecords(records, filters),
+        quick,
+        record => record.deathDate,
+        year,
+      ),
+    [records, filters, quick, year],
   );
 
   const certificateData: MemorialCertificateData | null = certificateRecord
@@ -54,173 +73,109 @@ export function MemorialRegistry() {
       }
     : null;
 
-  if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading memorial registry...
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-            Memorial Records
-          </h1>
-          <p className="text-slate-600 dark:text-zinc-400 mt-1">
-            In loving memory of those who have gone before us
-          </p>
-        </div>
-        <Button
-          onClick={() => setRecordDialogOpen(true)}
-          className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Record memorial
-        </Button>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-zinc-700/70 dark:bg-zinc-800/50">
-          <p className="text-sm text-slate-500 dark:text-zinc-400">
-            Total records
-          </p>
-          <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-1">
-            {records.length}
-          </p>
-        </div>
-        <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-zinc-700/70 dark:bg-zinc-800/50">
-          <p className="text-sm text-slate-500 dark:text-zinc-400">This year</p>
-          <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-1">
-            {
-              records.filter(
-                r =>
-                  new Date(r.deathDate).getFullYear() ===
-                  new Date().getFullYear(),
-              ).length
-            }
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-zinc-700/70 dark:bg-zinc-800/50 space-y-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              value={filters.search}
-              onChange={e =>
-                setFilters(prev => ({ ...prev, search: e.target.value }))
-              }
-              placeholder="Search by name, officiant, location, or notes"
-              className="pl-9 rounded-xl"
-            />
-          </div>
-          <Input
-            type="date"
-            value={filters.dateFrom}
-            onChange={e =>
-              setFilters(prev => ({ ...prev, dateFrom: e.target.value }))
-            }
-            className="rounded-xl lg:w-40"
-            aria-label="From date"
-          />
-          <Input
-            type="date"
-            value={filters.dateTo}
-            onChange={e =>
-              setFilters(prev => ({ ...prev, dateTo: e.target.value }))
-            }
-            className="rounded-xl lg:w-40"
-            aria-label="To date"
-          />
-          {hasActiveMemorialFilters(filters) && (
-            <Button
-              variant="outline"
-              onClick={() => setFilters(DEFAULT_MEMORIAL_REGISTRY_FILTERS)}
-              className="rounded-xl"
-            >
-              <X className="w-4 h-4 mr-2" />
-              Clear
-            </Button>
-          )}
-        </div>
-
-        {rows.length === 0 ? (
-          <div className="py-16 text-center">
-            <Cross className="w-10 h-10 mx-auto text-slate-300 dark:text-zinc-600" />
-            <p className="mt-4 font-medium text-slate-900 dark:text-white">
-              {records.length === 0
-                ? "No memorial records yet"
-                : "No memorial records match your filters"}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-              {records.length === 0
-                ? "Record a memorial to start the registry."
-                : "Try adjusting your search or date range."}
-            </p>
-            {records.length === 0 && (
-              <Button
-                onClick={() => setRecordDialogOpen(true)}
-                className="mt-4 rounded-xl"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Record memorial
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Date of passing</TableHead>
-                  <TableHead>Service date</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Officiant</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map(record => (
-                  <TableRow key={record.id}>
-                    <TableCell className="font-medium text-slate-900 dark:text-white">
-                      {record.deceasedName}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(record.deathDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      {record.serviceDate
-                        ? new Date(record.serviceDate).toLocaleDateString()
-                        : "—"}
-                    </TableCell>
-                    <TableCell>{record.location || "—"}</TableCell>
-                    <TableCell>{record.officiantName || "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-lg"
-                          onClick={() => setCertificateRecord(record)}
-                        >
-                          <FileText className="w-4 h-4 mr-1" />
-                          Certificate
-                        </Button>
-                      </div>
-                    </TableCell>
+    <>
+      <LifeEventRegistryLayout
+        title="Memorial Records"
+        description="In loving memory of those who have gone before us"
+        icon={Cross}
+        recordLabel="Record memorial"
+        hydrated={hydrated}
+        isSaving={isSaving}
+        onRecord={() => setRecordDialogOpen(true)}
+        filters={filters}
+        onFiltersChange={setFilters}
+        quick={quick}
+        onQuickChange={setQuick}
+        counts={counts}
+        resultCount={rows.length}
+        searchPlaceholder="Search by name, officiant, location, family, or notes..."
+        dateHelp="Dates and This Year refer to the date of passing."
+      >
+        {view =>
+          view === "cards" ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {rows.map(record => (
+                <LifeEventRecordCard
+                  key={record.id}
+                  title={record.deceasedName}
+                  subtitle="In loving memory"
+                  icon={Cross}
+                  date={formatLifeEventDate(record.deathDate)}
+                  dateLabel="Date of passing"
+                  location={record.location}
+                  officiant={record.officiantName}
+                  notes={record.notes}
+                  onCertificate={() => setCertificateRecord(record)}
+                >
+                  <p>
+                    Memorial service:{" "}
+                    {record.serviceDate
+                      ? formatLifeEventDate(record.serviceDate)
+                      : "Not recorded"}
+                  </p>
+                  {record.survivedBy && (
+                    <p className="break-words">
+                      Survived by: {record.survivedBy}
+                    </p>
+                  )}
+                </LifeEventRecordCard>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-xl border bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Date of passing</TableHead>
+                    <TableHead>Service date</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Officiant</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
-
+                </TableHeader>
+                <TableBody>
+                  {rows.map(record => (
+                    <TableRow key={record.id}>
+                      <TableCell className="min-w-40 max-w-xs break-words font-medium text-foreground">
+                        {record.deceasedName}
+                      </TableCell>
+                      <TableCell className="min-w-36 max-w-xs break-words">
+                        {formatLifeEventDate(record.deathDate)}
+                      </TableCell>
+                      <TableCell className="min-w-36 max-w-xs break-words">
+                        {record.serviceDate
+                          ? formatLifeEventDate(record.serviceDate)
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="min-w-36 max-w-xs break-words">
+                        {record.location || "—"}
+                      </TableCell>
+                      <TableCell className="min-w-36 max-w-xs break-words">
+                        {record.officiantName || "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1 rounded-xl border-[var(--accent-color-border)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]"
+                            onClick={() => setCertificateRecord(record)}
+                          >
+                            <FileText className="w-4 h-4 mr-1" />
+                            Certificate
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )
+        }
+      </LifeEventRegistryLayout>
       <RecordMemorialDialog
         open={recordDialogOpen}
         onOpenChange={setRecordDialogOpen}
@@ -236,6 +191,6 @@ export function MemorialRegistry() {
         }}
         certificateData={certificateData}
       />
-    </div>
+    </>
   );
 }

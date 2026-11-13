@@ -17,17 +17,30 @@ export function PipelineViewTab({
   const grouped = groupByStage(people);
 
   return (
-    <div className="overflow-x-auto pb-2 -mx-1 px-1">
-      <div className="flex gap-4 min-w-max lg:min-w-0 lg:grid lg:grid-cols-5">
-        {GROWTH_TRACK_STAGES.map(stage => (
-          <PipelineColumn
-            key={stage.key}
-            stage={stage.key}
-            people={grouped[stage.key]}
-            isSaving={isSaving}
-            onPersonAction={onPersonAction}
-          />
-        ))}
+    <div className="min-w-0 space-y-4">
+      <div>
+        <h2 className="text-lg font-bold tracking-tight">Growth Pipeline</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Follow each person’s next step, from their first visit to serving.
+        </p>
+      </div>
+      <div
+        role="region"
+        aria-label="Growth pipeline stages"
+        tabIndex={0}
+        className="overflow-x-auto rounded-2xl pb-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-color)]"
+      >
+        <div className="grid grid-cols-5 gap-4 min-w-[1450px]">
+          {GROWTH_TRACK_STAGES.map(stage => (
+            <PipelineColumn
+              key={stage.key}
+              stage={stage.key}
+              people={grouped[stage.key]}
+              isSaving={isSaving}
+              onPersonAction={onPersonAction}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

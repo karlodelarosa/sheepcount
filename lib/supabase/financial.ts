@@ -67,9 +67,7 @@ function toIncomeEntry(row: DbFinancialAuditIncomeEntry): AuditIncomeEntry {
   };
 }
 
-function toExpenseEntry(
-  row: DbFinancialAuditExpenseEntry,
-): AuditExpenseEntry {
+function toExpenseEntry(row: DbFinancialAuditExpenseEntry): AuditExpenseEntry {
   return {
     id: row.id,
     auditId: row.audit_id,
@@ -255,12 +253,14 @@ export async function seedFinancialDefaults(
   }));
 
   const [receiptError, categoryError] = await Promise.all([
-    supabase
-      .from("financial_receipt_types")
-      .upsert(receiptRows, { onConflict: "organization_id,name", ignoreDuplicates: true }),
-    supabase
-      .from("financial_expense_categories")
-      .upsert(categoryRows, { onConflict: "organization_id,name", ignoreDuplicates: true }),
+    supabase.from("financial_receipt_types").upsert(receiptRows, {
+      onConflict: "organization_id,name",
+      ignoreDuplicates: true,
+    }),
+    supabase.from("financial_expense_categories").upsert(categoryRows, {
+      onConflict: "organization_id,name",
+      ignoreDuplicates: true,
+    }),
   ]).then(([receiptResult, categoryResult]) => [
     receiptResult.error,
     categoryResult.error,

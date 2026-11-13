@@ -26,17 +26,16 @@ import { useEntitlements } from "@/lib/subscription/use-entitlements";
 import { hasFeature } from "@/lib/subscription/entitlements";
 import { createClient } from "@/lib/supabase/client";
 import { getOrganizationId } from "@/lib/supabase/tenant";
-import {
-  fetchAuditLogs,
-  type AuditLogEntry,
-} from "@/lib/supabase/audit-trail";
+import { fetchAuditLogs, type AuditLogEntry } from "@/lib/supabase/audit-trail";
 
 function formatActor(entry: AuditLogEntry) {
   if (!entry.actor) {
     return "System";
   }
 
-  return `${entry.actor.first_name} ${entry.actor.last_name}`.trim() || "Unknown";
+  return (
+    `${entry.actor.first_name} ${entry.actor.last_name}`.trim() || "Unknown"
+  );
 }
 
 function formatAction(action: AuditLogEntry["action"]) {
@@ -63,7 +62,10 @@ function formatChanges(entry: AuditLogEntry) {
   }
 
   return Object.entries(changes)
-    .map(([field, change]) => `${field}: ${JSON.stringify(change.from)} → ${JSON.stringify(change.to)}`)
+    .map(
+      ([field, change]) =>
+        `${field}: ${JSON.stringify(change.from)} → ${JSON.stringify(change.to)}`,
+    )
     .join("; ");
 }
 
@@ -202,7 +204,9 @@ export function AuditTrailView() {
                     </TableCell>
                     <TableCell>{formatActor(entry)}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{formatAction(entry.action)}</Badge>
+                      <Badge variant="outline">
+                        {formatAction(entry.action)}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       {entry.entity_id && entry.action !== "delete" ? (

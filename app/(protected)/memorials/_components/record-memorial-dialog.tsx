@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +51,10 @@ export function RecordMemorialDialog({
   isSaving,
   onRecord,
 }: RecordMemorialDialogProps) {
+  const returnFocus = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) returnFocus.current = document.activeElement as HTMLElement;
+  }, [open]);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -73,6 +77,7 @@ export function RecordMemorialDialog({
   };
 
   const handleSubmit = async () => {
+    if (isSaving) return;
     if (!formData.deceasedName || !formData.deathDate) return;
 
     const record = await onRecord(
@@ -99,11 +104,15 @@ export function RecordMemorialDialog({
     <Dialog
       open={open}
       onOpenChange={value => {
+        if (isSaving) return;
         if (!value) resetForm();
         onOpenChange(value);
       }}
     >
-      <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto dark:bg-zinc-800 dark:border-zinc-700">
+      <DialogContent
+        onCloseAutoFocus={() => returnFocus.current?.focus()}
+        className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto dark:bg-zinc-800 dark:border-zinc-700"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
             <Cross className="w-5 h-5" />
@@ -240,7 +249,7 @@ export function RecordMemorialDialog({
           <Button
             onClick={handleSubmit}
             disabled={!formData.deceasedName || !formData.deathDate || isSaving}
-            className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+            className="rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             {isSaving ? "Saving..." : "Record memorial"}
           </Button>

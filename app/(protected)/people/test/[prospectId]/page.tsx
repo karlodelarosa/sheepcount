@@ -5,9 +5,27 @@ import { Button } from "@/components/ui/button";
 
 // Same mock data (static)
 const mockPeople = [
-  { id: "p1", name: "Karlo Dela Rosa", email: "karlo@email.com", phone: "09171234567", status: "Prospect" },
-  { id: "p2", name: "May Santos", email: "may@email.com", phone: "09171234568", status: "Prospect" },
-  { id: "p3", name: "Titus Cruz", email: "titus@email.com", phone: "09171234569", status: "Prospect" },
+  {
+    id: "p1",
+    name: "Karlo Dela Rosa",
+    email: "karlo@email.com",
+    phone: "09171234567",
+    status: "Prospect",
+  },
+  {
+    id: "p2",
+    name: "May Santos",
+    email: "may@email.com",
+    phone: "09171234568",
+    status: "Prospect",
+  },
+  {
+    id: "p3",
+    name: "Titus Cruz",
+    email: "titus@email.com",
+    phone: "09171234569",
+    status: "Prospect",
+  },
 ];
 
 export default function ProspectDetailPage() {
@@ -21,7 +39,10 @@ export default function ProspectDetailPage() {
 
   return (
     <div className="p-6 max-w-lg mx-auto space-y-4">
-      <Button onClick={() => router.back()} className="bg-gray-200 hover:bg-gray-300">
+      <Button
+        onClick={() => router.back()}
+        className="bg-gray-200 hover:bg-gray-300"
+      >
         Back
       </Button>
 
@@ -38,13 +59,20 @@ export default function ProspectDetailPage() {
         </div>
         <div>
           <label className="block mb-1">Role / Position</label>
-          <input type="text" placeholder="e.g., Worship Team" className="w-full border p-2 rounded" />
+          <input
+            type="text"
+            placeholder="e.g., Worship Team"
+            className="w-full border p-2 rounded"
+          />
         </div>
         <div>
           <label className="block mb-1">Notes</label>
           <textarea className="w-full border p-2 rounded" />
         </div>
-        <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700">
+        <Button
+          type="submit"
+          className="bg-blue-600 text-white hover:bg-blue-700"
+        >
           Convert to Member
         </Button>
       </form>

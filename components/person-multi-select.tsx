@@ -90,12 +90,7 @@ export function PersonMultiSelect({
         />
       </div>
 
-      <ScrollArea
-        className={cn(
-          "h-48 rounded-lg border p-2",
-          listClassName,
-        )}
-      >
+      <ScrollArea className={cn("h-48 rounded-lg border p-2", listClassName)}>
         <div className="space-y-1">
           {filteredPeople.map(person => {
             const isSelected = selectedIds.includes(person.id);

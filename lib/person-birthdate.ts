@@ -29,7 +29,9 @@ export const MONTH_NAMES_FULL = [
 ] as const;
 
 function parseBirthdateParts(birthdate: string) {
-  const [year, month, day] = birthdate.split("-").map(part => parseInt(part, 10));
+  const [year, month, day] = birthdate
+    .split("-")
+    .map(part => parseInt(part, 10));
   if (!year || !month || !day) return null;
   return { month: month - 1, day };
 }

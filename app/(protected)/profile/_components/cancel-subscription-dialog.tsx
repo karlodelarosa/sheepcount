@@ -145,11 +145,7 @@ export function CancelSubscriptionDialog({
             >
               Keep subscription
             </Button>
-            <Button
-              type="submit"
-              variant="destructive"
-              disabled={isSubmitting}
-            >
+            <Button type="submit" variant="destructive" disabled={isSubmitting}>
               {isSubmitting ? "Cancelling..." : "Confirm cancellation"}
             </Button>
           </DialogFooter>

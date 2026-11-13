@@ -60,9 +60,7 @@ export function getSessionStats(records: GroupedAttendanceRecord[]) {
     sessionCount: records.length,
     totalAttendance,
     averageAttendance:
-      records.length > 0
-        ? Math.round(totalAttendance / records.length)
-        : 0,
+      records.length > 0 ? Math.round(totalAttendance / records.length) : 0,
     lastSessionDate: lastRecord?.date ?? null,
     lastSessionCount: lastRecord?.attendees.length ?? 0,
   };
@@ -86,10 +84,16 @@ export type DateRangeValue = { from: string; to: string };
 export const MAX_DATE_RANGE_DAYS = 365;
 
 function toDateString(date: Date) {
-  return date.toISOString().split("T")[0];
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 }
 
-export function getCurrentMonthRange(referenceDate = new Date()): DateRangeValue {
+export function getCurrentMonthRange(
+  referenceDate = new Date(),
+): DateRangeValue {
   const from = new Date(
     referenceDate.getFullYear(),
     referenceDate.getMonth(),
@@ -151,11 +155,7 @@ export function filterRowsByServiceCategory(
   });
 }
 
-export function isDateInRange(
-  date: string,
-  from: string,
-  to: string,
-): boolean {
+export function isDateInRange(date: string, from: string, to: string): boolean {
   return date >= from && date <= to;
 }
 
@@ -163,9 +163,7 @@ export function filterRecordsByDateRange(
   records: GroupedAttendanceRecord[],
   range: DateRangeValue,
 ): GroupedAttendanceRecord[] {
-  return records.filter((r) =>
-    isDateInRange(r.date, range.from, range.to),
-  );
+  return records.filter(r => isDateInRange(r.date, range.from, range.to));
 }
 
 export function getDataDateBounds(
@@ -173,17 +171,15 @@ export function getDataDateBounds(
 ): DateRangeValue | null {
   if (records.length === 0) return null;
 
-  const dates = records.map((r) => r.date).sort();
+  const dates = records.map(r => r.date).sort();
   return { from: dates[0], to: dates[dates.length - 1] };
 }
 
-export function getSundayAttendanceTrend(
-  records: GroupedAttendanceRecord[],
-) {
+export function getSundayAttendanceTrend(records: GroupedAttendanceRecord[]) {
   return records
     .filter(isSundayRecord)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map((r) => ({
+    .map(r => ({
       date: new Date(r.date).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
@@ -205,22 +201,23 @@ export type ServiceTypeBreakdown = {
 export function getAttendanceByServiceType(
   records: GroupedAttendanceRecord[],
 ): ServiceTypeBreakdown[] {
-  const byService = records.reduce<
-    Record<string, ServiceTypeBreakdown>
-  >((acc, record) => {
-    if (!acc[record.serviceId]) {
-      acc[record.serviceId] = {
-        serviceId: record.serviceId,
-        serviceType: record.serviceType,
-        serviceCategory: record.serviceCategory,
-        sessions: 0,
-        totalAttendees: 0,
-      };
-    }
-    acc[record.serviceId].sessions += 1;
-    acc[record.serviceId].totalAttendees += record.attendees.length;
-    return acc;
-  }, {});
+  const byService = records.reduce<Record<string, ServiceTypeBreakdown>>(
+    (acc, record) => {
+      if (!acc[record.serviceId]) {
+        acc[record.serviceId] = {
+          serviceId: record.serviceId,
+          serviceType: record.serviceType,
+          serviceCategory: record.serviceCategory,
+          sessions: 0,
+          totalAttendees: 0,
+        };
+      }
+      acc[record.serviceId].sessions += 1;
+      acc[record.serviceId].totalAttendees += record.attendees.length;
+      return acc;
+    },
+    {},
+  );
 
   return Object.values(byService).sort(
     (a, b) => b.totalAttendees - a.totalAttendees,
@@ -236,7 +233,7 @@ export function getEvangelismVisitorCount(
 
   for (const row of rows) {
     if (!isDateInRange(row.date, range.from, range.to)) continue;
-    const person = people.find((p) => p.id === row.personId);
+    const person = people.find(p => p.id === row.personId);
     if (person?.membershipType === "For Evangelism") {
       visitorIds.add(row.personId);
     }
@@ -279,7 +276,8 @@ export function buildDashboardAttendeeSummaries(
   for (const row of rows) {
     if (!isDateInRange(row.date, range.from, range.to)) continue;
     if (row.serviceCategory === "sunday" && !serviceFilter.sunday) continue;
-    if (row.serviceCategory === "life_group" && !serviceFilter.lifeGroup) continue;
+    if (row.serviceCategory === "life_group" && !serviceFilter.lifeGroup)
+      continue;
     counts.set(row.personId, (counts.get(row.personId) ?? 0) + 1);
   }
 
@@ -299,7 +297,10 @@ export function buildDashboardAttendeeSummaries(
         gender: person?.gender ?? null,
       };
     })
-    .sort((a, b) => b.attendanceCount - a.attendanceCount || a.name.localeCompare(b.name));
+    .sort(
+      (a, b) =>
+        b.attendanceCount - a.attendanceCount || a.name.localeCompare(b.name),
+    );
 }
 
 export function buildDashboardBreakdownAttendees(
@@ -319,8 +320,10 @@ export function buildDashboardBreakdownAttendees(
   return rows
     .filter(row => {
       if (!isDateInRange(row.date, range.from, range.to)) return false;
-      if (row.serviceCategory === "sunday" && !serviceFilter.sunday) return false;
-      if (row.serviceCategory === "life_group" && !serviceFilter.lifeGroup) return false;
+      if (row.serviceCategory === "sunday" && !serviceFilter.sunday)
+        return false;
+      if (row.serviceCategory === "life_group" && !serviceFilter.lifeGroup)
+        return false;
       return true;
     })
     .map(row => {

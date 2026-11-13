@@ -161,8 +161,8 @@ const NotificationDropdown = () => {
             className="gap-0"
           >
             <div className="px-3 pt-2 pb-1">
-              <TabsList className="grid w-full grid-cols-2 h-8">
-                <TabsTrigger value="actions" className="text-xs gap-1.5">
+              <TabsList>
+                <TabsTrigger value="actions">
                   <ClipboardList className="w-3.5 h-3.5" />
                   Actions
                   {unreadByTab.actions > 0 && (
@@ -171,7 +171,7 @@ const NotificationDropdown = () => {
                     </span>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="upcoming" className="text-xs gap-1.5">
+                <TabsTrigger value="upcoming">
                   <CalendarDays className="w-3.5 h-3.5" />
                   Upcoming
                   {unreadByTab.upcoming > 0 && (
@@ -203,8 +203,17 @@ const NotificationDropdown = () => {
 
         <DropdownMenuSeparator className="m-0" />
 
-        <DropdownMenuItem asChild className="justify-center text-sm text-blue-600 cursor-pointer py-2">
-          <Link href={activeTab === "actions" ? "/growth-track?tab=actions" : "/event-attendance"}>
+        <DropdownMenuItem
+          asChild
+          className="justify-center text-sm text-blue-600 cursor-pointer py-2"
+        >
+          <Link
+            href={
+              activeTab === "actions"
+                ? "/growth-track?tab=actions"
+                : "/event-attendance"
+            }
+          >
             View all
           </Link>
         </DropdownMenuItem>

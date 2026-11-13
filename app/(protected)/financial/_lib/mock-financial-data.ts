@@ -2,18 +2,17 @@ import {
   mockFinancialExpenses,
   mockFinancialIncome,
 } from "@/components/mock-data";
-import type {
-  ExpenseLine,
-  FinancialDayGroup,
-  IncomeLine,
-} from "./types";
+import type { ExpenseLine, FinancialDayGroup, IncomeLine } from "./types";
 
 export function createInitialFinancialData(): {
   income: IncomeLine[];
   expenses: ExpenseLine[];
 } {
   return {
-    income: mockFinancialIncome.map(item => ({ ...item, type: item.type as IncomeLine["type"] })),
+    income: mockFinancialIncome.map(item => ({
+      ...item,
+      type: item.type as IncomeLine["type"],
+    })),
     expenses: mockFinancialExpenses.map(item => ({ ...item })),
   };
 }

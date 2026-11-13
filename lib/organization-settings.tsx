@@ -93,9 +93,13 @@ export function OrganizationSettingsProvider({
 
       setIsSaving(true);
       try {
-        const next = await updateOrganizationSettings(supabase, organizationId, {
-          waterBaptismEnabled: enabled,
-        });
+        const next = await updateOrganizationSettings(
+          supabase,
+          organizationId,
+          {
+            waterBaptismEnabled: enabled,
+          },
+        );
         setSettings(next);
         toast.success(
           enabled
@@ -124,9 +128,13 @@ export function OrganizationSettingsProvider({
 
       setIsSaving(true);
       try {
-        const next = await updateOrganizationSettings(supabase, organizationId, {
-          hiddenMenuItems,
-        });
+        const next = await updateOrganizationSettings(
+          supabase,
+          organizationId,
+          {
+            hiddenMenuItems,
+          },
+        );
         setSettings(next);
         return true;
       } catch (error) {
@@ -188,10 +196,14 @@ export function OrganizationSettingsProvider({
 
       setIsSaving(true);
       try {
-        const next = await updateOrganizationSettings(supabase, organizationId, {
-          financialSavingsGoal: input.targetAmount,
-          financialGoalTargetDate: input.targetDate,
-        });
+        const next = await updateOrganizationSettings(
+          supabase,
+          organizationId,
+          {
+            financialSavingsGoal: input.targetAmount,
+            financialGoalTargetDate: input.targetDate,
+          },
+        );
         setSettings(next);
         toast.success("Savings goal updated");
         return true;

@@ -109,14 +109,11 @@ export function createGuestKey(): string {
 
 export function buildSelectedAttendeesFromSelection(
   selectedKeys: string[],
-  peopleById: Map<
-    string,
-    { id: string; name: string; householdName: string }
-  >,
+  peopleById: Map<string, { id: string; name: string; householdName: string }>,
   guestsByKey: Map<string, GuestName>,
   serviceStartTime: string,
 ): SelectedAttendee[] {
-  return selectedKeys.map((key) => {
+  return selectedKeys.map(key => {
     if (key.startsWith("guest-")) {
       const guestName = guestsByKey.get(key);
       return {
@@ -176,7 +173,7 @@ export function computeOverviewStats(
 export function toNewAttendanceAttendees(
   attendees: SelectedAttendee[],
 ): NewAttendanceAttendee[] {
-  return attendees.map((attendee) => ({
+  return attendees.map(attendee => ({
     personId: attendee.personId,
     guestName: attendee.guestName,
     status: attendee.status,

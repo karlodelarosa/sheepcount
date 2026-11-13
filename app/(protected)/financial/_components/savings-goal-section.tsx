@@ -6,10 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  getCurrencySymbol,
-  type SupportedCurrency,
-} from "@/lib/currency";
+import { getCurrencySymbol, type SupportedCurrency } from "@/lib/currency";
 import { useOrganizationSettings } from "@/lib/organization-settings";
 import { parseFinancialAmount } from "../_lib/types";
 
@@ -34,9 +31,7 @@ export function SavingsGoalSection({ currency }: SavingsGoalSectionProps) {
   }, [settings.financialGoalTargetDate, settings.financialSavingsGoal]);
 
   const handleSave = async () => {
-    const amount = goalAmount.trim()
-      ? parseFinancialAmount(goalAmount)
-      : null;
+    const amount = goalAmount.trim() ? parseFinancialAmount(goalAmount) : null;
     if (goalAmount.trim() && amount === null) return;
 
     await setFinancialGoal({
@@ -97,11 +92,12 @@ export function SavingsGoalSection({ currency }: SavingsGoalSectionProps) {
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="rounded-lg bg-slate-900 hover:bg-slate-800"
+            className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             Save goal
           </Button>
-          {(settings.financialSavingsGoal || settings.financialGoalTargetDate) && (
+          {(settings.financialSavingsGoal ||
+            settings.financialGoalTargetDate) && (
             <Button
               type="button"
               variant="outline"

@@ -80,26 +80,32 @@ function GoalAnalysisDetails({
   currency: SupportedCurrency;
 }) {
   return (
-    <div className="mt-4 pt-4 border-t border-violet-200/60 dark:border-violet-800/40 space-y-4">
+    <div className="mt-4 pt-4 border-t border-border/60 space-y-4">
       <div>
         <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-2">
           Current averages (last 3 months)
         </p>
         <div className="grid gap-2 sm:grid-cols-3 text-sm">
           <div className="rounded-lg bg-white/60 dark:bg-zinc-900/40 px-3 py-2">
-            <p className="text-slate-500 dark:text-zinc-400 text-xs">Receipts</p>
+            <p className="text-slate-500 dark:text-zinc-400 text-xs">
+              Receipts
+            </p>
             <p className="font-semibold tabular-nums">
               {formatCurrency(goalProgress.avgMonthlyIncome, currency)}/mo
             </p>
           </div>
           <div className="rounded-lg bg-white/60 dark:bg-zinc-900/40 px-3 py-2">
-            <p className="text-slate-500 dark:text-zinc-400 text-xs">Expenses</p>
+            <p className="text-slate-500 dark:text-zinc-400 text-xs">
+              Expenses
+            </p>
             <p className="font-semibold tabular-nums">
               {formatCurrency(goalProgress.avgMonthlyExpenses, currency)}/mo
             </p>
           </div>
           <div className="rounded-lg bg-white/60 dark:bg-zinc-900/40 px-3 py-2">
-            <p className="text-slate-500 dark:text-zinc-400 text-xs">Net savings</p>
+            <p className="text-slate-500 dark:text-zinc-400 text-xs">
+              Net savings
+            </p>
             <p className="font-semibold tabular-nums">
               {formatCurrency(goalProgress.avgMonthlyNet, currency)}/mo
             </p>
@@ -173,11 +179,14 @@ function GoalAnalysisDetails({
       {goalProgress.projectedReachDate && goalProgress.remaining > 0 && (
         <p className="text-xs text-slate-500 dark:text-zinc-400">
           At current net pace, projected to reach the goal around{" "}
-          {new Date(goalProgress.projectedReachDate).toLocaleDateString("en-PH", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+          {new Date(goalProgress.projectedReachDate).toLocaleDateString(
+            "en-PH",
+            {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            },
+          )}
           .
         </p>
       )}
@@ -185,15 +194,18 @@ function GoalAnalysisDetails({
   );
 }
 
-export function GoalProgressCard({ overview, currency }: GoalProgressCardProps) {
+export function GoalProgressCard({
+  overview,
+  currency,
+}: GoalProgressCardProps) {
   const { goalProgress, trendDirection, trendPercent } = overview;
   const [open, setOpen] = useState(true);
 
   if (!goalProgress.isConfigured) {
     return (
-      <div className="rounded-xl border border-dashed border-violet-200/80 bg-violet-50/40 p-4 dark:border-violet-800/50 dark:bg-violet-950/20">
+      <div className="rounded-2xl border border-dashed border-border bg-card p-5">
         <div className="flex items-start gap-3">
-          <div className="rounded-lg p-2 bg-violet-100/80 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 shrink-0">
+          <div className="rounded-lg p-2 bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)] shrink-0">
             <Target className="w-5 h-5" />
           </div>
           <div>
@@ -211,23 +223,27 @@ export function GoalProgressCard({ overview, currency }: GoalProgressCardProps) 
   }
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="group/collapsible">
-      <div className="rounded-xl border border-violet-200/70 bg-gradient-to-br from-violet-50/90 to-violet-100/20 dark:from-violet-950/40 dark:to-transparent dark:border-violet-800/50">
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="group/collapsible"
+    >
+      <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
         <CollapsibleTrigger asChild>
           <button
             type="button"
-            className="w-full p-4 text-left rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+            className="w-full p-4 text-left rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-color)]"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3 min-w-0">
-                <div className="rounded-lg p-2 bg-violet-100/80 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 shrink-0">
+                <div className="rounded-lg p-2 bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)] shrink-0">
                   <Target className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-400">
                     Savings Goal
                   </p>
-                  <p className="text-lg font-bold text-violet-900 dark:text-violet-100 mt-0.5">
+                  <p className="text-lg font-bold text-[var(--accent-color-strong)] dark:text-[var(--accent-color)] mt-0.5">
                     {formatCurrency(goalProgress.current, currency)}{" "}
                     <span className="text-sm font-normal text-slate-500 dark:text-zinc-400">
                       of {formatCurrency(goalProgress.target, currency)}
@@ -291,11 +307,16 @@ export function GoalProgressCard({ overview, currency }: GoalProgressCardProps) 
             <Progress value={goalProgress.percent} className="h-2.5" />
             <div className="flex justify-between text-xs text-slate-500 dark:text-zinc-400">
               <span>{goalProgress.percent.toFixed(1)}% of goal</span>
-              <span>{formatCurrency(goalProgress.target, currency)} target</span>
+              <span>
+                {formatCurrency(goalProgress.target, currency)} target
+              </span>
             </div>
           </div>
 
-          <GoalAnalysisDetails goalProgress={goalProgress} currency={currency} />
+          <GoalAnalysisDetails
+            goalProgress={goalProgress}
+            currency={currency}
+          />
         </CollapsibleContent>
       </div>
     </Collapsible>

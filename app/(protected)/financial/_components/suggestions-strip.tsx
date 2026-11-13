@@ -71,23 +71,14 @@ export function SuggestionsStrip({
           return (
             <div
               key={suggestion.id}
-              className={cn(
-                "rounded-lg border p-3",
-                styles.border,
-                styles.bg,
-              )}
+              className={cn("rounded-lg border p-3", styles.border, styles.bg)}
             >
               <div className="flex items-start gap-2">
                 <Icon
                   className={cn("w-4 h-4 mt-0.5 shrink-0", styles.iconColor)}
                 />
                 <div className="min-w-0">
-                  <p
-                    className={cn(
-                      "text-sm font-medium",
-                      styles.text,
-                    )}
-                  >
+                  <p className={cn("text-sm font-medium", styles.text)}>
                     {suggestion.title}
                   </p>
                   <p className="text-xs text-slate-600 dark:text-zinc-400 mt-0.5">

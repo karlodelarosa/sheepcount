@@ -5,9 +5,27 @@ import { Button } from "@/components/ui/button";
 
 // Mock data
 const mockPeople = [
-  { id: "p1", name: "Karlo Dela Rosa", email: "karlo@email.com", phone: "09171234567", status: "Prospect" },
-  { id: "p2", name: "May Santos", email: "may@email.com", phone: "09171234568", status: "Prospect" },
-  { id: "p3", name: "Titus Cruz", email: "titus@email.com", phone: "09171234569", status: "Prospect" },
+  {
+    id: "p1",
+    name: "Karlo Dela Rosa",
+    email: "karlo@email.com",
+    phone: "09171234567",
+    status: "Prospect",
+  },
+  {
+    id: "p2",
+    name: "May Santos",
+    email: "may@email.com",
+    phone: "09171234568",
+    status: "Prospect",
+  },
+  {
+    id: "p3",
+    name: "Titus Cruz",
+    email: "titus@email.com",
+    phone: "09171234569",
+    status: "Prospect",
+  },
 ];
 
 export default function ProspectList() {

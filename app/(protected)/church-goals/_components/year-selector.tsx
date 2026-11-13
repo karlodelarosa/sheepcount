@@ -31,8 +31,7 @@ export function YearSelector({
   const sortedYears = [...availableYears].sort((a, b) => b - a);
   const currentIndex = sortedYears.indexOf(selectedYear);
   const canGoNewer = currentIndex > 0;
-  const canGoOlder =
-    currentIndex >= 0 && currentIndex < sortedYears.length - 1;
+  const canGoOlder = currentIndex >= 0 && currentIndex < sortedYears.length - 1;
 
   return (
     <div className="flex items-center gap-2 flex-wrap">

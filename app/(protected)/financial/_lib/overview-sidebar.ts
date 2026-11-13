@@ -75,7 +75,8 @@ function computeSnapshot(
   );
   const avgMonthlyNet =
     monthsWithData.length > 0
-      ? monthsWithData.reduce((sum, m) => sum + m.net, 0) / monthsWithData.length
+      ? monthsWithData.reduce((sum, m) => sum + m.net, 0) /
+        monthsWithData.length
       : 0;
 
   let bestMonth: PeriodSnapshot["bestMonth"] = null;
@@ -154,9 +155,7 @@ function computeRecentActivity(
     })),
   ];
 
-  return rows
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, limit);
+  return rows.sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
 }
 
 function computeAuditsInPeriod(

@@ -24,9 +24,13 @@ import { usePeople } from "@/lib/people";
 import { useLeadership } from "@/lib/leadership";
 import { AssignAdminPositionDialog } from "./assign-admin-position-dialog";
 
+import { CollectionToolbar } from "@/components/ui/directory-page-header/collection-toolbar";
+
 export function AdminPositionsTab() {
   const { people } = usePeople();
   const { adminPositions, hydrated, isSaving } = useLeadership();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
   const positionsWithPeople = useMemo(
@@ -40,39 +44,29 @@ export function AdminPositionsTab() {
 
   const groupedPositions = useMemo(
     () =>
-      positionsWithPeople.reduce(
-        (acc, position) => {
-          if (!acc[position.title]) {
-            acc[position.title] = [];
-          }
-          acc[position.title].push(position);
-          return acc;
-        },
-        {} as Record<string, typeof positionsWithPeople>,
-      ),
-    [positionsWithPeople],
+      positionsWithPeople
+        .filter(
+          position =>
+            (statusFilter === "all" || position.title === statusFilter) &&
+            `${position.title} ${position.person?.name ?? ""}`
+              .toLowerCase()
+              .includes(search.trim().toLowerCase()),
+        )
+        .reduce(
+          (acc, position) => {
+            if (!acc[position.title]) {
+              acc[position.title] = [];
+            }
+            acc[position.title].push(position);
+            return acc;
+          },
+          {} as Record<string, typeof positionsWithPeople>,
+        ),
+    [positionsWithPeople, search, statusFilter],
   );
 
-  const getPositionColor = (title: string) => {
-    const colors: Record<string, string> = {
-      Secretary:
-        "from-blue-500 to-blue-700 dark:from-blue-600 dark:to-blue-800",
-      Treasurer:
-        "from-green-500 to-green-700 dark:from-green-600 dark:to-green-800",
-      Deacon:
-        "from-purple-500 to-purple-700 dark:from-purple-600 dark:to-purple-800",
-      "Head Pastor":
-        "from-indigo-500 to-indigo-700 dark:from-purple-600 dark:to-purple-800",
-    };
-    return (
-      colors[title] ||
-      "from-slate-500 to-slate-700 dark:from-zinc-600 dark:to-zinc-800"
-    );
-  };
-
   const DualModeButtonClass =
-    "rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20 dark:bg-purple-600 dark:hover:bg-purple-700 dark:shadow-purple-900/40";
-
+    "min-h-11 gap-2 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]";
   const getBadgeClass = (type: "active" | "term" | "inactive") => {
     if (type === "active") {
       return "rounded-lg bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300";
@@ -85,7 +79,7 @@ export function AdminPositionsTab() {
 
   if (!hydrated) {
     return (
-      <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50">
+      <Card className="min-w-0 rounded-2xl border-border/60 bg-card shadow-sm">
         <CardHeader>
           <Skeleton className="h-6 w-56" />
           <Skeleton className="h-4 w-80 mt-2" />
@@ -100,9 +94,9 @@ export function AdminPositionsTab() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-800/50">
+      <Card className="min-w-0 rounded-2xl border-border/60 bg-card shadow-sm">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle className="text-slate-900 dark:text-white">
                 Administrative Positions
@@ -122,13 +116,34 @@ export function AdminPositionsTab() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          <CollectionToolbar
+            label="leadership positions"
+            search={search}
+            onSearch={setSearch}
+            filter={statusFilter}
+            onFilter={setStatusFilter}
+            options={[
+              { value: "all", label: "All positions" },
+              ...Array.from(
+                new Set(positionsWithPeople.map(position => position.title)),
+              ).map(value => ({ value, label: value })),
+            ]}
+            count={Object.values(groupedPositions).reduce(
+              (sum, positions) => sum + positions.length,
+              0,
+            )}
+          />
+          {positionsWithPeople.length > 0 &&
+            Object.keys(groupedPositions).length === 0 && (
+              <p className="py-8 text-center text-muted-foreground">
+                No positions match your filters.
+              </p>
+            )}
           {Object.entries(groupedPositions).map(([title, positions]) => (
             <div key={title}>
               <div className="flex items-center gap-3 mb-4">
-                <div
-                  className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getPositionColor(title)} flex items-center justify-center shadow-sm`}
-                >
-                  <Shield className="w-5 h-5 text-white" />
+                <div className="size-12 shrink-0 rounded-xl bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)] flex items-center justify-center">
+                  <Shield className="size-5" />
                 </div>
                 <div>
                   <h3 className="text-slate-900 dark:text-white text-xl font-semibold">
@@ -212,7 +227,7 @@ export function AdminPositionsTab() {
             </div>
           ))}
 
-          {Object.keys(groupedPositions).length === 0 && (
+          {positionsWithPeople.length === 0 && (
             <div className="text-center py-12 text-slate-500 dark:text-zinc-500">
               <Shield className="w-12 h-12 mx-auto mb-4 text-slate-300 dark:text-zinc-700" />
               <p>No administrative positions assigned yet</p>

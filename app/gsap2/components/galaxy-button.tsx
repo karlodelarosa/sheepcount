@@ -35,7 +35,7 @@ export function GalaxyButton({ label = "Warp Drive" }) {
         duration: 1.4,
         ease: "power2.out",
         onComplete: () => ripple.remove(),
-      }
+      },
     );
 
     // 💥 Sparkle burst
@@ -64,7 +64,7 @@ export function GalaxyButton({ label = "Warp Drive" }) {
     gsap.fromTo(
       e.currentTarget,
       { scale: 0.9 },
-      { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.4)" }
+      { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.4)" },
     );
   };
 

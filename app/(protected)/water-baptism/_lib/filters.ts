@@ -84,10 +84,49 @@ export function buildBaptismRegistryRows(
     );
 }
 
-export function hasActiveBaptismFilters(filters: BaptismRegistryFilters): boolean {
+export function hasActiveBaptismFilters(
+  filters: BaptismRegistryFilters,
+): boolean {
   return (
     filters.search.trim() !== "" ||
     filters.dateFrom !== "" ||
     filters.dateTo !== ""
   );
+}
+
+export type BaptismQuickFilter = "all" | "rebaptisms" | "missing";
+
+export function isBaptismDetailMissing(row: BaptismRegistryRow): boolean {
+  return (
+    !row.latestRecord.location.trim() || !row.latestRecord.officiantPersonId
+  );
+}
+
+export function getBaptismRegistryCounts(rows: BaptismRegistryRow[]) {
+  return {
+    all: rows.length,
+    rebaptisms: rows.filter(row => row.recordCount > 1).length,
+    missing: rows.filter(isBaptismDetailMissing).length,
+  };
+}
+
+export function filterBaptismQuickRows(
+  rows: BaptismRegistryRow[],
+  quick: BaptismQuickFilter,
+) {
+  return rows.filter(
+    row =>
+      quick === "all" ||
+      (quick === "rebaptisms"
+        ? row.recordCount > 1
+        : isBaptismDetailMissing(row)),
+  );
+}
+
+export function formatBaptismDate(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }

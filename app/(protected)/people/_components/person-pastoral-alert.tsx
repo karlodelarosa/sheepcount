@@ -21,7 +21,10 @@ import {
 } from "../_lib/person-pastoral-status";
 import { cn } from "@/lib/utils";
 
-const LEVEL_ICONS: Record<PastoralCareLevel, ComponentType<{ className?: string }>> = {
+const LEVEL_ICONS: Record<
+  PastoralCareLevel,
+  ComponentType<{ className?: string }>
+> = {
   needs_visit: Home,
   check_in: MessageCircle,
   needs_contact: UserPlus,
@@ -36,18 +39,22 @@ type PersonPastoralAlertProps = {
   compact?: boolean;
 };
 
-export function PersonPastoralBadge({ status }: { status: PersonPastoralStatus }) {
+export function PersonPastoralBadge({
+  status,
+}: {
+  status: PersonPastoralStatus;
+}) {
   const styles = PASTORAL_LEVEL_STYLES[status.level];
   const Icon = LEVEL_ICONS[status.level];
 
   return (
     <Badge
       className={cn(
-        "rounded-md border-0 px-1.5 py-0 text-[10px] h-5 gap-0.5",
+        "h-6 gap-1 rounded-full border-0 px-2.5 py-0 text-xs",
         styles.badge,
       )}
     >
-      <Icon className="w-2.5 h-2.5" />
+      <Icon className="size-3" />
       {status.label}
     </Badge>
   );
@@ -72,9 +79,11 @@ export function PersonPastoralAlert({
   return (
     <div
       className={cn(
-        "rounded-lg border px-3 py-2.5 flex gap-2.5",
+        "flex gap-3 rounded-xl border px-4 py-3",
         styles.banner,
-        compact ? "items-center" : "items-start",
+        compact
+          ? "items-center"
+          : "flex-col items-stretch sm:flex-row sm:items-start",
       )}
     >
       <Icon className={cn("w-4 h-4 shrink-0 mt-0.5", styles.icon)} />
@@ -95,7 +104,7 @@ export function PersonPastoralAlert({
         <Button
           variant="outline"
           size="sm"
-          className="shrink-0 h-7 text-xs rounded-lg bg-white/60 dark:bg-zinc-900/60"
+          className="h-9 shrink-0 self-start rounded-lg bg-white/60 text-xs dark:bg-zinc-900/60"
           asChild
         >
           <Link href="/growth-track">Log outreach</Link>

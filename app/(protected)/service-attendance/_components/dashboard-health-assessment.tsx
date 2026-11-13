@@ -61,10 +61,7 @@ const SEVERITY_STYLES = {
 export function DashboardHealthAssessment({
   attendees,
 }: DashboardHealthAssessmentProps) {
-  const health = useMemo(
-    () => assessAttendanceHealth(attendees),
-    [attendees],
-  );
+  const health = useMemo(() => assessAttendanceHealth(attendees), [attendees]);
 
   const compositionChart = useMemo(() => {
     return Object.entries(health.composition)
@@ -73,7 +70,10 @@ export function DashboardHealthAssessment({
         key,
         label: key,
         count,
-        color: ATTENDANCE_STATUS_COLORS[key as keyof typeof ATTENDANCE_STATUS_COLORS],
+        color:
+          ATTENDANCE_STATUS_COLORS[
+            key as keyof typeof ATTENDANCE_STATUS_COLORS
+          ],
       }));
   }, [health.composition]);
 
@@ -87,30 +87,41 @@ export function DashboardHealthAssessment({
         : "text-rose-600";
 
   const scoreLabel =
-    health.score >= 80 ? "Healthy" : health.score >= 55 ? "Needs attention" : "Take action";
+    health.score >= 80
+      ? "Healthy"
+      : health.score >= 55
+        ? "Needs attention"
+        : "Take action";
 
   return (
-    <Card className="border-border/60 bg-card/50">
-      <CardHeader className="py-3 px-4">
+    <Card className="min-w-0 rounded-2xl border-border/60 bg-card shadow-sm">
+      <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-sm flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-violet-500" />
+            <CardTitle className="flex items-center gap-3 text-base font-bold">
+              <Sparkles className="size-5 shrink-0 text-[var(--accent-color)]" />
               Attendance health check
             </CardTitle>
-            <CardDescription className="text-xs">
+            <CardDescription>
               Quick read on balance and suggested next steps
             </CardDescription>
           </div>
           <div className="text-right shrink-0">
-            <p className={cn("text-2xl font-semibold tabular-nums leading-none", scoreColor)}>
+            <p
+              className={cn(
+                "text-2xl font-semibold tabular-nums leading-none",
+                scoreColor,
+              )}
+            >
               {health.score}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{scoreLabel}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {scoreLabel}
+            </p>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="px-4 pb-4 pt-0 space-y-4">
+      <CardContent className="space-y-4">
         {compositionChart.length > 0 && (
           <div>
             <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
@@ -118,11 +129,36 @@ export function DashboardHealthAssessment({
             </p>
             <ResponsiveContainer width="100%" height={120}>
               <BarChart data={compositionChart}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 9 }} interval={0} angle={-20} textAnchor="end" height={50} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 10 }} width={28} />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-muted"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 9 }}
+                  interval={0}
+                  angle={-20}
+                  textAnchor="end"
+                  height={50}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  tick={{ fontSize: 10 }}
+                  width={28}
+                />
                 <Tooltip />
-                <ReferenceLine y={health.totalPeople * 0.25} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: "25%", position: "insideTopRight", fontSize: 9, fill: "#94a3b8" }} />
+                <ReferenceLine
+                  y={health.totalPeople * 0.25}
+                  stroke="#94a3b8"
+                  strokeDasharray="4 4"
+                  label={{
+                    value: "25%",
+                    position: "insideTopRight",
+                    fontSize: 9,
+                    fill: "#94a3b8",
+                  }}
+                />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                   {compositionChart.map(entry => (
                     <Cell key={entry.key} fill={entry.color} />
@@ -147,7 +183,9 @@ export function DashboardHealthAssessment({
                 )}
               >
                 <div className="flex items-start gap-2">
-                  <Icon className={cn("w-4 h-4 shrink-0 mt-0.5", style.iconColor)} />
+                  <Icon
+                    className={cn("w-4 h-4 shrink-0 mt-0.5", style.iconColor)}
+                  />
                   <div className="min-w-0 space-y-1">
                     <p className={cn("text-xs font-semibold", style.text)}>
                       {insight.title}

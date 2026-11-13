@@ -30,21 +30,23 @@ export const ATTENDANCE_STATUS_COLORS: Record<AttendanceStatusKey, string> = {
   Visitor: "#d97706",
 };
 
-export const ATTENDANCE_STATUS_BADGE_CLASSES: Record<AttendanceStatusKey, string> =
-  {
-    Worker:
-      "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800/60",
-    Volunteer:
-      "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/50 dark:text-violet-300 dark:border-violet-800/60",
-    Member:
-      "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800/60",
-    Attender:
-      "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800/60",
-    "New Comer":
-      "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/50 dark:text-teal-300 dark:border-teal-800/60",
-    Visitor:
-      "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800/60",
-  };
+export const ATTENDANCE_STATUS_BADGE_CLASSES: Record<
+  AttendanceStatusKey,
+  string
+> = {
+  Worker:
+    "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:border-purple-800/60",
+  Volunteer:
+    "bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/50 dark:text-violet-300 dark:border-violet-800/60",
+  Member:
+    "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800/60",
+  Attender:
+    "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800/60",
+  "New Comer":
+    "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/50 dark:text-teal-300 dark:border-teal-800/60",
+  Visitor:
+    "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800/60",
+};
 
 export const ATTENDANCE_STATUS_ROW_ACCENT: Record<AttendanceStatusKey, string> =
   {

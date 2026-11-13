@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -19,10 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown/index";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  CalendarDays,
-  TrendingUp,
-} from "lucide-react";
+import { CalendarDays, TrendingUp } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -78,24 +77,22 @@ export function GoalProjectDetails({
       : 0;
   }, [campaign, raisedAmount]);
 
-  const remaining = campaign ? Math.max(campaign.goalAmount - raisedAmount, 0) : 0;
+  const remaining = campaign
+    ? Math.max(campaign.goalAmount - raisedAmount, 0)
+    : 0;
 
   const [isAddContributionOpen, setIsAddContributionOpen] = useState(false);
   const [isEditCampaignOpen, setIsEditCampaignOpen] = useState(false);
   const [isDeleteCampaignOpen, setIsDeleteCampaignOpen] = useState(false);
-  const [editingContributionId, setEditingContributionId] = useState<string | null>(
-    null,
-  );
-  const [deleteContributionId, setDeleteContributionId] = useState<string | null>(
-    null,
-  );
+  const [editingContributionId, setEditingContributionId] = useState<
+    string | null
+  >(null);
+  const [deleteContributionId, setDeleteContributionId] = useState<
+    string | null
+  >(null);
 
   if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading...
-      </div>
-    );
+    return <PageSkeleton message="Loading..." />;
   }
 
   if (!campaign) {
@@ -129,7 +126,7 @@ export function GoalProjectDetails({
           <>
             <Button
               onClick={() => setIsAddContributionOpen(true)}
-              className="rounded-xl border border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
+              className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Contribution
@@ -141,7 +138,7 @@ export function GoalProjectDetails({
                   <Button
                     variant="outline"
                     size="icon"
-                    className="rounded-xl border-white/25 bg-white/15 text-white hover:bg-white/25 hover:text-white"
+                    className="rounded-xl border-border bg-card text-foreground hover:bg-muted"
                     disabled={isSaving}
                   >
                     <MoreHorizontal className="w-4 h-4" />
@@ -220,7 +217,7 @@ export function GoalProjectDetails({
         />
       </div>
 
-      <Card className="overflow-hidden rounded-2xl border-slate-200/60 bg-white/80 shadow-sm backdrop-blur-sm dark:border-zinc-700/60 dark:bg-zinc-900/50">
+      <Card className="overflow-hidden rounded-2xl border-border/60 bg-card shadow-sm">
         <CardContent className="p-0">
           <div className="px-6 py-4 border-b border-border/60">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -260,7 +257,9 @@ export function GoalProjectDetails({
                   return (
                     <TableRow key={contribution.id}>
                       <TableCell>
-                        {new Date(contribution.contributedOn).toLocaleDateString()}
+                        {new Date(
+                          contribution.contributedOn,
+                        ).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="font-medium">
                         {formatCurrency(contribution.amount, currency)}
@@ -313,14 +312,15 @@ export function GoalProjectDetails({
 
       <AddProjectContributionDialog
         open={Boolean(editingContributionId)}
-        onOpenChange={(next) => {
+        onOpenChange={next => {
           if (!next) setEditingContributionId(null);
         }}
         campaignId={campaign.id}
         contribution={
           editingContributionId
-            ? campaign.contributions.find(c => c.id === editingContributionId) ??
-              null
+            ? (campaign.contributions.find(
+                c => c.id === editingContributionId,
+              ) ?? null)
             : null
         }
       />
@@ -343,7 +343,7 @@ export function GoalProjectDetails({
           />
           <DeleteContributionDialog
             open={Boolean(deleteContributionId)}
-            onOpenChange={(next) => {
+            onOpenChange={next => {
               if (!next) setDeleteContributionId(null);
             }}
             onConfirm={() =>
@@ -358,4 +358,3 @@ export function GoalProjectDetails({
     </div>
   );
 }
-

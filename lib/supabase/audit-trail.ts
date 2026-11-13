@@ -71,6 +71,6 @@ export async function fetchAuditLogs(
     entity_id: row.entity_id,
     metadata: (row.metadata ?? {}) as AuditLogEntry["metadata"],
     created_at: row.created_at,
-    actor: row.actor_user_id ? actorMap.get(row.actor_user_id) ?? null : null,
+    actor: row.actor_user_id ? (actorMap.get(row.actor_user_id) ?? null) : null,
   }));
 }

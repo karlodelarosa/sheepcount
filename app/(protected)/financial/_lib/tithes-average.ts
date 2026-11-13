@@ -65,8 +65,7 @@ function getPeriodMonthCount(filter: OverviewPeriodFilter): number {
 
 function getPeriodWeekCount(filter: OverviewPeriodFilter): number {
   const { start, end } = getPeriodBounds(filter);
-  const days =
-    Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
+  const days = Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
   return Math.max(1, days / 7);
 }
 
@@ -81,9 +80,7 @@ export function computeTithesAverage(
   );
   const total = titheLines.reduce((sum, line) => sum + line.amount, 0);
   const divisor =
-    mode === "month"
-      ? getPeriodMonthCount(period)
-      : getPeriodWeekCount(period);
+    mode === "month" ? getPeriodMonthCount(period) : getPeriodWeekCount(period);
 
   return {
     average: divisor > 0 ? total / divisor : 0,

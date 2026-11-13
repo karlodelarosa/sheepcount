@@ -2,7 +2,11 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { PageLoader } from "@/components/page-loader";
-import { applyAccentColorVariables } from "@/lib/accent-color";
+import {
+  applyAccentColorVariables,
+  DEFAULT_ACCENT_COLOR,
+  migrateLegacyAccentColor,
+} from "@/lib/accent-color";
 
 interface ThemeSettings {
   mode: "light" | "dark" | "system";
@@ -21,11 +25,14 @@ interface ThemeContextType {
 
 const defaultSettings: ThemeSettings = {
   mode: "system",
-  accentColor: "#030213",
+  accentColor: DEFAULT_ACCENT_COLOR,
   organizationName: "Grace Community Church",
   organizationLogo: null,
   useOrganizationLogo: false,
 };
+
+const ACCENT_DEFAULT_MIGRATION_KEY =
+  "ministry-lens.theme.accent-default-migrated-v1";
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -39,10 +46,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem("theme-settings");
     if (stored) {
       try {
-        setSettings({ ...defaultSettings, ...JSON.parse(stored) });
+        const parsed = JSON.parse(stored) as Partial<ThemeSettings>;
+        const shouldMigrate =
+          localStorage.getItem(ACCENT_DEFAULT_MIGRATION_KEY) !== "complete";
+        const accentColor = shouldMigrate
+          ? migrateLegacyAccentColor(
+              parsed.accentColor ?? defaultSettings.accentColor,
+            )
+          : (parsed.accentColor ?? defaultSettings.accentColor);
+
+        setSettings({ ...defaultSettings, ...parsed, accentColor });
+        if (shouldMigrate) {
+          localStorage.setItem(ACCENT_DEFAULT_MIGRATION_KEY, "complete");
+        }
       } catch {
         localStorage.removeItem("theme-settings");
       }
+    } else {
+      localStorage.setItem(ACCENT_DEFAULT_MIGRATION_KEY, "complete");
     }
     setMounted(true);
   }, []);
@@ -57,7 +78,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Determine actual mode
     let mode: "light" | "dark" = "light";
     if (settings.mode === "system") {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
       mode = prefersDark ? "dark" : "light";
     } else {
       mode = settings.mode;
@@ -75,11 +98,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [settings, mounted]);
 
   const updateSettings = (updates: Partial<ThemeSettings>) => {
-    setSettings((prev) => ({ ...prev, ...updates }));
+    setSettings(prev => ({ ...prev, ...updates }));
   };
 
   const toggleMode = () => {
-    setSettings((prev) => {
+    setSettings(prev => {
       if (prev.mode === "light") return { ...prev, mode: "dark" };
       if (prev.mode === "dark") return { ...prev, mode: "light" };
       return { ...prev, mode: "system" };
@@ -91,7 +114,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ThemeContext.Provider value={{ settings, updateSettings, toggleMode, resolvedMode }}>
+    <ThemeContext.Provider
+      value={{ settings, updateSettings, toggleMode, resolvedMode }}
+    >
       {children}
     </ThemeContext.Provider>
   );

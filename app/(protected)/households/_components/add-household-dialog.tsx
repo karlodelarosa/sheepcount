@@ -45,7 +45,7 @@ export function AddHouseholdDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] border-slate-200/60">
+      <DialogContent className="border-border/70 sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add New Household</DialogTitle>
           <DialogDescription>
@@ -64,7 +64,7 @@ export function AddHouseholdDialog({
                 onChange={e =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="rounded-lg"
+                className="rounded-lg focus-visible:ring-[var(--accent-color)]"
                 required
                 disabled={isSaving}
               />
@@ -78,7 +78,7 @@ export function AddHouseholdDialog({
                 onChange={e =>
                   setFormData({ ...formData, address: e.target.value })
                 }
-                className="rounded-lg"
+                className="rounded-lg focus-visible:ring-[var(--accent-color)]"
                 rows={3}
                 disabled={isSaving}
               />
@@ -89,14 +89,14 @@ export function AddHouseholdDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="rounded-lg"
+              className="rounded-lg focus-visible:ring-[var(--accent-color)]"
               disabled={isSaving}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="rounded-lg bg-slate-900 hover:bg-slate-800"
+              className="rounded-lg bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] focus-visible:ring-[var(--accent-color)]"
               disabled={isSaving}
             >
               {isSaving ? (

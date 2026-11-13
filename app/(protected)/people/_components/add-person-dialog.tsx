@@ -151,7 +151,7 @@ export function AddPersonDialog({
                   key={step}
                   value={step}
                   aria-label={step}
-                  className="rounded-lg px-2 text-xs sm:text-sm data-[state=on]:bg-slate-900 data-[state=on]:text-white dark:data-[state=on]:bg-purple-600"
+                  className="rounded-lg px-2 text-xs focus-visible:ring-[var(--accent-color)] data-[state=on]:bg-[var(--accent-color)] data-[state=on]:text-[var(--accent-color-foreground)] sm:text-sm"
                 >
                   {MEMBERSHIP_PATH_LABELS[step]}
                 </ToggleGroupItem>
@@ -308,7 +308,7 @@ export function AddPersonDialog({
             <Button
               type="submit"
               disabled={isSaving}
-              className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+              className="rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] focus-visible:ring-[var(--accent-color)]"
             >
               {isSaving ? (
                 <>

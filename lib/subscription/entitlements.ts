@@ -186,7 +186,7 @@ export const BASIC_ENTITLEMENTS_FALLBACK: Entitlements = {
       church_goals: { enabled: false },
     },
   },
-  features: { audit_trail: false },
+  features: { audit_trail: false, circles_access: false },
 };
 
 /** Conservative defaults while tenant entitlements are loading — avoids disabled items flashing on screen. */
@@ -238,5 +238,5 @@ export const PRO_ENTITLEMENTS_FALLBACK: Entitlements = {
       church_goals: { enabled: true },
     },
   },
-  features: { audit_trail: true },
+  features: { audit_trail: true, circles_access: true },
 };

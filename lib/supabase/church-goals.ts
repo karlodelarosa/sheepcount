@@ -1,3 +1,4 @@
+import type { ThemeCadence } from "@/lib/church-theme-periods";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type RetrospectiveCategory =
@@ -37,6 +38,7 @@ export type YearlyGoal = {
 };
 
 export type MonthlyTheme = {
+  cadence?: ThemeCadence;
   id: string;
   organizationId: string;
   year: number;
@@ -65,6 +67,7 @@ export type SaveRetrospectiveInput = {
 };
 
 export type SaveMonthlyThemeInput = {
+  cadence?: ThemeCadence;
   year: number;
   month: number;
   title: string;
@@ -102,6 +105,7 @@ type DbRetrospectiveItem = {
 };
 
 type DbMonthlyTheme = {
+  cadence?: ThemeCadence;
   id: string;
   organization_id: string;
   year: number;
@@ -163,6 +167,7 @@ function toMonthlyTheme(row: DbMonthlyTheme): MonthlyTheme {
     organizationId: row.organization_id,
     year: row.year,
     month: row.month,
+    cadence: row.cadence ?? "monthly",
     title: row.title,
     description: row.description,
     content: row.content,
@@ -180,7 +185,9 @@ export function getRetrospectiveItems(
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-export function formatActionPointsForCarryForward(goal: YearlyGoal): string | null {
+export function formatActionPointsForCarryForward(
+  goal: YearlyGoal,
+): string | null {
   const items = getRetrospectiveItems(goal, "action_point");
   if (items.length === 0) return null;
   return items.map(item => `• ${item.text}`).join("\n");
@@ -274,7 +281,7 @@ export async function fetchChurchGoalsForOrg(
     supabase
       .from("church_monthly_themes")
       .select(
-        "id, organization_id, year, month, title, description, content, created_at, updated_at",
+        "id, organization_id, year, month, cadence, title, description, content, created_at, updated_at",
       )
       .eq("organization_id", organizationId)
       .order("year", { ascending: false })
@@ -450,9 +457,7 @@ export async function upsertObjectives(
       text: objective.text.trim(),
       sort_order: index,
       is_completed: objective.isCompleted ?? false,
-      completed_at: objective.isCompleted
-        ? new Date().toISOString()
-        : null,
+      completed_at: objective.isCompleted ? new Date().toISOString() : null,
     }));
 
   if (filtered.length === 0) return;
@@ -476,9 +481,7 @@ export async function toggleObjectiveCompleted(
       completed_at: completed ? new Date().toISOString() : null,
     })
     .eq("id", objectiveId)
-    .select(
-      "id, yearly_goal_id, text, sort_order, is_completed, completed_at",
-    )
+    .select("id, yearly_goal_id, text, sort_order, is_completed, completed_at")
     .single();
 
   if (error || !data) {
@@ -493,18 +496,29 @@ export async function upsertMonthlyTheme(
   organizationId: string,
   input: SaveMonthlyThemeInput,
 ): Promise<MonthlyTheme> {
-  const { data: existing } = await supabase
+  if (
+    !Number.isInteger(input.month) ||
+    input.month < 1 ||
+    input.month > (input.cadence === "quarterly" ? 4 : 12)
+  ) {
+    throw new Error("Invalid theme period");
+  }
+  const { data: existing, error: lookupError } = await supabase
     .from("church_monthly_themes")
     .select("id")
     .eq("organization_id", organizationId)
     .eq("year", input.year)
     .eq("month", input.month)
+    .eq("cadence", input.cadence ?? "monthly")
     .maybeSingle();
+
+  if (lookupError) throw lookupError;
 
   const payload = {
     organization_id: organizationId,
     year: input.year,
     month: input.month,
+    cadence: input.cadence ?? "monthly",
     title: input.title,
     description: input.description,
     content: input.content,
@@ -517,7 +531,7 @@ export async function upsertMonthlyTheme(
       .update(payload)
       .eq("id", existing.id)
       .select(
-        "id, organization_id, year, month, title, description, content, created_at, updated_at",
+        "id, organization_id, year, month, cadence, title, description, content, created_at, updated_at",
       )
       .single();
 
@@ -532,7 +546,7 @@ export async function upsertMonthlyTheme(
     .from("church_monthly_themes")
     .insert(payload)
     .select(
-      "id, organization_id, year, month, title, description, content, created_at, updated_at",
+      "id, organization_id, year, month, cadence, title, description, content, created_at, updated_at",
     )
     .single();
 

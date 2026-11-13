@@ -1,6 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -42,17 +43,18 @@ export function ControlBar({
     filters.assignmentStatus !== "all";
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex items-center gap-2 flex-1 px-4 py-2.5 rounded-xl border border-slate-200/80 bg-slate-50/80 dark:bg-zinc-800/50 dark:border-zinc-700/80">
+    <div className="space-y-3 rounded-2xl border border-border/60 bg-card p-4 shadow-sm sm:p-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-background px-3 focus-within:ring-2 focus-within:ring-[var(--accent-color)]">
           <Search className="w-4 h-4 text-slate-400 dark:text-zinc-400 shrink-0" />
           <Input
+            aria-label="Search growth track people"
             placeholder="Search by name, stage, or assignment status..."
             value={filters.search}
             onChange={e =>
               onFiltersChange({ ...filters, search: e.target.value })
             }
-            className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="h-11 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
 
@@ -65,7 +67,10 @@ export function ControlBar({
             })
           }
         >
-          <SelectTrigger className="w-full sm:w-[200px] rounded-xl">
+          <SelectTrigger
+            aria-label="Filter by stage"
+            className="h-11 w-full rounded-xl bg-background lg:w-[200px]"
+          >
             <SelectValue placeholder="Stage" />
           </SelectTrigger>
           <SelectContent>
@@ -87,7 +92,10 @@ export function ControlBar({
             })
           }
         >
-          <SelectTrigger className="w-full sm:w-[200px] rounded-xl">
+          <SelectTrigger
+            aria-label="Filter by assignment status"
+            className="h-11 w-full rounded-xl bg-background lg:w-[200px]"
+          >
             <SelectValue placeholder="Assignment" />
           </SelectTrigger>
           <SelectContent>
@@ -100,13 +108,32 @@ export function ControlBar({
         </Select>
       </div>
 
+      {hasActiveFilters && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            onFiltersChange({
+              search: "",
+              stage: "all",
+              assignmentStatus: "all",
+            })
+          }
+          className="min-h-10 text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]"
+        >
+          Clear filters
+        </Button>
+      )}
+
       {resultCount !== undefined && (
         <p className="text-xs text-slate-500 dark:text-zinc-400 px-1">
           {hasActiveFilters ? (
             <>
-              Showing {resultCount}{" "}
-              {resultCount === 1 ? "person" : "people"}
-              {context === "actions" ? " in this action category" : " in pipeline"}
+              Showing {resultCount} {resultCount === 1 ? "person" : "people"}
+              {context === "actions"
+                ? " in this action category"
+                : " in pipeline"}
             </>
           ) : (
             <>

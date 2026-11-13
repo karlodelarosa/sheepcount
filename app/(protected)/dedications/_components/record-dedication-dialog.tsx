@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +46,10 @@ export function RecordDedicationDialog({
   isSaving,
   onRecord,
 }: RecordDedicationDialogProps) {
+  const returnFocus = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (open) returnFocus.current = document.activeElement as HTMLElement;
+  }, [open]);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -55,6 +59,7 @@ export function RecordDedicationDialog({
   };
 
   const handleSubmit = async () => {
+    if (isSaving) return;
     if (!formData.childName || !formData.dedicatedAt) return;
 
     const record = await onRecord(
@@ -80,11 +85,15 @@ export function RecordDedicationDialog({
     <Dialog
       open={open}
       onOpenChange={value => {
+        if (isSaving) return;
         if (!value) resetForm();
         onOpenChange(value);
       }}
     >
-      <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto dark:bg-zinc-800 dark:border-zinc-700">
+      <DialogContent
+        onCloseAutoFocus={() => returnFocus.current?.focus()}
+        className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto dark:bg-zinc-800 dark:border-zinc-700"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
             <Baby className="w-5 h-5" />
@@ -205,7 +214,7 @@ export function RecordDedicationDialog({
           <Button
             onClick={handleSubmit}
             disabled={!formData.childName || !formData.dedicatedAt || isSaving}
-            className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+            className="rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             {isSaving ? "Saving..." : "Record dedication"}
           </Button>

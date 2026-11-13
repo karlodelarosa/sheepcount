@@ -31,7 +31,7 @@ const buttonVariants = cva(
       variant: "cosmic",
       size: "md",
     },
-  }
+  },
 );
 
 interface CosmicButtonProps
@@ -42,9 +42,18 @@ interface CosmicButtonProps
   label?: string;
 }
 
-export const CosmicButton = React.forwardRef<HTMLButtonElement, CosmicButtonProps>(
-  ({ className, variant, size, asChild, icon, label, children, ...props }, ref) => {
-    const { onDrag, onDragStart, onDragEnd, ...buttonProps } = props;
+export const CosmicButton = React.forwardRef<
+  HTMLButtonElement,
+  CosmicButtonProps
+>(
+  (
+    { className, variant, size, asChild, icon, label, children, ...props },
+    ref,
+  ) => {
+    const buttonProps = { ...props };
+    delete buttonProps.onDrag;
+    delete buttonProps.onDragStart;
+    delete buttonProps.onDragEnd;
 
     if (asChild) {
       return (
@@ -135,7 +144,7 @@ export const CosmicButton = React.forwardRef<HTMLButtonElement, CosmicButtonProp
         </span>
       </motion.button>
     );
-  }
+  },
 );
 
 CosmicButton.displayName = "CosmicButton";

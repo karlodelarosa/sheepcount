@@ -5,10 +5,17 @@ import { motion } from "framer-motion";
 import gsap from "gsap";
 import MouseFollower from "./components/menu";
 import NeonPulseButton from "./components/button";
-import { SparkButton, MagicButton, GalaxyButton, QuantumButton, WaveButton, PlasmaButton, NebulaButton, FrostButton, InfernoButton } from "./components/button2";
-import { CosmicButton } from "./components/cosmic-button";
-import { RocketIcon, StarIcon, SparklesIcon } from "lucide-react";
-
+import {
+  SparkButton,
+  MagicButton,
+  GalaxyButton,
+  QuantumButton,
+  WaveButton,
+  PlasmaButton,
+  NebulaButton,
+  FrostButton,
+  InfernoButton,
+} from "./components/button2";
 
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -18,26 +25,28 @@ export default function Hero() {
   useEffect(() => {
     orbRefs.current
       .filter((orb): orb is HTMLDivElement => orb !== null)
-      .forEach((orb, i) => {
-      // 🌀 Random scattered start positions
-      const startX = Math.random() * window.innerWidth - window.innerWidth / 2;
-      const startY = Math.random() * window.innerHeight - window.innerHeight / 2;
+      .forEach(orb => {
+        // 🌀 Random scattered start positions
+        const startX =
+          Math.random() * window.innerWidth - window.innerWidth / 2;
+        const startY =
+          Math.random() * window.innerHeight - window.innerHeight / 2;
 
-      gsap.set(orb, { x: startX, y: startY });
+        gsap.set(orb, { x: startX, y: startY });
 
-      // 🌊 Continuous floating motion per orb
-      const animateOrb = () => {
-        gsap.to(orb, {
-          x: `+=${Math.random() * 500 - 250}`, // Move horizontally (-250 to +250px)
-          y: `+=${Math.random() * 300 - 150}`, // Move vertically (-150 to +150px)
-          duration: 2 + Math.random() * 5, // 🎛️ Duration per drift cycle (5–10s)
-          ease: "sine.inOut", // Smooth motion
-          yoyo: true, // Reverse motion for looping
-          repeat: -1, // Infinite animation
-        });
-      };
-      animateOrb();
-    });
+        // 🌊 Continuous floating motion per orb
+        const animateOrb = () => {
+          gsap.to(orb, {
+            x: `+=${Math.random() * 500 - 250}`, // Move horizontally (-250 to +250px)
+            y: `+=${Math.random() * 300 - 150}`, // Move vertically (-150 to +150px)
+            duration: 2 + Math.random() * 5, // 🎛️ Duration per drift cycle (5–10s)
+            ease: "sine.inOut", // Smooth motion
+            yoyo: true, // Reverse motion for looping
+            repeat: -1, // Infinite animation
+          });
+        };
+        animateOrb();
+      });
   }, []);
 
   // === MOUSE INTERACTION PARALLAX ===
@@ -114,8 +123,9 @@ export default function Hero() {
           transition={{ duration: 1.2, ease: "easeOut" }}
           className="text-2xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent"
         >
-           Something’s Stirring Here<br />
-           And You’re Meant to Feel It
+          Something’s Stirring Here
+          <br />
+          And You’re Meant to Feel It
         </motion.h1>
 
         {/* 🕊️ Subtitle */}
@@ -137,16 +147,16 @@ export default function Hero() {
           Enter Experience
         </motion.button>
 
-<NeonPulseButton />
-<SparkButton />
-<MagicButton />
-<GalaxyButton />
-<PlasmaButton />
-<WaveButton />
-<QuantumButton />
-<NebulaButton />
-<InfernoButton />
-<FrostButton />
+        <NeonPulseButton />
+        <SparkButton />
+        <MagicButton />
+        <GalaxyButton />
+        <PlasmaButton />
+        <WaveButton />
+        <QuantumButton />
+        <NebulaButton />
+        <InfernoButton />
+        <FrostButton />
         <MouseFollower />
       </motion.div>
 

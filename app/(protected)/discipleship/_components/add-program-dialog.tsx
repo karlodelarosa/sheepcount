@@ -1,10 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PersonSelect } from "@/components/person-select";
 import { Label } from "@/components/ui/label";
 import { Plus, BookOpen } from "lucide-react";
@@ -20,7 +33,9 @@ interface AddProgramDialogProps {
   onOpenChange: (open: boolean) => void;
   people: Person[];
   isSaving: boolean;
-  onCreate: (input: CreateDiscipleshipTrackInput) => Promise<DiscipleshipTrack | null>;
+  onCreate: (
+    input: CreateDiscipleshipTrackInput,
+  ) => Promise<DiscipleshipTrack | null>;
 }
 
 const CATEGORIES: DiscipleshipCategory[] = [
@@ -76,8 +91,10 @@ export function AddProgramDialog({
     }
   };
 
-  const DualModePrimaryButtonClass = "rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700";
-  const DualModeInputClass = "rounded-lg bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500";
+  const DualModePrimaryButtonClass =
+    "min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] focus-visible:ring-[var(--accent-color)]";
+  const DualModeInputClass =
+    "rounded-lg bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500";
   const DualModeLabelClass = "text-slate-700 dark:text-zinc-300";
 
   return (
@@ -93,7 +110,9 @@ export function AddProgramDialog({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name" className={DualModeLabelClass}>Program Name *</Label>
+            <Label htmlFor="name" className={DualModeLabelClass}>
+              Program Name *
+            </Label>
             <Input
               id="name"
               value={name}
@@ -102,7 +121,9 @@ export function AddProgramDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description" className={DualModeLabelClass}>Description</Label>
+            <Label htmlFor="description" className={DualModeLabelClass}>
+              Description
+            </Label>
             <Input
               id="description"
               value={description}
@@ -112,7 +133,9 @@ export function AddProgramDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="category" className={DualModeLabelClass}>Category *</Label>
+              <Label htmlFor="category" className={DualModeLabelClass}>
+                Category *
+              </Label>
               <Select
                 value={category}
                 onValueChange={v => setCategory(v as DiscipleshipCategory)}
@@ -130,7 +153,9 @@ export function AddProgramDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="duration" className={DualModeLabelClass}>Duration *</Label>
+              <Label htmlFor="duration" className={DualModeLabelClass}>
+                Duration *
+              </Label>
               <Input
                 id="duration"
                 value={duration}
@@ -141,7 +166,9 @@ export function AddProgramDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="schedule" className={DualModeLabelClass}>Schedule</Label>
+            <Label htmlFor="schedule" className={DualModeLabelClass}>
+              Schedule
+            </Label>
             <Input
               id="schedule"
               value={schedule}
@@ -152,7 +179,9 @@ export function AddProgramDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="leader" className={DualModeLabelClass}>Leader</Label>
+              <Label htmlFor="leader" className={DualModeLabelClass}>
+                Leader
+              </Label>
               <PersonSelect
                 id="leader"
                 people={people}
@@ -164,7 +193,9 @@ export function AddProgramDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="color" className={DualModeLabelClass}>Color</Label>
+              <Label htmlFor="color" className={DualModeLabelClass}>
+                Color
+              </Label>
               <Select value={color} onValueChange={setColor}>
                 <SelectTrigger id="color" className={DualModeInputClass}>
                   <SelectValue placeholder="Select color" />

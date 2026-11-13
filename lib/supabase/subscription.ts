@@ -7,7 +7,7 @@ import type {
   ModulesConfig,
   SubscriptionFeatures,
 } from "@/lib/subscription/plans";
-import { getPlanTier, normalizePlanKey } from "@/lib/subscription/plans";
+import { getPlanTier } from "@/lib/subscription/plans";
 
 export type SubscriptionPlan = {
   key: string;

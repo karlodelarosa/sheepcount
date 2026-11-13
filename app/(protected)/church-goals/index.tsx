@@ -1,8 +1,13 @@
 "use client";
 
+import {
+  getActiveThemePeriod,
+  matchesThemeCadence,
+  type ThemeCadence,
+} from "@/lib/church-theme-periods";
 import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Target } from "lucide-react";
+import { Plus, Target } from "lucide-react";
 import { useEntitlements } from "@/lib/subscription/use-entitlements";
 import { isItemEnabled } from "@/lib/subscription/entitlements";
 import { useTenant } from "@/app/providers/tenant-provider";
@@ -20,13 +25,18 @@ import {
   ChurchGoalsPageHeader,
   ChurchGoalsStats,
 } from "./_components/church-goals-stats";
+import { Button } from "@/components/ui/button";
+import { KeyObjectives } from "./_components/key-objectives";
 import { SectionLabel } from "./_components/section-label";
 import { EditMonthlyThemeDialog } from "./_components/edit-monthly-theme-dialog";
 
 export function ChurchGoalsView() {
   const { entitlements, isLoading: entitlementsLoading } = useEntitlements();
   const { tenant } = useTenant();
-  const churchGoalsEnabled = isItemEnabled(entitlements.modules, "church_goals");
+  const churchGoalsEnabled = isItemEnabled(
+    entitlements.modules,
+    "church_goals",
+  );
   const isAdmin = tenant?.profile?.role === "admin";
 
   const {
@@ -46,16 +56,21 @@ export function ChurchGoalsView() {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
+  const [cadence, setCadence] = useState<ThemeCadence>("monthly");
+  const activePeriod = getActiveThemePeriod(cadence, currentMonth);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [editGoalOpen, setEditGoalOpen] = useState(false);
   const [editActiveMonthOpen, setEditActiveMonthOpen] = useState(false);
 
   const selectedGoal = getYearlyGoal(selectedYear);
   const priorYearActionPoints = getPriorYearActionPoints(selectedYear);
-  const activeMonthTheme = getMonthlyTheme(currentYear, currentMonth);
+  const activeMonthTheme = getMonthlyTheme(currentYear, activePeriod, cadence);
   const themesForYear = useMemo(
-    () => monthlyThemes.filter(t => t.year === selectedYear),
-    [monthlyThemes, selectedYear],
+    () =>
+      monthlyThemes.filter(
+        t => t.year === selectedYear && matchesThemeCadence(t, cadence),
+      ),
+    [monthlyThemes, selectedYear, cadence],
   );
   const configuredMonthsCount = themesForYear.filter(
     t => t.title.trim() || t.description.trim() || t.content.trim(),
@@ -122,21 +137,32 @@ export function ChurchGoalsView() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <ChurchGoalsPageHeader
           selectedYear={selectedYear}
           isCurrentYear={selectedYear === currentYear}
         />
-        <YearSelector
-          selectedYear={selectedYear}
-          availableYears={availableYears}
-          hasGoalForYear={Boolean(selectedGoal)}
-          isAdmin={isAdmin}
-          currentYear={currentYear}
-          onYearChange={setSelectedYear}
-          onSetupYear={() => setEditGoalOpen(true)}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          <YearSelector
+            selectedYear={selectedYear}
+            availableYears={availableYears}
+            hasGoalForYear={Boolean(selectedGoal)}
+            isAdmin={isAdmin}
+            currentYear={currentYear}
+            onYearChange={setSelectedYear}
+            onSetupYear={() => setEditGoalOpen(true)}
+          />
+          {isAdmin && (
+            <Button
+              className="gap-2"
+              onClick={() => setEditActiveMonthOpen(true)}
+            >
+              <Plus className="size-4" />
+              Add Theme
+            </Button>
+          )}
+        </div>
       </div>
 
       <section className="space-y-3">
@@ -146,14 +172,12 @@ export function ChurchGoalsView() {
           isAdmin={isAdmin}
           isSaving={isSaving}
           onEdit={() => setEditGoalOpen(true)}
-          onToggleObjective={(id, completed) =>
-            void toggleObjective(id, completed)
-          }
           onSaveRetrospective={handleSaveRetrospective}
         />
       </section>
 
       <ChurchGoalsStats
+        cadence={cadence}
         goal={selectedGoal}
         year={selectedYear}
         monthlyThemesCount={configuredMonthsCount}
@@ -174,9 +198,18 @@ export function ChurchGoalsView() {
         </section>
       )}
 
-      <section className="space-y-3">
-        <SectionLabel>Monthly themes</SectionLabel>
+      <section className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)]">
+        <KeyObjectives
+          onToggleObjective={(id, completed) =>
+            void toggleObjective(id, completed)
+          }
+          goal={selectedGoal}
+          isAdmin={isAdmin}
+          isSaving={isSaving}
+        />
         <MonthlyThemesGrid
+          cadence={cadence}
+          onCadenceChange={setCadence}
           year={selectedYear}
           themes={themesForYear}
           currentMonth={currentMonth}
@@ -184,11 +217,14 @@ export function ChurchGoalsView() {
           isAdmin={isAdmin}
           isSaving={isSaving}
           onSaveTheme={async (month, data) => {
-            await saveMonthlyTheme({
+            const saved = await saveMonthlyTheme({
+              cadence,
               year: selectedYear,
               month,
               ...data,
             });
+            if (!saved)
+              throw new Error("Theme was not saved. Please try again.");
           }}
         />
       </section>
@@ -203,18 +239,21 @@ export function ChurchGoalsView() {
       />
 
       <EditMonthlyThemeDialog
+        cadence={cadence}
         open={editActiveMonthOpen}
         onOpenChange={setEditActiveMonthOpen}
-        theme={activeMonthTheme}
-        year={currentYear}
-        month={currentMonth}
+        theme={getMonthlyTheme(selectedYear, activePeriod, cadence)}
+        year={selectedYear}
+        month={activePeriod}
         isSaving={isSaving}
         onSave={async data => {
-          await saveMonthlyTheme({
-            year: currentYear,
-            month: currentMonth,
+          const saved = await saveMonthlyTheme({
+            year: selectedYear,
+            cadence,
+            month: activePeriod,
             ...data,
           });
+          if (!saved) throw new Error("Theme was not saved. Please try again.");
         }}
       />
     </div>

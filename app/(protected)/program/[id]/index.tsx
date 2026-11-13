@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -145,7 +147,9 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
       parentPersonId: isChildRegistration ? parentPersonId : undefined,
       roleInEvent,
       medicalNotes: isChildRegistration ? medicalNotes : undefined,
-      dietaryRestrictions: isChildRegistration ? dietaryRestrictions : undefined,
+      dietaryRestrictions: isChildRegistration
+        ? dietaryRestrictions
+        : undefined,
     });
 
     if (result) {
@@ -177,22 +181,21 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
     "rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
   const DualModeMemberAvatarClass =
     "from-slate-900 to-slate-700 dark:from-purple-700 dark:to-purple-500";
-  const tabTriggerClass =
-    "text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-zinc-700 dark:data-[state=active]:text-white";
 
   if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading event...
-      </div>
-    );
+    return <PageSkeleton message="Loading event..." />;
   }
 
   if (!event) {
     return (
       <div className="space-y-6 p-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={onBack} className="rounded-xl">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onBack}
+            className="rounded-xl"
+          >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-slate-900 dark:text-white">Event Not Found</h1>
@@ -214,9 +217,9 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
           Event Management
         </AlertTitle>
         <AlertDescription className="text-blue-800/90 dark:text-blue-300/90">
-          Manage this church program or event — register participants, assign roles,
-          track attendance, and update event details. Child registrations can include
-          parent/guardian info and medical notes.
+          Manage this church program or event — register participants, assign
+          roles, track attendance, and update event details. Child registrations
+          can include parent/guardian info and medical notes.
         </AlertDescription>
       </Alert>
 
@@ -233,7 +236,10 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
           <div>
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-slate-900 dark:text-white">{event.title}</h1>
-              <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
+              <Badge
+                variant="secondary"
+                className={DualModeSecondaryBadgeClass}
+              >
                 {event.type}
               </Badge>
               <Badge
@@ -260,7 +266,10 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
         </div>
         <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
           <Users className="w-3 h-3 mr-1 inline" />
-          {registrationRows.filter(r => r.attendanceStatus === "attended").length}{" "}
+          {
+            registrationRows.filter(r => r.attendanceStatus === "attended")
+              .length
+          }{" "}
           attended
         </Badge>
       </div>
@@ -357,17 +366,21 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
         </Card>
 
         <div className="lg:col-span-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
-              <TabsTrigger value="overview" className={tabTriggerClass}>
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-6"
+          >
+            <TabsList>
+              <TabsTrigger value="overview">
                 <LayoutDashboard className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="attendance" className={tabTriggerClass}>
+              <TabsTrigger value="attendance">
                 <ClipboardList className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Attendance
               </TabsTrigger>
-              <TabsTrigger value="manage" className={tabTriggerClass}>
+              <TabsTrigger value="manage">
                 <Settings className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Manage Event
               </TabsTrigger>
@@ -386,7 +399,8 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
                 <CardContent>
                   {registrationRows.length === 0 ? (
                     <p className="text-center text-slate-500 dark:text-zinc-400 py-8">
-                      No registrations yet. Register a participant to get started.
+                      No registrations yet. Register a participant to get
+                      started.
                     </p>
                   ) : (
                     <div className="space-y-3">
@@ -482,7 +496,9 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
                                 </SelectTrigger>
                                 <SelectContent>
                                   {(
-                                    Object.keys(attendanceLabels) as AttendanceStatus[]
+                                    Object.keys(
+                                      attendanceLabels,
+                                    ) as AttendanceStatus[]
                                   ).map(status => (
                                     <SelectItem key={status} value={status}>
                                       {attendanceLabels[status]}
@@ -506,9 +522,15 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="Attendee">Attendee</SelectItem>
-                                  <SelectItem value="Volunteer">Volunteer</SelectItem>
-                                  <SelectItem value="Core_Leader">Core Leader</SelectItem>
+                                  <SelectItem value="Attendee">
+                                    Attendee
+                                  </SelectItem>
+                                  <SelectItem value="Volunteer">
+                                    Volunteer
+                                  </SelectItem>
+                                  <SelectItem value="Core_Leader">
+                                    Core Leader
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -572,7 +594,9 @@ export function EventDetails({ eventId, onBack }: EventDetailsProps) {
                       <Label>Status</Label>
                       <Select
                         value={editStatus}
-                        onValueChange={v => setEditStatus(v as ChurchEventStatus)}
+                        onValueChange={v =>
+                          setEditStatus(v as ChurchEventStatus)
+                        }
                       >
                         <SelectTrigger className={DualModeInputClass}>
                           <SelectValue />

@@ -61,7 +61,11 @@ function getErrorMessage(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-export function LeadershipProvider({ children }: { children: React.ReactNode }) {
+export function LeadershipProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { tenant, isLoading: tenantLoading } = useTenant();
   const supabase = useMemo(() => createClient(), []);
   const organizationId = getOrganizationId(tenant);
@@ -70,9 +74,9 @@ export function LeadershipProvider({ children }: { children: React.ReactNode }) 
   const [organizationLeadership, setOrganizationLeadership] =
     useState<OrganizationLeadership>({ headPersonId: null });
   const [workMinistries, setWorkMinistries] = useState<WorkMinistry[]>([]);
-  const [workMinistryTeams, setWorkMinistryTeams] = useState<WorkMinistryTeam[]>(
-    [],
-  );
+  const [workMinistryTeams, setWorkMinistryTeams] = useState<
+    WorkMinistryTeam[]
+  >([]);
   const [workMinistryTeamRoles, setWorkMinistryTeamRoles] = useState<
     WorkMinistryTeamRole[]
   >([]);

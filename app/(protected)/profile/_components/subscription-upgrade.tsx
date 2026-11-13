@@ -113,7 +113,9 @@ export function SubscriptionUpgrade({
 
   if (isLoadingPlans) {
     return (
-      <p className="text-sm text-muted-foreground">Loading available plans...</p>
+      <p className="text-sm text-muted-foreground">
+        Loading available plans...
+      </p>
     );
   }
 
@@ -127,7 +129,7 @@ export function SubscriptionUpgrade({
 
   if (isOnHighestPlan) {
     return (
-      <div className="rounded-lg border border-emerald-200/80 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200">
+      <div className="rounded-lg border border-[var(--accent-color-border)] bg-[var(--accent-color-soft)] px-4 py-3 text-sm text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]">
         <div className="flex items-center gap-2 font-medium">
           <Sparkles className="h-4 w-4" />
           You are on the highest available plan.
@@ -157,7 +159,7 @@ export function SubscriptionUpgrade({
               key={plan.key}
               className={
                 isCurrent
-                  ? "border-indigo-300/80 shadow-sm dark:border-indigo-700/60"
+                  ? "border-[var(--accent-color-border)] bg-[var(--accent-color-soft)] shadow-sm"
                   : canUpgrade
                     ? "border-border"
                     : "opacity-70"
@@ -165,16 +167,26 @@ export function SubscriptionUpgrade({
             >
               <CardHeader className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-lg">{plan.name}</CardTitle>
+                  <CardTitle className="text-base">{plan.name}</CardTitle>
                   {isCurrent ? (
-                    <Badge variant="secondary">Current plan</Badge>
+                    <Badge
+                      variant="secondary"
+                      className="bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]"
+                    >
+                      Current plan
+                    </Badge>
                   ) : canUpgrade ? (
-                    <Badge>Upgrade</Badge>
+                    <Badge className="bg-[var(--accent-color)] text-[var(--accent-color-foreground)]">
+                      Upgrade
+                    </Badge>
                   ) : null}
                 </div>
                 <CardDescription>
                   {formatPlanLimit(plan.max_people, "people")} ·{" "}
-                  {formatPlanLimit(plan.max_attendance_sessions, "attendance sessions")}
+                  {formatPlanLimit(
+                    plan.max_attendance_sessions,
+                    "attendance sessions",
+                  )}
                 </CardDescription>
               </CardHeader>
 
@@ -182,7 +194,7 @@ export function SubscriptionUpgrade({
                 <ul className="space-y-2 text-sm">
                   {highlights.map(feature => (
                     <li key={feature} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]" />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -192,7 +204,7 @@ export function SubscriptionUpgrade({
               {canUpgrade && (
                 <CardFooter>
                   <Button
-                    className="w-full"
+                    className="w-full rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] hover:text-[var(--accent-color-foreground)]"
                     onClick={() => handleUpgrade(plan)}
                     disabled={upgradingPlanKey !== null}
                   >

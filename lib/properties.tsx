@@ -94,7 +94,9 @@ function replaceBorrow(
       b => b.id !== borrow.id && !b.returnedAt,
     );
     const nextStatus =
-      borrow.returnedAt && activeBorrows.length === 0 && property.status !== "lost"
+      borrow.returnedAt &&
+      activeBorrows.length === 0 &&
+      property.status !== "lost"
         ? "owned"
         : !borrow.returnedAt
           ? "borrowed"
@@ -126,7 +128,11 @@ function detachBorrow(
   });
 }
 
-export function PropertiesProvider({ children }: { children: React.ReactNode }) {
+export function PropertiesProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { tenant, isLoading: tenantLoading } = useTenant();
   const supabase = useMemo(() => createClient(), []);
   const organizationId = getOrganizationId(tenant);
@@ -228,7 +234,11 @@ export function PropertiesProvider({ children }: { children: React.ReactNode }) 
           nextInput = { ...input, imageUrl };
         }
 
-        const property = await updateProperty(supabase, organizationId, nextInput);
+        const property = await updateProperty(
+          supabase,
+          organizationId,
+          nextInput,
+        );
         setProperties(prev =>
           prev.map(p => (p.id === property.id ? property : p)),
         );
@@ -326,7 +336,11 @@ export function PropertiesProvider({ children }: { children: React.ReactNode }) 
       if (!organizationId) return false;
       setIsSaving(true);
       try {
-        const created = await createPropertyType(supabase, organizationId, name);
+        const created = await createPropertyType(
+          supabase,
+          organizationId,
+          name,
+        );
         setPropertyTypes(prev => {
           const existing = prev.find(type => type.id === created.id);
           if (existing) {
@@ -357,7 +371,9 @@ export function PropertiesProvider({ children }: { children: React.ReactNode }) 
         return false;
       }
 
-      const inUse = properties.some(property => property.propertyTypeId === typeId);
+      const inUse = properties.some(
+        property => property.propertyTypeId === typeId,
+      );
       if (inUse) {
         toast.error("Cannot remove a type that is assigned to properties");
         return false;

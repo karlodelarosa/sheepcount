@@ -64,7 +64,7 @@ export function LifeGroupsTab({
 
   const filteredRecords = useMemo(() => {
     if (selectedServiceId === "all") return records;
-    return records.filter((record) => record.serviceId === selectedServiceId);
+    return records.filter(record => record.serviceId === selectedServiceId);
   }, [records, selectedServiceId]);
 
   const stats = useMemo(
@@ -74,8 +74,7 @@ export function LifeGroupsTab({
 
   const selectedRecord = selectedRecordKey
     ? (filteredRecords.find(
-        (record) =>
-          `${record.serviceId}-${record.date}` === selectedRecordKey,
+        record => `${record.serviceId}-${record.date}` === selectedRecordKey,
       ) ?? null)
     : null;
 
@@ -116,7 +115,7 @@ export function LifeGroupsTab({
                   </Badge>
                 )}
               </Button>
-              {lifeGroupServiceTypes.map((serviceType) => {
+              {lifeGroupServiceTypes.map(serviceType => {
                 const count = sessionCountByService.get(serviceType.id) ?? 0;
                 return (
                   <Button
@@ -214,7 +213,7 @@ export function LifeGroupsTab({
             </Card>
           ) : (
             <div className="space-y-2">
-              {filteredRecords.map((record) => {
+              {filteredRecords.map(record => {
                 const key = `${record.serviceId}-${record.date}`;
                 return (
                   <AttendanceRecordCard

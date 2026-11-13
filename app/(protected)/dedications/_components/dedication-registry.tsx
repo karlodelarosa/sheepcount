@@ -10,8 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Baby, FileText, Plus, Search, X } from "lucide-react";
+import { Baby, FileText } from "lucide-react";
 import { useTheme } from "@/context/theme-context";
 import { useDedication } from "@/lib/dedications";
 import { RecordDedicationDialog } from "./record-dedication-dialog";
@@ -21,9 +20,19 @@ import type { DedicationRecord } from "@/lib/supabase/dedications";
 import {
   DEFAULT_DEDICATION_REGISTRY_FILTERS,
   filterDedicationRecords,
-  hasActiveDedicationFilters,
   type DedicationRegistryFilters,
 } from "../_lib/filters";
+
+import {
+  LifeEventRegistryLayout,
+  LifeEventRecordCard,
+} from "@/components/life-event-registry";
+import {
+  filterLifeEventQuickRecords,
+  getLifeEventCounts,
+  formatLifeEventDate,
+  type LifeEventQuickFilter,
+} from "@/lib/life-event-registry";
 
 export function DedicationRegistry() {
   const { settings } = useTheme();
@@ -35,9 +44,23 @@ export function DedicationRegistry() {
   const [certificateRecord, setCertificateRecord] =
     useState<DedicationRecord | null>(null);
 
+  const [quick, setQuick] = useState<LifeEventQuickFilter>("all");
+  const year = new Date().getFullYear();
+  const counts = getLifeEventCounts(
+    records,
+    record => record.dedicatedAt,
+    year,
+  );
+
   const rows = useMemo(
-    () => filterDedicationRecords(records, filters),
-    [records, filters],
+    () =>
+      filterLifeEventQuickRecords(
+        filterDedicationRecords(records, filters),
+        quick,
+        record => record.dedicatedAt,
+        year,
+      ),
+    [records, filters, quick, year],
   );
 
   const certificateData: DedicationCertificateData | null = certificateRecord
@@ -53,169 +76,99 @@ export function DedicationRegistry() {
       }
     : null;
 
-  if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading dedication registry...
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
-            Child Dedication
-          </h1>
-          <p className="text-slate-600 dark:text-zinc-400 mt-1">
-            Registry of child dedications and certificate generation
-          </p>
-        </div>
-        <Button
-          onClick={() => setRecordDialogOpen(true)}
-          className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Record dedication
-        </Button>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-zinc-700/70 dark:bg-zinc-800/50">
-          <p className="text-sm text-slate-500 dark:text-zinc-400">
-            Total dedications
-          </p>
-          <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-1">
-            {records.length}
-          </p>
-        </div>
-        <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-zinc-700/70 dark:bg-zinc-800/50">
-          <p className="text-sm text-slate-500 dark:text-zinc-400">This year</p>
-          <p className="text-2xl font-semibold text-slate-900 dark:text-white mt-1">
-            {
-              records.filter(
-                r =>
-                  new Date(r.dedicatedAt).getFullYear() ===
-                  new Date().getFullYear(),
-              ).length
-            }
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-zinc-700/70 dark:bg-zinc-800/50 space-y-3">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              value={filters.search}
-              onChange={e =>
-                setFilters(prev => ({ ...prev, search: e.target.value }))
-              }
-              placeholder="Search by child, parents, officiant, or notes"
-              className="pl-9 rounded-xl"
-            />
-          </div>
-          <Input
-            type="date"
-            value={filters.dateFrom}
-            onChange={e =>
-              setFilters(prev => ({ ...prev, dateFrom: e.target.value }))
-            }
-            className="rounded-xl lg:w-40"
-            aria-label="From date"
-          />
-          <Input
-            type="date"
-            value={filters.dateTo}
-            onChange={e =>
-              setFilters(prev => ({ ...prev, dateTo: e.target.value }))
-            }
-            className="rounded-xl lg:w-40"
-            aria-label="To date"
-          />
-          {hasActiveDedicationFilters(filters) && (
-            <Button
-              variant="outline"
-              onClick={() => setFilters(DEFAULT_DEDICATION_REGISTRY_FILTERS)}
-              className="rounded-xl"
-            >
-              <X className="w-4 h-4 mr-2" />
-              Clear
-            </Button>
-          )}
-        </div>
-
-        {rows.length === 0 ? (
-          <div className="py-16 text-center">
-            <Baby className="w-10 h-10 mx-auto text-slate-300 dark:text-zinc-600" />
-            <p className="mt-4 font-medium text-slate-900 dark:text-white">
-              {records.length === 0
-                ? "No dedications recorded yet"
-                : "No dedications match your filters"}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-zinc-400 mt-1">
-              {records.length === 0
-                ? "Record your first dedication to start the registry."
-                : "Try adjusting your search or date range."}
-            </p>
-            {records.length === 0 && (
-              <Button
-                onClick={() => setRecordDialogOpen(true)}
-                className="mt-4 rounded-xl"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Record dedication
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Child</TableHead>
-                  <TableHead>Parent(s)</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Officiant</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map(record => (
-                  <TableRow key={record.id}>
-                    <TableCell className="font-medium text-slate-900 dark:text-white">
-                      {record.childName}
-                    </TableCell>
-                    <TableCell>{record.parentNames || "—"}</TableCell>
-                    <TableCell>
-                      {new Date(record.dedicatedAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{record.location || "—"}</TableCell>
-                    <TableCell>{record.officiantName || "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="rounded-lg"
-                          onClick={() => setCertificateRecord(record)}
-                        >
-                          <FileText className="w-4 h-4 mr-1" />
-                          Certificate
-                        </Button>
-                      </div>
-                    </TableCell>
+    <>
+      <LifeEventRegistryLayout
+        title="Child Dedication"
+        description="Registry of child dedications and certificate generation"
+        icon={Baby}
+        recordLabel="Record dedication"
+        hydrated={hydrated}
+        isSaving={isSaving}
+        onRecord={() => setRecordDialogOpen(true)}
+        filters={filters}
+        onFiltersChange={setFilters}
+        quick={quick}
+        onQuickChange={setQuick}
+        counts={counts}
+        resultCount={rows.length}
+        searchPlaceholder="Search by child, parents, officiant, location, or notes..."
+        dateHelp="Dates refer to the dedication date."
+      >
+        {view =>
+          view === "cards" ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {rows.map(record => (
+                <LifeEventRecordCard
+                  key={record.id}
+                  title={record.childName}
+                  subtitle="Child dedication"
+                  icon={Baby}
+                  date={formatLifeEventDate(record.dedicatedAt)}
+                  dateLabel="Dedication date"
+                  location={record.location}
+                  officiant={record.officiantName}
+                  notes={record.notes}
+                  onCertificate={() => setCertificateRecord(record)}
+                >
+                  <p className="break-words">
+                    Parents: {record.parentNames || "Not recorded"}
+                  </p>
+                </LifeEventRecordCard>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-xl border bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Child</TableHead>
+                    <TableHead>Parent(s)</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Officiant</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
-
+                </TableHeader>
+                <TableBody>
+                  {rows.map(record => (
+                    <TableRow key={record.id}>
+                      <TableCell className="min-w-40 max-w-xs break-words font-medium text-foreground">
+                        {record.childName}
+                      </TableCell>
+                      <TableCell className="min-w-36 max-w-xs break-words">
+                        {record.parentNames || "—"}
+                      </TableCell>
+                      <TableCell className="min-w-36 max-w-xs break-words">
+                        {formatLifeEventDate(record.dedicatedAt)}
+                      </TableCell>
+                      <TableCell className="min-w-36 max-w-xs break-words">
+                        {record.location || "—"}
+                      </TableCell>
+                      <TableCell className="min-w-36 max-w-xs break-words">
+                        {record.officiantName || "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1 rounded-xl border-[var(--accent-color-border)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]"
+                            onClick={() => setCertificateRecord(record)}
+                          >
+                            <FileText className="w-4 h-4 mr-1" />
+                            Certificate
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )
+        }
+      </LifeEventRegistryLayout>
       <RecordDedicationDialog
         open={recordDialogOpen}
         onOpenChange={setRecordDialogOpen}
@@ -230,6 +183,6 @@ export function DedicationRegistry() {
         }}
         certificateData={certificateData}
       />
-    </div>
+    </>
   );
 }

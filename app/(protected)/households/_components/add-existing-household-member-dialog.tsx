@@ -101,11 +101,7 @@ export function AddExistingHouseholdMemberDialog({
 
             <div className="space-y-2">
               <Label>Role in Family</Label>
-              <Select
-                value={role}
-                onValueChange={setRole}
-                disabled={isSaving}
-              >
+              <Select value={role} onValueChange={setRole} disabled={isSaving}>
                 <SelectTrigger className="rounded-lg">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>

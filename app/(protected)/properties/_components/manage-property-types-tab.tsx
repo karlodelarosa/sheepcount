@@ -8,12 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useProperties } from "@/lib/properties";
 
 export function ManagePropertyTypesTab() {
-  const {
-    activePropertyTypes,
-    addPropertyType,
-    removePropertyType,
-    isSaving,
-  } = useProperties();
+  const { activePropertyTypes, addPropertyType, removePropertyType, isSaving } =
+    useProperties();
   const [newType, setNewType] = useState("");
 
   const handleAdd = async () => {
@@ -22,7 +18,7 @@ export function ManagePropertyTypesTab() {
   };
 
   return (
-    <Card className="border-slate-200/60 dark:border-zinc-700/60 max-w-xl">
+    <Card className="w-full rounded-2xl border-border/60 bg-card shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Property types</CardTitle>
         <p className="text-sm text-slate-500 dark:text-zinc-400">
@@ -48,7 +44,7 @@ export function ManagePropertyTypesTab() {
             type="button"
             onClick={() => void handleAdd()}
             disabled={isSaving || !newType.trim()}
-            className="rounded-lg shrink-0 bg-slate-900 hover:bg-slate-800"
+            className="min-h-11 shrink-0 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
           >
             <Plus className="w-4 h-4 mr-1" />
             Add
@@ -56,13 +52,15 @@ export function ManagePropertyTypesTab() {
         </div>
 
         {activePropertyTypes.length === 0 ? (
-          <p className="text-sm text-slate-500 text-center py-4">No types yet.</p>
+          <p className="text-sm text-slate-500 text-center py-4">
+            No types yet.
+          </p>
         ) : (
           <div className="space-y-2">
             {activePropertyTypes.map(type => (
               <div
                 key={type.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200/60 px-3 py-2 dark:border-zinc-700/60"
+                className="flex items-center justify-between gap-3 min-h-12 rounded-xl border border-border/60 px-3 py-3"
               >
                 <span className="text-sm font-medium text-slate-900 dark:text-white">
                   {type.name}

@@ -68,8 +68,7 @@ export function GrowthTrackActionDialog({
     onOpenChange(false);
   };
 
-  const fieldLabel =
-    mode === "enroll_discipleship" ? "Track" : "Group";
+  const fieldLabel = mode === "enroll_discipleship" ? "Track" : "Group";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

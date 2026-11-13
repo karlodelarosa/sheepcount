@@ -58,7 +58,12 @@ export function AddTrainingCourseDialog({
     });
     if (result) {
       onOpenChange(false);
-      setFormData({ name: "", description: "", category: "Leadership", slug: "" });
+      setFormData({
+        name: "",
+        description: "",
+        category: "Leadership",
+        slug: "",
+      });
     }
   };
 
@@ -73,7 +78,9 @@ export function AddTrainingCourseDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`sm:max-w-[600px] ${DualModeDialogClass}`}>
         <DialogHeader>
-          <DialogTitle className="text-slate-900 dark:text-white">Add Training Course</DialogTitle>
+          <DialogTitle className="text-slate-900 dark:text-white">
+            Add Training Course
+          </DialogTitle>
           <DialogDescription className="text-slate-600 dark:text-zinc-400">
             Create a competency-based course with sequential modules
           </DialogDescription>
@@ -81,7 +88,10 @@ export function AddTrainingCourseDialog({
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="course-name" className="text-slate-700 dark:text-zinc-300">
+              <Label
+                htmlFor="course-name"
+                className="text-slate-700 dark:text-zinc-300"
+              >
                 Course Name
               </Label>
               <Input
@@ -97,7 +107,10 @@ export function AddTrainingCourseDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-slate-700 dark:text-zinc-300">
+              <Label
+                htmlFor="description"
+                className="text-slate-700 dark:text-zinc-300"
+              >
                 Description
               </Label>
               <Textarea
@@ -114,7 +127,10 @@ export function AddTrainingCourseDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="category" className="text-slate-700 dark:text-zinc-300">
+                <Label
+                  htmlFor="category"
+                  className="text-slate-700 dark:text-zinc-300"
+                >
                   Category
                 </Label>
                 <Select
@@ -134,14 +150,19 @@ export function AddTrainingCourseDialog({
                     <SelectItem value="Life Skills">Life Skills</SelectItem>
                     <SelectItem value="Leadership">Leadership</SelectItem>
                     <SelectItem value="Safety">Safety</SelectItem>
-                    <SelectItem value="Administration">Administration</SelectItem>
+                    <SelectItem value="Administration">
+                      Administration
+                    </SelectItem>
                     <SelectItem value="Worship">Worship</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="slug" className="text-slate-700 dark:text-zinc-300">
+                <Label
+                  htmlFor="slug"
+                  className="text-slate-700 dark:text-zinc-300"
+                >
                   Slug (optional)
                 </Label>
                 <Input

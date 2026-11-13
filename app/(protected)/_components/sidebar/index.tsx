@@ -1,6 +1,8 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { startTransition, useOptimistic } from "react";
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -58,6 +60,7 @@ export function Sidebar() {
     useOrganizationSettings();
   const router = useRouter();
   const pathname = usePathname();
+  const [activePath, setActivePath] = useOptimistic(pathname);
 
   const activeMemberCount = people.filter(p => p.status === "Active").length;
 
@@ -72,18 +75,21 @@ export function Sidebar() {
   const isActive = (view: ViewRoute) => {
     const path = getPath(view);
     if (view === "dashboard") {
-      return pathname === path;
+      return activePath === path;
     }
-    return pathname.startsWith(path);
+    return activePath === path || activePath.startsWith(`${path}/`);
   };
 
   const navigateTo = (view: ViewRoute) => {
-    router.push(getPath(view));
+    startTransition(() => {
+      setActivePath(getPath(view));
+      router.push(getPath(view));
+    });
   };
 
   const sidebarItemClass = (active: boolean, disabled = false) =>
     cn(
-      "w-full px-2.5 py-1.5 rounded-lg transition-all duration-200 text-sm",
+      "w-full px-3 py-2 lg:py-1.5 rounded-xl transition-colors duration-150 text-sm",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       disabled
         ? "opacity-50 cursor-not-allowed text-muted-foreground"
@@ -109,8 +115,8 @@ export function Sidebar() {
   );
 
   return (
-    <SidebarComponent className="w-52 shrink-0 border-r border-border/60 bg-card/80 backdrop-blur-sm text-sm">
-      <SidebarHeader className="border-b border-border/60 px-3 py-2.5">
+    <SidebarComponent className="w-60 lg:w-56 shrink-0 border-r border-border/60 bg-card/80 backdrop-blur-sm text-sm">
+      <SidebarHeader className="border-b border-border/60 px-5 py-4 lg:px-4 lg:py-3">
         <div className="flex items-center gap-2">
           <BrandingLogo className="w-7 h-7" iconClassName="w-3.5 h-3.5" />
           <div className="min-w-0">
@@ -124,7 +130,7 @@ export function Sidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="p-2">
+      <SidebarContent className="p-3 lg:p-2">
         <SidebarMenu className="space-y-0.5">
           {isLoading || !orgSettingsHydrated ? (
             <SidebarNavSkeleton />
@@ -133,14 +139,25 @@ export function Sidebar() {
               {showDashboard && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => navigateTo(DASHBOARD_MENU_ITEM.route)}
+                    asChild
                     isActive={isActive(DASHBOARD_MENU_ITEM.route)}
                     className={sidebarItemClass(
                       isActive(DASHBOARD_MENU_ITEM.route),
                     )}
                   >
-                    <DASHBOARD_MENU_ITEM.icon className="w-4 h-4 mr-2" />
-                    <span>{DASHBOARD_MENU_ITEM.title}</span>
+                    <Link
+                      href={getPath(DASHBOARD_MENU_ITEM.route)}
+                      onNavigate={event => {
+                        event.preventDefault();
+                        navigateTo(DASHBOARD_MENU_ITEM.route);
+                      }}
+                      aria-current={
+                        isActive(DASHBOARD_MENU_ITEM.route) ? "page" : undefined
+                      }
+                    >
+                      <DASHBOARD_MENU_ITEM.icon className="w-4 h-4 mr-2" />
+                      <span>{DASHBOARD_MENU_ITEM.title}</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
@@ -153,7 +170,7 @@ export function Sidebar() {
                 >
                   <SidebarGroup>
                     <CollapsibleTrigger asChild>
-                      <SidebarGroupLabel className="px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-between group-data-[state=open]/collapsible:text-foreground">
+                      <SidebarGroupLabel className="px-2.5 py-2 lg:py-1.5 text-xs font-semibold text-foreground hover:text-foreground cursor-pointer flex items-center justify-between group-data-[state=open]/collapsible:text-foreground">
                         <span>{group.title}</span>
                         <ChevronDown className="w-3 h-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
                       </SidebarGroupLabel>
@@ -168,22 +185,36 @@ export function Sidebar() {
                               <SidebarMenuItem key={item.key}>
                                 <SidebarMenuButton
                                   disabled={disabled}
-                                  onClick={
-                                    disabled
-                                      ? undefined
-                                      : () => navigateTo(item.route)
-                                  }
+                                  asChild={!disabled}
                                   isActive={!disabled && isActive(item.route)}
-                                  tooltip={
-                                    disabled ? "Coming soon" : undefined
-                                  }
+                                  tooltip={disabled ? "Coming soon" : undefined}
                                   className={sidebarItemClass(
                                     !disabled && isActive(item.route),
                                     disabled,
                                   )}
                                 >
-                                  <item.icon className="w-4 h-4 mr-2" />
-                                  <span>{item.title}</span>
+                                  {disabled ? (
+                                    <>
+                                      <item.icon className="w-4 h-4 mr-2" />
+                                      <span>{item.title}</span>
+                                    </>
+                                  ) : (
+                                    <Link
+                                      href={getPath(item.route)}
+                                      onNavigate={event => {
+                                        event.preventDefault();
+                                        navigateTo(item.route);
+                                      }}
+                                      aria-current={
+                                        isActive(item.route)
+                                          ? "page"
+                                          : undefined
+                                      }
+                                    >
+                                      <item.icon className="w-4 h-4 mr-2" />
+                                      <span>{item.title}</span>
+                                    </Link>
+                                  )}
                                 </SidebarMenuButton>
                               </SidebarMenuItem>
                             );
@@ -199,19 +230,28 @@ export function Sidebar() {
 
           <SidebarMenuItem className="mt-2">
             <SidebarMenuButton
-              onClick={() => navigateTo("settings")}
+              asChild
               isActive={isActive("settings")}
               className={sidebarItemClass(isActive("settings"))}
             >
-              <Settings className="w-4 h-4 mr-2" />
-              <span>Settings</span>
+              <Link
+                href="/settings"
+                onNavigate={event => {
+                  event.preventDefault();
+                  navigateTo("settings");
+                }}
+                aria-current={isActive("settings") ? "page" : undefined}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                <span>Settings</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
 
       <SidebarFooter className="p-2 border-t border-border/60">
-        <div className="px-2.5 py-1.5 rounded-lg bg-muted/50 border border-border/60 text-xs">
+        <div className="px-3 py-2 rounded-xl bg-muted/50 border border-border/60 text-xs">
           <p className="text-foreground">Active Members</p>
           <p className="text-muted-foreground">
             {hydrated ? `${activeMemberCount} people` : "Loading..."}

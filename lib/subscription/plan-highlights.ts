@@ -48,6 +48,10 @@ export function getPlanHighlights(plan: SubscriptionPlan): string[] {
     highlights.push("Audit Trail");
   }
 
+  if (hasFeature(plan, "circles_access")) {
+    highlights.push("Circles Member App");
+  }
+
   return [...new Set(highlights)];
 }
 

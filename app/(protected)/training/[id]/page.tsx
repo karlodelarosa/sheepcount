@@ -1,12 +1,13 @@
 "use client";
 
 import { CourseDetails } from ".";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function TrainingCoursePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams();
   const id = params?.id as string | undefined;
 
@@ -32,5 +33,12 @@ export default function TrainingCoursePage() {
     );
   }
 
-  return <CourseDetails courseId={id} onBack={handleBack} />;
+  return (
+    <CourseDetails
+      courseId={id}
+      onBack={handleBack}
+      initialPersonId={searchParams.get("person") ?? undefined}
+      initialTab={searchParams.get("tab") ?? undefined}
+    />
+  );
 }

@@ -32,19 +32,17 @@ function SidebarPanel({
   return (
     <div
       className={cn(
-        "rounded-xl border border-slate-200/80 bg-white dark:border-zinc-700/80 dark:bg-zinc-900/60",
+        "min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm",
         className,
       )}
     >
-      <div className="px-3.5 pt-3.5 pb-2">
+      <div className="border-b border-border/60 px-5 py-4">
         <div className="flex items-center gap-2">
           {Icon ? (
-            <Icon className="h-4 w-4 text-slate-400 dark:text-zinc-500 shrink-0" />
+            <Icon className="size-5 shrink-0 text-[var(--accent-color)]" />
           ) : null}
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-              {title}
-            </h3>
+            <h3 className="text-base font-bold text-foreground">{title}</h3>
             {description ? (
               <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
                 {description}
@@ -53,7 +51,7 @@ function SidebarPanel({
           </div>
         </div>
       </div>
-      <div className="px-3.5 pb-3.5">{children}</div>
+      <div className="p-5">{children}</div>
     </div>
   );
 }
@@ -100,9 +98,7 @@ function PeriodSnapshotPanel({
       <div className="grid grid-cols-2 gap-2">
         <SnapshotStat
           label="Expense ratio"
-          value={
-            data.expenseRatio !== null ? `${data.expenseRatio}%` : "—"
-          }
+          value={data.expenseRatio !== null ? `${data.expenseRatio}%` : "—"}
           hint="Expenses ÷ receipts"
         />
         <SnapshotStat
@@ -118,9 +114,7 @@ function PeriodSnapshotPanel({
         <SnapshotStat
           label="Best month"
           value={
-            data.bestMonth
-              ? formatCurrency(data.bestMonth.net, currency)
-              : "—"
+            data.bestMonth ? formatCurrency(data.bestMonth.net, currency) : "—"
           }
           hint={data.bestMonth?.label}
         />

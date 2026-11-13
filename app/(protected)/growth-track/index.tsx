@@ -1,10 +1,13 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Kanban, ListChecks, BarChart3, Loader2 } from "lucide-react";
+import { DirectoryTitleCard } from "@/components/ui/directory-page-header";
+import { Kanban, ListChecks, BarChart3, TrendingUp } from "lucide-react";
 import { useGrowthTrack } from "@/lib/growth-track";
 import { filterGrowthTrackPeople } from "./_lib/filters";
 import type { GrowthTrackFilters, GrowthTrackPerson } from "./_lib/types";
@@ -131,41 +134,30 @@ export function GrowthTrackView() {
   const showFilters = activeTab === "pipeline" || activeTab === "actions";
 
   if (!hydrated) {
-    return (
-      <div className="flex items-center justify-center py-20 text-slate-500 dark:text-zinc-400">
-        <Loader2 className="w-5 h-5 animate-spin mr-2" />
-        Loading growth track...
-      </div>
-    );
+    return <PageSkeleton message="Loading growth track..." />;
   }
 
   return (
     <div className="space-y-6">
       {ActionDialog}
 
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Growth Track
-        </h1>
-        <p className="text-slate-600 dark:text-zinc-400">
-          Attendance insights, pipeline progress, and actionable next steps
-        </p>
-      </div>
+      <DirectoryTitleCard
+        title="Growth Track"
+        description="Attendance insights, pipeline progress, and actionable next steps"
+        icon={TrendingUp}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-2xl grid-cols-3 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
-          <TabsTrigger value="overview" className="gap-1.5 text-xs sm:text-sm">
+        <TabsList aria-label="Growth track views">
+          <TabsTrigger value="overview">
             <BarChart3 className="w-4 h-4" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="pipeline" className="gap-1.5 text-xs sm:text-sm">
+          <TabsTrigger value="pipeline">
             <Kanban className="w-4 h-4" />
             Pipeline View
           </TabsTrigger>
-          <TabsTrigger
-            value="actions"
-            className="gap-1.5 text-xs sm:text-sm relative"
-          >
+          <TabsTrigger value="actions">
             <ListChecks className="w-4 h-4" />
             Action Hub
             {totalActionCount > 0 && (

@@ -41,7 +41,7 @@ function ArrivalToggleButtons({
 
   return (
     <div className="flex flex-wrap gap-1">
-      {toggles.map((toggle) => (
+      {toggles.map(toggle => (
         <Button
           key={toggle}
           type="button"
@@ -75,7 +75,7 @@ export function AttendanceTimestampStep({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">Apply to all:</span>
-          {(["early", "on-time", "late"] as ArrivalStatus[]).map((toggle) => (
+          {(["early", "on-time", "late"] as ArrivalStatus[]).map(toggle => (
             <Button
               key={toggle}
               type="button"
@@ -103,14 +103,14 @@ export function AttendanceTimestampStep({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {attendees.map((attendee) => {
+              {attendees.map(attendee => {
                 const arrivalStatus = classifyArrival(
                   attendee.timeOfArrival,
                   serviceStartTime,
                 );
                 const activeToggle =
                   attendee.timeOfArrival ===
-                    getToggleTime(serviceStartTime, "early")
+                  getToggleTime(serviceStartTime, "early")
                     ? "early"
                     : attendee.timeOfArrival ===
                         getToggleTime(serviceStartTime, "on-time")
@@ -144,7 +144,7 @@ export function AttendanceTimestampStep({
                       <Input
                         type="time"
                         value={attendee.timeOfArrival}
-                        onChange={(e) =>
+                        onChange={e =>
                           onUpdateArrivalTime(attendee.key, e.target.value)
                         }
                         className="h-8 w-[7.5rem] tabular-nums"
@@ -153,7 +153,7 @@ export function AttendanceTimestampStep({
                     <TableCell>
                       <ArrivalToggleButtons
                         activeToggle={activeToggle}
-                        onSelect={(toggle) =>
+                        onSelect={toggle =>
                           onUpdateArrivalTime(
                             attendee.key,
                             getToggleTime(serviceStartTime, toggle),

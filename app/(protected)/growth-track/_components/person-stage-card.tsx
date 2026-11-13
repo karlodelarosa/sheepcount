@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { PersonAvatar } from "@/app/(protected)/people/_components/person-detail-ui";
 import { getMembershipDisplayColor } from "@/lib/membership-path";
 import type { GrowthTrackPerson } from "../_lib/types";
@@ -22,15 +22,15 @@ export function PersonStageCard({
   const nextStep = getNextStepAction(person);
 
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm dark:border-zinc-700/80 dark:bg-zinc-900/80 space-y-3">
+    <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm space-y-4">
       <div className="flex items-start gap-3">
         <PersonAvatar name={person.name} size="sm" />
         <div className="min-w-0 flex-1">
-          <p className="font-medium text-slate-900 dark:text-white truncate">
+          <p className="font-semibold text-foreground break-words">
             {person.name}
           </p>
           {person.householdName && (
-            <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">
+            <p className="text-xs text-muted-foreground truncate">
               Family: {person.householdName}
             </p>
           )}
@@ -53,19 +53,24 @@ export function PersonStageCard({
         )}
       </div>
 
-      <p className="text-xs text-slate-500 dark:text-zinc-400">
+      <p className="text-xs text-muted-foreground">
         Last Active: {formatLastActive(person.lastActive)}
       </p>
 
       <Button
         size="sm"
         variant={nextStep.variant}
-        className="w-full text-xs"
+        className={
+          nextStep.variant === "outline"
+            ? "min-h-10 w-full justify-between rounded-lg border-[var(--accent-color-border)] text-xs text-[var(--accent-color-strong)] hover:bg-[var(--accent-color-soft)] dark:text-[var(--accent-color)]"
+            : "min-h-10 w-full justify-between rounded-lg bg-[var(--accent-color)] text-xs text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
+        }
         disabled={isSaving}
         onClick={() => onAction(person)}
       >
         {isSaving && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
         {nextStep.label}
+        <ArrowRight className="size-3.5" aria-hidden="true" />
       </Button>
     </div>
   );

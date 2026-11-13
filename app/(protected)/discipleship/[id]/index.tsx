@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -99,10 +101,12 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
   const [milestoneDescription, setMilestoneDescription] = useState("");
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
-  const [editCategory, setEditCategory] = useState<DiscipleshipCategory>("Foundation");
+  const [editCategory, setEditCategory] =
+    useState<DiscipleshipCategory>("Foundation");
   const [editDuration, setEditDuration] = useState("");
   const [editSchedule, setEditSchedule] = useState("");
-  const [editStatus, setEditStatus] = useState<DiscipleshipTrackStatus>("active");
+  const [editStatus, setEditStatus] =
+    useState<DiscipleshipTrackStatus>("active");
   const [editInitialized, setEditInitialized] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -144,7 +148,9 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
     enrollmentRows[0]?.id ||
     "";
 
-  const activeEnrollment = enrollmentRows.find(e => e.id === activeEnrollmentId);
+  const activeEnrollment = enrollmentRows.find(
+    e => e.id === activeEnrollmentId,
+  );
 
   const enrolledPersonIds = useMemo(
     () => new Set(trackEnrollments.map(e => e.personId)),
@@ -181,7 +187,11 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
 
   const handleEnroll = async () => {
     if (newPersonIds.length === 0) return;
-    if (track?.category === "Mentorship" && newRole === "Learner" && !newMentorId) {
+    if (
+      track?.category === "Mentorship" &&
+      newRole === "Learner" &&
+      !newMentorId
+    ) {
       return;
     }
 
@@ -264,22 +274,21 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
     "rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
   const DualModeMemberAvatarClass =
     "from-slate-900 to-slate-700 dark:from-purple-700 dark:to-purple-500";
-  const tabTriggerClass =
-    "text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-zinc-700 dark:data-[state=active]:text-white";
 
   if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading track...
-      </div>
-    );
+    return <PageSkeleton message="Loading track..." />;
   }
 
   if (!track) {
     return (
       <div className="space-y-6 p-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={onBack} className="rounded-xl">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onBack}
+            className="rounded-xl"
+          >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-slate-900 dark:text-white">Track Not Found</h1>
@@ -296,9 +305,9 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
           Track Management
         </AlertTitle>
         <AlertDescription className="text-blue-800/90 dark:text-blue-300/90">
-          Manage this discipleship track — define milestones, enroll learners and
-          guides, assign mentors, and track milestone progress. Completing all
-          milestones earns a badge on the person&apos;s profile.
+          Manage this discipleship track — define milestones, enroll learners
+          and guides, assign mentors, and track milestone progress. Completing
+          all milestones earns a badge on the person&apos;s profile.
         </AlertDescription>
       </Alert>
 
@@ -315,7 +324,10 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-slate-900 dark:text-white">{track.name}</h1>
-              <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
+              <Badge
+                variant="secondary"
+                className={DualModeSecondaryBadgeClass}
+              >
                 {track.category}
               </Badge>
               {track.status === "not_started" && (
@@ -415,21 +427,25 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
         </Card>
 
         <div className="lg:col-span-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
-              <TabsTrigger value="overview" className={tabTriggerClass}>
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-6"
+          >
+            <TabsList>
+              <TabsTrigger value="overview">
                 <LayoutDashboard className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="manage" className={tabTriggerClass}>
+              <TabsTrigger value="manage">
                 <ListChecks className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Milestones
               </TabsTrigger>
-              <TabsTrigger value="progress" className={tabTriggerClass}>
+              <TabsTrigger value="progress">
                 <TrendingUp className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Progress
               </TabsTrigger>
-              <TabsTrigger value="settings" className={tabTriggerClass}>
+              <TabsTrigger value="settings">
                 <Settings className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Settings
               </TabsTrigger>
@@ -522,22 +538,23 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                           onClick={() => openProgressForEnrollment(row.id)}
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            {row.status !== "completed" && row.currentMilestone && (
-                              <Checkbox
-                                checked={false}
-                                disabled={isSaving}
-                                onClick={e => e.stopPropagation()}
-                                onCheckedChange={() =>
-                                  void handleToggleMilestone(
-                                    row.id,
-                                    row.currentMilestone!.id,
-                                    row.personId,
-                                  )
-                                }
-                                className="shrink-0"
-                                aria-label={`Complete ${row.currentMilestone.name} for ${row.person?.name ?? "participant"}`}
-                              />
-                            )}
+                            {row.status !== "completed" &&
+                              row.currentMilestone && (
+                                <Checkbox
+                                  checked={false}
+                                  disabled={isSaving}
+                                  onClick={e => e.stopPropagation()}
+                                  onCheckedChange={() =>
+                                    void handleToggleMilestone(
+                                      row.id,
+                                      row.currentMilestone!.id,
+                                      row.personId,
+                                    )
+                                  }
+                                  className="shrink-0"
+                                  aria-label={`Complete ${row.currentMilestone.name} for ${row.person?.name ?? "participant"}`}
+                                />
+                              )}
                             <div
                               className={`w-9 h-9 shrink-0 rounded-lg bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center`}
                             >
@@ -553,11 +570,12 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                                 {row.role}
                                 {row.mentor && ` · Mentor: ${row.mentor.name}`}
                               </p>
-                              {row.status !== "completed" && row.currentMilestone && (
-                                <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5 truncate">
-                                  Current: {row.currentMilestone.name}
-                                </p>
-                              )}
+                              {row.status !== "completed" &&
+                                row.currentMilestone && (
+                                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5 truncate">
+                                    Current: {row.currentMilestone.name}
+                                  </p>
+                                )}
                             </div>
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
@@ -570,7 +588,9 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                                   </Badge>
                                   <p className="text-xs text-slate-500 dark:text-zinc-500">
                                     {row.completedAt
-                                      ? new Date(row.completedAt).toLocaleDateString()
+                                      ? new Date(
+                                          row.completedAt,
+                                        ).toLocaleDateString()
                                       : "Completed"}
                                   </p>
                                 </>
@@ -580,7 +600,8 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                                     {row.progress.percent}%
                                   </p>
                                   <p className="text-xs text-slate-500 dark:text-zinc-500">
-                                    {row.progress.completed}/{row.progress.total} milestones
+                                    {row.progress.completed}/
+                                    {row.progress.total} milestones
                                   </p>
                                 </>
                               )}
@@ -697,7 +718,11 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                                 isSaving || index === trackMilestones.length - 1
                               }
                               onClick={() =>
-                                void moveMilestone(trackId, milestone.id, "down")
+                                void moveMilestone(
+                                  trackId,
+                                  milestone.id,
+                                  "down",
+                                )
                               }
                             >
                               <ChevronDown className="w-4 h-4" />
@@ -707,7 +732,9 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                               size="icon"
                               className="h-8 w-8 text-slate-400 hover:text-red-500"
                               disabled={isSaving}
-                              onClick={() => void removeMilestoneById(milestone.id)}
+                              onClick={() =>
+                                void removeMilestoneById(milestone.id)
+                              }
                             >
                               <X className="w-4 h-4" />
                             </Button>
@@ -966,20 +993,23 @@ export function TrackDetails({ trackId, onBack }: TrackDetailsProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {(Object.keys(TRACK_STATUS_LABELS) as DiscipleshipTrackStatus[]).map(
-                              status => (
-                                <SelectItem key={status} value={status}>
-                                  {TRACK_STATUS_LABELS[status]}
-                                </SelectItem>
-                              ),
-                            )}
+                            {(
+                              Object.keys(
+                                TRACK_STATUS_LABELS,
+                              ) as DiscipleshipTrackStatus[]
+                            ).map(status => (
+                              <SelectItem key={status} value={status}>
+                                {TRACK_STATUS_LABELS[status]}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-zinc-500">
-                      Use Not yet started for upcoming cohorts, In Progress while
-                      running, and Finished when the session has wrapped up.
+                      Use Not yet started for upcoming cohorts, In Progress
+                      while running, and Finished when the session has wrapped
+                      up.
                     </p>
                     <Button
                       onClick={() => void handleSaveTrack()}

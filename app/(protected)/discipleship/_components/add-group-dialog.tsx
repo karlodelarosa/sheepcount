@@ -22,7 +22,9 @@ interface AddGroupDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isSaving: boolean;
-  onCreate: (input: CreateDiscipleshipGroupInput) => Promise<DiscipleshipGroup | null>;
+  onCreate: (
+    input: CreateDiscipleshipGroupInput,
+  ) => Promise<DiscipleshipGroup | null>;
 }
 
 export function AddGroupDialog({
@@ -50,8 +52,10 @@ export function AddGroupDialog({
     }
   };
 
-  const DualModePrimaryButtonClass = "rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700";
-  const DualModeInputClass = "rounded-lg bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500";
+  const DualModePrimaryButtonClass =
+    "min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] focus-visible:ring-[var(--accent-color)]";
+  const DualModeInputClass =
+    "rounded-lg bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500";
   const DualModeLabelClass = "text-slate-700 dark:text-zinc-300";
 
   return (
@@ -68,7 +72,9 @@ export function AddGroupDialog({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="group-name" className={DualModeLabelClass}>Group Name *</Label>
+            <Label htmlFor="group-name" className={DualModeLabelClass}>
+              Group Name *
+            </Label>
             <Input
               id="group-name"
               value={name}
@@ -78,7 +84,9 @@ export function AddGroupDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="group-description" className={DualModeLabelClass}>Description</Label>
+            <Label htmlFor="group-description" className={DualModeLabelClass}>
+              Description
+            </Label>
             <Input
               id="group-description"
               value={description}

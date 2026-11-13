@@ -9,197 +9,133 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, UserPlus, Search } from "lucide-react";
-import {
-  mockLifeGroupMembers,
-  mockPeople,
-  mockLifeGroups,
-} from "@/components/mock-data";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PersonSelect } from "@/components/person-select";
 import { Label } from "@/components/ui/label";
-
-interface ManageLifeGroupMembersDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  groupId: string | null;
-}
+import { PersonSelect } from "@/components/person-select";
+import { usePeople } from "@/lib/people";
+import { useGroupsMinistry } from "@/lib/groups-ministry";
+import { X, UserPlus } from "lucide-react";
 
 export function ManageLifeGroupMembersDialog({
   open,
   onOpenChange,
   groupId,
-}: ManageLifeGroupMembersDialogProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [newPersonId, setNewPersonId] = useState("");
-
-  const group = mockLifeGroups.find(g => g.id === groupId);
-  const memberships = mockLifeGroupMembers.filter(
-    m => m.lifeGroupId === groupId,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  groupId: string | null;
+}) {
+  const { people } = usePeople();
+  const {
+    lifeGroups,
+    lifeGroupMembers,
+    assignLifeGroupMember,
+    removeLifeGroupMemberById,
+    isSaving,
+  } = useGroupsMinistry();
+  const [returnFocus] = useState(() =>
+    typeof document !== "undefined"
+      ? (document.activeElement as HTMLElement | null)
+      : null,
+  );
+  const [search, setSearch] = useState("");
+  const [personId, setPersonId] = useState("");
+  const group = lifeGroups.find(g => g.id === groupId);
+  const memberships = lifeGroupMembers.filter(m => m.lifeGroupId === groupId);
+  const available = people.filter(
+    p => !memberships.some(m => m.personId === p.id),
   );
   const members = memberships.map(m => ({
     ...m,
-    person: mockPeople.find(p => p.id === m.personId),
+    person: people.find(p => p.id === m.personId),
   }));
-
-  const availablePeople = mockPeople.filter(
-    person => !memberships.some(m => m.personId === person.id),
-  );
-
-  const filteredMembers = members.filter(member =>
-    member.person?.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const handleAddMember = () => {
-    if (newPersonId) {
-      console.log("Adding member to life group:", {
-        groupId,
-        personId: newPersonId,
-      });
-      setNewPersonId("");
-    }
-  };
-
-  const handleRemoveMember = (membershipId: string) => {
-    console.log("Removing member from life group:", membershipId);
-  };
-
-  // Dual-Mode Primary Button Class
-  const DualModePrimaryButtonClass =
-    "rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-purple-600 dark:hover:bg-purple-700";
-
-  // Dual-Mode Input/Select Class
-  const DualModeInputClass =
-    "rounded-lg bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500";
-
-  // Dual-Mode Neutral Avatar Color (Used for member icons)
-  const DualModeMemberAvatarClass =
-    "from-slate-900 to-slate-700 dark:from-purple-700 dark:to-purple-500";
-
+  async function addMember() {
+    if (!groupId || !personId || isSaving) return;
+    if (await assignLifeGroupMember(groupId, personId)) setPersonId("");
+  }
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      {/* DialogContent: Dual Mode Styling */}
-      <DialogContent className="sm:max-w-[700px] bg-white border-slate-200/60 dark:bg-zinc-800 dark:border-zinc-700/60 dark:text-white">
+    <Dialog
+      open={open}
+      onOpenChange={value => {
+        if (!isSaving) onOpenChange(value);
+      }}
+    >
+      <DialogContent
+        className="max-h-[90dvh] overflow-y-auto sm:max-w-xl"
+        onCloseAutoFocus={() => returnFocus?.focus()}
+      >
         <DialogHeader>
-          <DialogTitle className="text-slate-900 dark:text-white">
-            Manage Life Group Members
-          </DialogTitle>
-          <DialogDescription className="text-slate-600 dark:text-zinc-400">
-            {group
-              ? `Managing members for ${group.name}`
-              : "Manage life group members"}
-          </DialogDescription>
+          <DialogTitle>Manage Life Group Members</DialogTitle>
+          <DialogDescription>{group?.name}</DialogDescription>
         </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Add New Member (Dual Mode) */}
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/60 space-y-4 dark:bg-zinc-900/40 dark:border-zinc-700">
-            <h3 className="text-slate-900 dark:text-white">Add New Member</h3>
-            <div className="space-y-2">
-              <Label className="text-slate-700 dark:text-zinc-300">
-                Select Person
-              </Label>
-              <PersonSelect
-                people={availablePeople}
-                value={newPersonId}
-                onValueChange={setNewPersonId}
-                placeholder="Choose a person"
-                triggerClassName={DualModeInputClass}
-              />
-            </div>
-            <Button
-              onClick={handleAddMember}
-              disabled={!newPersonId}
-              className={`w-full ${DualModePrimaryButtonClass}`}
-            >
-              <UserPlus className="w-4 h-4 mr-2" />
-              Add to Group
-            </Button>
+        <fieldset disabled={isSaving} className="space-y-4 min-w-0">
+          <div className="space-y-2">
+            <Label htmlFor="life-group-person">Add a person</Label>
+            <PersonSelect
+              id="life-group-person"
+              disabled={isSaving}
+              people={available}
+              value={personId}
+              onValueChange={setPersonId}
+              placeholder="Choose a person"
+            />
           </div>
-
-          {/* Current Members (Dual Mode) */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-slate-900 dark:text-white">
-                Current Members ({members.length})
-              </h3>
-              {/* Search Input (Dual Mode) */}
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-zinc-400" />
-                <Input
-                  placeholder="Search members..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className={`pl-9 ${DualModeInputClass}`}
-                />
-              </div>
-            </div>
-
-            {/* Member List Container (Dual Mode) */}
-            <div className="border border-slate-200/60 rounded-xl overflow-hidden max-h-[400px] overflow-y-auto dark:border-zinc-700/60">
-              {filteredMembers.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 dark:text-zinc-500">
-                  {searchTerm ? "No members found" : "No members yet"}
+          <Button
+            onClick={() => void addMember()}
+            disabled={!personId || isSaving}
+            className="gap-2 bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
+          >
+            <UserPlus className="size-4" />
+            Add to Group
+          </Button>
+          <Input
+            aria-label="Search group members"
+            placeholder="Search members..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <p className="text-sm font-medium">
+            Current Members ({members.length})
+          </p>
+          <div className="max-h-72 overflow-y-auto divide-y rounded-xl border">
+            {members
+              .filter(m =>
+                (m.person?.name ?? "Unknown person")
+                  .toLowerCase()
+                  .includes(search.toLowerCase()),
+              )
+              .map(m => (
+                <div
+                  key={m.id}
+                  className="flex items-center justify-between gap-3 p-3"
+                >
+                  <span className="min-w-0 break-words">
+                    {m.person?.name ?? "Unknown person"}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={isSaving}
+                    aria-label={`Remove ${m.person?.name ?? "person"} from group`}
+                    onClick={() => {
+                      if (!isSaving) void removeLifeGroupMemberById(m.id);
+                    }}
+                  >
+                    <X className="size-4" />
+                  </Button>
                 </div>
-              ) : (
-                <div className="divide-y divide-slate-200/60 dark:divide-zinc-700/60">
-                  {filteredMembers.map(member => (
-                    <div
-                      key={member.id}
-                      className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-zinc-800/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* Member Avatar (Dual Mode Gradient) */}
-                        <div
-                          className={`w-10 h-10 rounded-xl bg-gradient-to-br ${DualModeMemberAvatarClass} flex items-center justify-center shadow-sm`}
-                        >
-                          <span className="text-white">
-                            {member.person?.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-slate-900 dark:text-white">
-                            {member.person?.name}
-                          </p>
-                          <p className="text-slate-600 dark:text-zinc-400">
-                            {member.person?.householdName}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {/* Badge (Dual Mode) */}
-                        <Badge
-                          variant="secondary"
-                          className="rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300"
-                        >
-                          Joined{" "}
-                          {new Date(member.joinedDate).toLocaleDateString()}
-                        </Badge>
-                        {/* Remove Button (Dual Mode) */}
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleRemoveMember(member.id)}
-                          className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/50"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+              ))}
+            {!members.some(m =>
+              (m.person?.name ?? "Unknown person")
+                .toLowerCase()
+                .includes(search.toLowerCase()),
+            ) && (
+              <p className="p-6 text-center text-sm text-muted-foreground">
+                {search ? "No members found" : "No members yet"}
+              </p>
+            )}
           </div>
-        </div>
+        </fieldset>
       </DialogContent>
     </Dialog>
   );

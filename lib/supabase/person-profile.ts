@@ -5,7 +5,10 @@ import type {
   DiscipleshipEnrollment,
   DiscipleshipTrack,
 } from "@/lib/supabase/discipleship";
-import type { ChurchEvent, ChurchEventRegistration } from "@/lib/supabase/events";
+import type {
+  ChurchEvent,
+  ChurchEventRegistration,
+} from "@/lib/supabase/events";
 import type { Person } from "@/lib/people";
 import type {
   PersonCourseProgress,
@@ -14,12 +17,18 @@ import type {
 } from "@/lib/supabase/training";
 import type { BaptismRecord } from "@/lib/supabase/baptism";
 import { getPersonTrainingBadges } from "@/lib/supabase/training";
-import { fetchCellGroupMembers, fetchCellGroups } from "@/lib/supabase/cell-groups";
+import {
+  fetchCellGroupMembers,
+  fetchCellGroups,
+} from "@/lib/supabase/cell-groups";
 import {
   fetchDiscipleshipEnrollments,
   fetchDiscipleshipTracks,
 } from "@/lib/supabase/discipleship";
-import { fetchChurchEvents, fetchEventRegistrations } from "@/lib/supabase/events";
+import {
+  fetchChurchEvents,
+  fetchEventRegistrations,
+} from "@/lib/supabase/events";
 import { fetchPeople } from "@/lib/supabase/people";
 import { fetchBaptismRecords } from "@/lib/supabase/baptism";
 import {
@@ -94,7 +103,10 @@ export type BuildPersonProfileDeps = {
   baptismRecords: BaptismRecord[];
 };
 
-function getPersonName(people: Person[], personId: string | null): string | null {
+function getPersonName(
+  people: Person[],
+  personId: string | null,
+): string | null {
   if (!personId) return null;
   const person = people.find(p => p.id === personId);
   return person?.name ?? null;
@@ -147,7 +159,9 @@ export function buildPersonProfileDetails(
 ): PersonProfileDetails {
   const { personId } = deps;
 
-  const cellMembership = deps.cellGroupMembers.find(m => m.personId === personId);
+  const cellMembership = deps.cellGroupMembers.find(
+    m => m.personId === personId,
+  );
   const cellGroup = cellMembership
     ? deps.cellGroups.find(g => g.id === cellMembership.cellGroupId)
     : undefined;
@@ -172,12 +186,16 @@ export function buildPersonProfileDetails(
     deps.discipleshipEnrollments,
   );
 
-  const personProgress = deps.courseProgress.filter(p => p.personId === personId);
+  const personProgress = deps.courseProgress.filter(
+    p => p.personId === personId,
+  );
   const activeCourses = personProgress
     .filter(p => p.status === "in_progress")
     .map(p => {
       const course = deps.trainingCourses.find(c => c.id === p.courseId);
-      const moduleCount = deps.courseModules.filter(m => m.courseId === p.courseId).length;
+      const moduleCount = deps.courseModules.filter(
+        m => m.courseId === p.courseId,
+      ).length;
       const completed = p.completedModuleIds.length;
       const progressPercent =
         moduleCount > 0 ? Math.round((completed / moduleCount) * 100) : 0;

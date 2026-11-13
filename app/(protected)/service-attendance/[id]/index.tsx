@@ -13,7 +13,18 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, ArrowLeft, Users, Trash, Clock, X, UserPlus, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import {
+  Calendar,
+  ArrowLeft,
+  Users,
+  Trash,
+  Clock,
+  X,
+  UserPlus,
+  MoreVertical,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,8 +79,14 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
   const router = useRouter();
   const { tenant } = useTenant();
   const organizationId = getOrganizationId(tenant);
-  const { removeAttendee, recordAttendance, updateSessionDetails, deleteSession, serviceTypes, isSaving } =
-    useServiceAttendance();
+  const {
+    removeAttendee,
+    recordAttendance,
+    updateSessionDetails,
+    deleteSession,
+    serviceTypes,
+    isSaving,
+  } = useServiceAttendance();
   const { people, addPerson } = usePeople();
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -226,7 +243,7 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
 
   const peopleOptions = useMemo(
     () =>
-      people.map((person) => ({
+      people.map(person => ({
         id: person.id,
         name: person.name,
         householdName: person.householdName,
@@ -252,7 +269,9 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
   const filteredAttendees = useMemo(() => {
     if (!session) return [];
     return session.attendees.filter(person => {
-      const meta = breakdownAttendees.find(a => a.attendanceId === person.attendanceId);
+      const meta = breakdownAttendees.find(
+        a => a.attendanceId === person.attendanceId,
+      );
       if (!meta) return true;
       return attendeeMatchesStatusFilter(meta, statusFilter);
     });
@@ -288,7 +307,7 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
   }
 
   const evangelismCount = session.attendees.filter(
-    (p) => p.membershipType === "For Evangelism",
+    p => p.membershipType === "For Evangelism",
   ).length;
 
   const isSunday = session.serviceCategory === "sunday";
@@ -306,7 +325,9 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="min-w-0">
-            <h1 className="text-lg font-semibold truncate">{session.serviceType}</h1>
+            <h1 className="text-lg font-semibold truncate">
+              {session.serviceType}
+            </h1>
             <p className="text-sm text-muted-foreground">
               {new Date(session.date).toLocaleDateString("en-US", {
                 weekday: "long",
@@ -380,7 +401,7 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
               serviceType={session.serviceType}
               date={session.date}
               serviceStartTime={session.serviceStartTime}
-              existingAttendeeIds={session.attendees.map((a) => a.personId)}
+              existingAttendeeIds={session.attendees.map(a => a.personId)}
               people={peopleOptions}
               isSaving={isSaving}
               onAddAttendees={handleAddAttendees}
@@ -450,56 +471,56 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
                 );
 
                 return (
-                <div
-                  key={person.attendanceId}
-                  className={cn(
-                    "flex items-center gap-2 p-2 rounded-lg border border-border/50 bg-background/60 text-sm border-l-[3px]",
-                    getAttendeeStatusRowAccent(attendeeMeta),
-                  )}
-                >
                   <div
-                    className={`w-7 h-7 rounded-md flex items-center justify-center text-xs text-white shrink-0 ${
-                      isSunday ? "bg-violet-500" : "bg-blue-500"
-                    }`}
-                  >
-                    {person.name.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/people/${person.personId}`}
-                      className="truncate block font-medium hover:text-violet-600 dark:hover:text-violet-400 hover:underline"
-                    >
-                      {person.name}
-                    </Link>
-                    <p className="text-[10px] text-muted-foreground truncate">
-                      {person.householdName}
-                      {person.timeOfArrival && (
-                        <>
-                          {" · "}
-                          <Clock className="inline w-2.5 h-2.5 mr-0.5" />
-                          {formatArrivalTime(person.timeOfArrival)}
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <Badge
+                    key={person.attendanceId}
                     className={cn(
-                      "text-[10px] shrink-0 border",
-                      getAttendeeStatusBadgeClass(attendeeMeta),
+                      "flex items-center gap-2 p-2 rounded-lg border border-border/50 bg-background/60 text-sm border-l-[3px]",
+                      getAttendeeStatusRowAccent(attendeeMeta),
                     )}
                   >
-                    {statusLabel}
-                  </Badge>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 shrink-0"
-                    disabled={isSaving}
-                    onClick={() => handleRemovePerson(person.attendanceId)}
-                  >
-                    <Trash className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
+                    <div
+                      className={`w-7 h-7 rounded-md flex items-center justify-center text-xs text-white shrink-0 ${
+                        isSunday ? "bg-violet-500" : "bg-blue-500"
+                      }`}
+                    >
+                      {person.name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/people/${person.personId}`}
+                        className="truncate block font-medium hover:text-violet-600 dark:hover:text-violet-400 hover:underline"
+                      >
+                        {person.name}
+                      </Link>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {person.householdName}
+                        {person.timeOfArrival && (
+                          <>
+                            {" · "}
+                            <Clock className="inline w-2.5 h-2.5 mr-0.5" />
+                            {formatArrivalTime(person.timeOfArrival)}
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <Badge
+                      className={cn(
+                        "text-[10px] shrink-0 border",
+                        getAttendeeStatusBadgeClass(attendeeMeta),
+                      )}
+                    >
+                      {statusLabel}
+                    </Badge>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0"
+                      disabled={isSaving}
+                      onClick={() => handleRemovePerson(person.attendanceId)}
+                    >
+                      <Trash className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 );
               })
             )}
@@ -511,7 +532,9 @@ export function AttendanceDetailsView({ attendanceId }: Props) {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Delete attendance session?"
-        description={`This will permanently remove ${session.serviceType} on ${new Date(session.date).toLocaleDateString("en-US", {
+        description={`This will permanently remove ${session.serviceType} on ${new Date(
+          session.date,
+        ).toLocaleDateString("en-US", {
           month: "long",
           day: "numeric",
           year: "numeric",

@@ -1,8 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  getImageExtension,
-  validateImageFile,
-} from "@/lib/upload-validation";
+import { getImageExtension, validateImageFile } from "@/lib/upload-validation";
 
 const PROPERTY_IMAGE_BUCKET = "property-images";
 
@@ -130,7 +127,10 @@ function toPropertyTypeOption(row: DbPropertyTypeRow): PropertyTypeOption {
   };
 }
 
-function resolveTypeName(row: DbPropertyRow, typeById: Map<string, string>): string {
+function resolveTypeName(
+  row: DbPropertyRow,
+  typeById: Map<string, string>,
+): string {
   const joined = row.property_types;
   if (Array.isArray(joined)) {
     return joined[0]?.name ?? typeById.get(row.property_type_id) ?? "Equipment";
@@ -234,9 +234,10 @@ export async function seedPropertyTypeDefaults(
     sort_order: index + 1,
   }));
 
-  const { error } = await supabase
-    .from("property_types")
-    .upsert(rows, { onConflict: "organization_id,name", ignoreDuplicates: true });
+  const { error } = await supabase.from("property_types").upsert(rows, {
+    onConflict: "organization_id,name",
+    ignoreDuplicates: true,
+  });
 
   if (error) throw error;
 }
@@ -376,7 +377,9 @@ export async function uploadPropertyImage(
 
   if (uploadError) throw uploadError;
 
-  const { data } = supabase.storage.from(PROPERTY_IMAGE_BUCKET).getPublicUrl(path);
+  const { data } = supabase.storage
+    .from(PROPERTY_IMAGE_BUCKET)
+    .getPublicUrl(path);
   return `${data.publicUrl}?t=${Date.now()}`;
 }
 
@@ -577,13 +580,15 @@ export async function deleteBorrow(
   }
 }
 
-export function getActiveBorrow(property: ChurchProperty): PropertyBorrow | null {
+export function getActiveBorrow(
+  property: ChurchProperty,
+): PropertyBorrow | null {
   return property.borrows.find(b => !b.returnedAt) ?? null;
 }
 
-export function getAllBorrows(properties: ChurchProperty[]): Array<
-  PropertyBorrow & { property: ChurchProperty }
-> {
+export function getAllBorrows(
+  properties: ChurchProperty[],
+): Array<PropertyBorrow & { property: ChurchProperty }> {
   const rows: Array<PropertyBorrow & { property: ChurchProperty }> = [];
   for (const property of properties) {
     for (const borrow of property.borrows) {

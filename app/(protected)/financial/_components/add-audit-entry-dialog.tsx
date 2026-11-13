@@ -21,10 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  getCurrencySymbol,
-  type SupportedCurrency,
-} from "@/lib/currency";
+import { getCurrencySymbol, type SupportedCurrency } from "@/lib/currency";
 import { todayDateString } from "../_lib/dates";
 import {
   PAYMENT_METHODS,
@@ -152,8 +149,8 @@ export function AddAuditEntryDialog({
         <DialogHeader>
           <DialogTitle>Add entry</DialogTitle>
           <DialogDescription>
-            Record a receipt or an expense for this audit. Date defaults to today
-            but can be changed for late inputs.
+            Record a receipt or an expense for this audit. Date defaults to
+            today but can be changed for late inputs.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -162,7 +159,7 @@ export function AddAuditEntryDialog({
             onValueChange={v => setEntryType(v as FinancialEntryType)}
             className="mb-4"
           >
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList>
               <TabsTrigger value="income">Receipts</TabsTrigger>
               <TabsTrigger value="expense">Expense</TabsTrigger>
             </TabsList>
@@ -252,7 +249,10 @@ export function AddAuditEntryDialog({
                       })
                     }
                   >
-                    <SelectTrigger id="audit-income-payment" className="rounded-lg">
+                    <SelectTrigger
+                      id="audit-income-payment"
+                      className="rounded-lg"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -296,7 +296,9 @@ export function AddAuditEntryDialog({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="audit-expense-amount">Amount ({symbol})</Label>
+                  <Label htmlFor="audit-expense-amount">
+                    Amount ({symbol})
+                  </Label>
                   <Input
                     id="audit-expense-amount"
                     type="number"
@@ -349,7 +351,10 @@ export function AddAuditEntryDialog({
                     })
                   }
                 >
-                  <SelectTrigger id="audit-expense-payment" className="rounded-lg">
+                  <SelectTrigger
+                    id="audit-expense-payment"
+                    className="rounded-lg"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -408,7 +413,7 @@ export function AddAuditEntryDialog({
             </Button>
             <Button
               type="submit"
-              className="rounded-lg bg-slate-900 hover:bg-slate-800"
+              className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
             >
               Add entry
             </Button>

@@ -1,5 +1,9 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
+import { DirectoryTitleCard } from "@/components/ui/directory-page-header";
+
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -27,11 +31,12 @@ import {
   UserPlus,
   UserCog,
   Search,
-  Loader2,
   Briefcase,
   ChevronRight,
   AlertCircle,
   Sparkles,
+  Plus,
+  UsersRound,
 } from "lucide-react";
 import { usePeople, type Person } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
@@ -44,6 +49,10 @@ import {
 } from "@/lib/membership-path";
 import { cn } from "@/lib/utils";
 import { OverviewStatCard } from "@/components/overview-stat-card";
+import { splitServingPeople } from "@/lib/worker-onboarding";
+import { useWorkerOnboarding } from "@/lib/worker-onboarding-context";
+import { WorkerOnboardingDashboard } from "./_components/onboarding-dashboard";
+import { AddWorkerCandidateDialog } from "./_components/onboarding-setup-dialogs";
 
 const panelCard =
   "rounded-xl border border-slate-200/90 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:border-zinc-700/90 dark:bg-zinc-900/95 dark:shadow-[0_1px_3px_rgba(0,0,0,0.25)]";
@@ -97,10 +106,14 @@ function WorkersTable({
   people,
   search,
   onSearchChange,
+  emptyMessage = "No workers found",
+  searchPlaceholder = "Search by name, household, or email...",
 }: {
   people: Person[];
   search: string;
   onSearchChange: (v: string) => void;
+  emptyMessage?: string;
+  searchPlaceholder?: string;
 }) {
   const router = useRouter();
   const filtered = useMemo(
@@ -119,7 +132,7 @@ function WorkersTable({
       <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200/80 bg-slate-50/80 dark:bg-zinc-800/50 dark:border-zinc-700/80">
         <Search className="w-4 h-4 text-slate-400 dark:text-zinc-400 shrink-0" />
         <Input
-          placeholder="Search workers by name, household, or email..."
+          placeholder={searchPlaceholder}
           value={search}
           onChange={e => onSearchChange(e.target.value)}
           className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -133,7 +146,9 @@ function WorkersTable({
               <TableHead>Name</TableHead>
               <TableHead>Household</TableHead>
               <TableHead>Contact</TableHead>
-              <TableHead className="min-w-[200px]">Ministry Involvement</TableHead>
+              <TableHead className="min-w-[200px]">
+                Ministry Involvement
+              </TableHead>
               <TableHead>Type</TableHead>
               <TableHead className="w-10" />
             </TableRow>
@@ -145,7 +160,7 @@ function WorkersTable({
                   colSpan={6}
                   className="text-center text-slate-500 dark:text-zinc-500 py-10"
                 >
-                  No workers found
+                  {emptyMessage}
                 </TableCell>
               </TableRow>
             ) : (
@@ -175,11 +190,11 @@ function WorkersTable({
                   <TableCell>
                     <Badge
                       className={`rounded-lg ${getMembershipDisplayColor(person.membershipType, getPersonVisitDate(person))}`}
-                        >
-                          {getMembershipDisplayLabel(
-                            person.membershipType,
-                            getPersonVisitDate(person),
-                          )}
+                    >
+                      {getMembershipDisplayLabel(
+                        person.membershipType,
+                        getPersonVisitDate(person),
+                      )}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -277,12 +292,12 @@ function MembershipTable({
                   {showNewComer && (
                     <TableCell>
                       <Badge
-                      className={`rounded-lg ${getMembershipDisplayColor(person.membershipType, getPersonVisitDate(person))}`}
-                        >
-                          {getMembershipDisplayLabel(
-                            person.membershipType,
-                            getPersonVisitDate(person),
-                          )}
+                        className={`rounded-lg ${getMembershipDisplayColor(person.membershipType, getPersonVisitDate(person))}`}
+                      >
+                        {getMembershipDisplayLabel(
+                          person.membershipType,
+                          getPersonVisitDate(person),
+                        )}
                       </Badge>
                     </TableCell>
                   )}
@@ -345,20 +360,21 @@ export function WorkersView() {
   const router = useRouter();
   const { people, hydrated } = usePeople();
   const { getPersonMinistries } = useGroupsMinistry();
-  const [activeTab, setActiveTab] = useState("overview");
+  const { config, isAdmin } = useWorkerOnboarding();
+  const [activeTab, setActiveTab] = useState("onboarding");
+  const [isAddCandidateOpen, setIsAddCandidateOpen] = useState(false);
   const [workerSearch, setWorkerSearch] = useState("");
+  const [volunteerSearch, setVolunteerSearch] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
   const [attenderSearch, setAttenderSearch] = useState("");
 
-  const workers = useMemo(
-    () =>
-      people.filter(
-        p =>
-          (p.membershipType === "Worker" ||
-            p.membershipType === "Volunteer Worker") &&
-          p.status === "Active",
-      ),
+  const { workers, volunteers } = useMemo(
+    () => splitServingPeople(people),
     [people],
+  );
+  const servingPeople = useMemo(
+    () => [...workers, ...volunteers],
+    [volunteers, workers],
   );
   const members = useMemo(
     () =>
@@ -376,373 +392,466 @@ export function WorkersView() {
   );
   const newComers = useMemo(
     () =>
-      [...attenders.filter(p => isAttenderNewComer(getPersonVisitDate(p)))].sort(
+      [
+        ...attenders.filter(p => isAttenderNewComer(getPersonVisitDate(p))),
+      ].sort(
         (a, b) =>
           new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime(),
       ),
     [attenders],
   );
   const workersWithMinistry = useMemo(
-    () => workers.filter(p => getPersonMinistries(p.id).length > 0),
-    [workers, getPersonMinistries],
+    () => servingPeople.filter(p => getPersonMinistries(p.id).length > 0),
+    [servingPeople, getPersonMinistries],
   );
   const workersWithoutMinistry = useMemo(
-    () => workers.filter(p => getPersonMinistries(p.id).length === 0),
-    [workers, getPersonMinistries],
+    () => servingPeople.filter(p => getPersonMinistries(p.id).length === 0),
+    [servingPeople, getPersonMinistries],
   );
 
   const ministryBreakdown = useMemo(() => {
     const map = new Map<string, number>();
-    for (const worker of workers) {
+    for (const worker of servingPeople) {
       for (const a of getPersonMinistries(worker.id)) {
         const name = a.ministry?.name ?? "Unnamed ministry";
         map.set(name, (map.get(name) ?? 0) + 1);
       }
     }
-    return [...map.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6);
-  }, [workers, getPersonMinistries]);
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+  }, [servingPeople, getPersonMinistries]);
 
-  const totalActive = workers.length + members.length + attenders.length;
+  const totalActive =
+    workers.length + volunteers.length + members.length + attenders.length;
   const composition = useMemo(
     () => [
-      { label: "Workers", count: workers.length, pct: totalActive ? (workers.length / totalActive) * 100 : 0 },
-      { label: "Members", count: members.length, pct: totalActive ? (members.length / totalActive) * 100 : 0 },
-      { label: "Attenders", count: attenders.length, pct: totalActive ? (attenders.length / totalActive) * 100 : 0 },
+      {
+        label: "Serving team",
+        count: servingPeople.length,
+        pct: totalActive ? (servingPeople.length / totalActive) * 100 : 0,
+      },
+      {
+        label: "Members",
+        count: members.length,
+        pct: totalActive ? (members.length / totalActive) * 100 : 0,
+      },
+      {
+        label: "Attenders",
+        count: attenders.length,
+        pct: totalActive ? (attenders.length / totalActive) * 100 : 0,
+      },
     ],
-    [workers.length, members.length, attenders.length, totalActive],
+    [servingPeople.length, members.length, attenders.length, totalActive],
   );
 
   if (!hydrated) {
-    return (
-      <div className="flex items-center justify-center py-24 text-slate-500 dark:text-zinc-400">
-        <Loader2 className="w-6 h-6 animate-spin mr-2" />
-        Loading membership data...
-      </div>
-    );
+    return <PageSkeleton message="Loading membership data..." />;
   }
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
-      <TabsList className="grid w-full max-w-2xl grid-cols-4 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
-        <TabsTrigger value="overview" className="text-xs sm:text-sm rounded-lg">
-          Overview
-        </TabsTrigger>
-        <TabsTrigger value="workers" className="text-xs sm:text-sm rounded-lg">
-          Workers
-          <TabCount count={workers.length} />
-        </TabsTrigger>
-        <TabsTrigger value="members" className="text-xs sm:text-sm rounded-lg">
-          Members
-          <TabCount count={members.length} />
-        </TabsTrigger>
-        <TabsTrigger value="attenders" className="text-xs sm:text-sm rounded-lg">
-          Attenders
-          <TabCount count={attenders.length} />
-        </TabsTrigger>
-      </TabsList>
+    <div className="space-y-5">
+      <DirectoryTitleCard
+        title="Workers & Service"
+        description="Onboard, prepare, and deploy your ministry team."
+        icon={UsersRound}
+        action={
+          isAdmin
+            ? {
+                label: "Add candidate",
+                icon: Plus,
+                onClick: () => setIsAddCandidateOpen(true),
+                disabled: !config,
+              }
+            : undefined
+        }
+      />
 
-      <TabsContent value="overview" className="mt-0 space-y-5">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 pb-6">
-          <OverviewStatCard
-            label="Total active"
-            value={totalActive}
-            hint="Workers, members & attenders"
-            icon={Users}
-            variant="violet"
-          />
-          <OverviewStatCard
-            label="Workers"
-            value={workers.length}
-            hint={`${workersWithMinistry.length} in ministries`}
-            icon={UserCog}
-            variant="blue"
-          />
-          <OverviewStatCard
-            label="Members"
-            value={members.length}
-            hint="Official church members"
-            icon={UserCheck}
-            variant="emerald"
-          />
-          <OverviewStatCard
-            label="Attenders"
-            value={attenders.length}
-            hint={`${newComers.length} new comer${newComers.length !== 1 ? "s" : ""}`}
-            icon={UserPlus}
-            variant="amber"
-          />
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className={cn(panelCard, "lg:col-span-2")}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-slate-900 dark:text-white">
-                Needs attention
-              </CardTitle>
-              <CardDescription>
-                People worth a follow-up or assignment this week
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div>
-                <div className="flex items-center gap-2 mb-2.5">
-                  <Sparkles className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
-                  <h3 className="text-sm font-medium text-slate-900 dark:text-white">
-                    New comers
-                    {newComers.length > 0 && (
-                      <span className="ml-2 text-slate-500 dark:text-zinc-500 font-normal">
-                        ({newComers.length})
-                      </span>
-                    )}
-                  </h3>
-                </div>
-                {newComers.length === 0 ? (
-                  <p className="text-sm text-slate-500 dark:text-zinc-500 py-3 px-1">
-                    No new comers in the last 30 days.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {newComers.slice(0, 4).map(person => (
-                      <OverviewPersonRow
-                        key={person.id}
-                        person={person}
-                        subtitle={`Joined ${formatDate(person.joinDate)} · ${person.householdName || "No household"}`}
-                        onClick={() => router.push(`/people/${person.id}`)}
-                      />
-                    ))}
-                    {newComers.length > 4 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full text-slate-600 dark:text-zinc-400"
-                        onClick={() => setActiveTab("attenders")}
-                      >
-                        View all {newComers.length} new comers
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="border-t border-slate-200/80 dark:border-zinc-700/80 pt-4">
-                <div className="flex items-center gap-2 mb-2.5">
-                  <AlertCircle className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
-                  <h3 className="text-sm font-medium text-slate-900 dark:text-white">
-                    Workers without ministry
-                    {workersWithoutMinistry.length > 0 && (
-                      <span className="ml-2 text-slate-500 dark:text-zinc-500 font-normal">
-                        ({workersWithoutMinistry.length})
-                      </span>
-                    )}
-                  </h3>
-                </div>
-                {workersWithoutMinistry.length === 0 ? (
-                  <p className="text-sm text-slate-500 dark:text-zinc-500 py-3 px-1">
-                    All workers have at least one ministry assignment.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {workersWithoutMinistry.slice(0, 4).map(person => (
-                      <OverviewPersonRow
-                        key={person.id}
-                        person={person}
-                        subtitle={person.householdName || "No household"}
-                        onClick={() => router.push(`/people/${person.id}`)}
-                      />
-                    ))}
-                    {workersWithoutMinistry.length > 4 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full text-slate-600 dark:text-zinc-400"
-                        onClick={() => setActiveTab("workers")}
-                      >
-                        View all workers
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className={panelCard}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base text-slate-900 dark:text-white">
-                Ministry coverage
-              </CardTitle>
-              <CardDescription>
-                {workersWithMinistry.length} of {workers.length} workers
-                assigned
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
-                  {composition.map((seg, i) => (
-                    <div
-                      key={seg.label}
-                      className={cn(
-                        "h-full",
-                        i === 0 && "bg-slate-700 dark:bg-zinc-400",
-                        i === 1 && "bg-slate-500 dark:bg-zinc-500",
-                        i === 2 && "bg-slate-300 dark:bg-zinc-600",
-                      )}
-                      style={{ width: `${seg.pct}%` }}
-                      title={`${seg.label}: ${seg.count}`}
-                    />
-                  ))}
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-zinc-400">
-                  {composition.map(seg => (
-                    <span key={seg.label}>
-                      {seg.label}{" "}
-                      <span className="font-medium text-slate-900 dark:text-white">
-                        {seg.count}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {ministryBreakdown.length > 0 ? (
-                <div className="space-y-2 pt-1">
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-500">
-                    By ministry
-                  </p>
-                  {ministryBreakdown.map(([name, count]) => (
-                    <div
-                      key={name}
-                      className="flex items-center justify-between text-sm py-1.5 border-b border-slate-100 dark:border-zinc-800 last:border-0"
-                    >
-                      <span className="text-slate-700 dark:text-zinc-300 truncate pr-2">
-                        {name}
-                      </span>
-                      <span className="tabular-nums font-medium text-slate-900 dark:text-white shrink-0">
-                        {count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-500 dark:text-zinc-500">
-                  No ministry assignments recorded yet.
-                </p>
-              )}
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full rounded-lg border-slate-200 dark:border-zinc-700"
-                onClick={() => setActiveTab("workers")}
-              >
-                <Briefcase className="w-3.5 h-3.5 mr-2" />
-                Open workers list
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-3">
-          {(
-            [
-              { tab: "workers", label: "Browse workers", count: workers.length, desc: "Ministry involvement" },
-              { tab: "members", label: "Browse members", count: members.length, desc: "Official members" },
-              { tab: "attenders", label: "Browse attenders", count: attenders.length, desc: "Visitors & new comers" },
-            ] as const
-          ).map(item => (
-            <button
-              key={item.tab}
-              type="button"
-              onClick={() => setActiveTab(item.tab)}
-              className={cn(
-                panelCard,
-                "p-4 text-left hover:shadow-[0_2px_8px_rgba(15,23,42,0.08)] dark:hover:shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition-shadow",
-              )}
-            >
-              <p className="font-medium text-sm text-slate-900 dark:text-white">
-                {item.label}
-              </p>
-              <p className="text-2xl font-semibold tabular-nums text-slate-900 dark:text-white mt-1">
-                {item.count}
-              </p>
-              <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
-                {item.desc}
-              </p>
-            </button>
-          ))}
-        </div>
-      </TabsContent>
-
-      <TabsContent value="workers" className="mt-0">
-        <Card className={panelCard}>
-          <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-white">
-              Workers & Ministry Involvement
-            </CardTitle>
-            <CardDescription>
-              {workers.length} active worker
-              {workers.length !== 1 ? "s" : ""} — {workersWithMinistry.length}{" "}
-              with ministry assignments
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <WorkersTable
-              people={workers}
-              search={workerSearch}
-              onSearchChange={setWorkerSearch}
-            />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="members" className="mt-0">
-        <Card className={panelCard}>
-          <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-white">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-5"
+      >
+        <div className="overflow-x-auto pb-1">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+            <TabsTrigger value="workers">
+              Workers
+              <TabCount count={workers.length} />
+            </TabsTrigger>
+            <TabsTrigger value="volunteers">
+              Volunteers
+              <TabCount count={volunteers.length} />
+            </TabsTrigger>
+            <TabsTrigger value="members">
               Members
-            </CardTitle>
-            <CardDescription>
-              {members.length} official church member
-              {members.length !== 1 ? "s" : ""}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <MembershipTable
-              people={members}
-              search={memberSearch}
-              onSearchChange={setMemberSearch}
-              emptyMessage="No members found"
-            />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="attenders" className="mt-0">
-        <Card className={panelCard}>
-          <CardHeader>
-            <CardTitle className="text-slate-900 dark:text-white">
+              <TabCount count={members.length} />
+            </TabsTrigger>
+            <TabsTrigger value="attenders">
               Attenders
-            </CardTitle>
-            <CardDescription>
-              {attenders.length} active attender
-              {attenders.length !== 1 ? "s" : ""} — {newComers.length} shown as
-              New Comer (first 30 days)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <MembershipTable
-              people={attenders}
-              search={attenderSearch}
-              onSearchChange={setAttenderSearch}
-              showNewComer
-              emptyMessage="No attenders found"
+              <TabCount count={attenders.length} />
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="onboarding" className="mt-0">
+          <WorkerOnboardingDashboard />
+        </TabsContent>
+
+        <TabsContent value="overview" className="mt-0 space-y-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 pb-6">
+            <OverviewStatCard
+              label="Total active"
+              value={totalActive}
+              hint="Workers, volunteers, members & attenders"
+              icon={Users}
+              variant="accent"
             />
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+            <OverviewStatCard
+              label="Serving team"
+              value={servingPeople.length}
+              hint={`${workersWithMinistry.length} in ministries`}
+              icon={UserCog}
+              variant="accent"
+            />
+            <OverviewStatCard
+              label="Members"
+              value={members.length}
+              hint="Official church members"
+              icon={UserCheck}
+              variant="accent"
+            />
+            <OverviewStatCard
+              label="Attenders"
+              value={attenders.length}
+              hint={`${newComers.length} new comer${newComers.length !== 1 ? "s" : ""}`}
+              icon={UserPlus}
+              variant="accent"
+            />
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className={cn(panelCard, "lg:col-span-2")}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-slate-900 dark:text-white">
+                  Needs attention
+                </CardTitle>
+                <CardDescription>
+                  People worth a follow-up or assignment this week
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <Sparkles className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
+                    <h3 className="text-sm font-medium text-slate-900 dark:text-white">
+                      New comers
+                      {newComers.length > 0 && (
+                        <span className="ml-2 text-slate-500 dark:text-zinc-500 font-normal">
+                          ({newComers.length})
+                        </span>
+                      )}
+                    </h3>
+                  </div>
+                  {newComers.length === 0 ? (
+                    <p className="text-sm text-slate-500 dark:text-zinc-500 py-3 px-1">
+                      No new comers in the last 30 days.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {newComers.slice(0, 4).map(person => (
+                        <OverviewPersonRow
+                          key={person.id}
+                          person={person}
+                          subtitle={`Joined ${formatDate(person.joinDate)} · ${person.householdName || "No household"}`}
+                          onClick={() => router.push(`/people/${person.id}`)}
+                        />
+                      ))}
+                      {newComers.length > 4 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-slate-600 dark:text-zinc-400"
+                          onClick={() => setActiveTab("attenders")}
+                        >
+                          View all {newComers.length} new comers
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-slate-200/80 dark:border-zinc-700/80 pt-4">
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <AlertCircle className="w-4 h-4 text-slate-500 dark:text-zinc-400" />
+                    <h3 className="text-sm font-medium text-slate-900 dark:text-white">
+                      Serving people without ministry
+                      {workersWithoutMinistry.length > 0 && (
+                        <span className="ml-2 text-slate-500 dark:text-zinc-500 font-normal">
+                          ({workersWithoutMinistry.length})
+                        </span>
+                      )}
+                    </h3>
+                  </div>
+                  {workersWithoutMinistry.length === 0 ? (
+                    <p className="text-sm text-slate-500 dark:text-zinc-500 py-3 px-1">
+                      All workers have at least one ministry assignment.
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {workersWithoutMinistry.slice(0, 4).map(person => (
+                        <OverviewPersonRow
+                          key={person.id}
+                          person={person}
+                          subtitle={person.householdName || "No household"}
+                          onClick={() => router.push(`/people/${person.id}`)}
+                        />
+                      ))}
+                      {workersWithoutMinistry.length > 4 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-slate-600 dark:text-zinc-400"
+                          onClick={() => setActiveTab("workers")}
+                        >
+                          View all workers
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={panelCard}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-slate-900 dark:text-white">
+                  Ministry coverage
+                </CardTitle>
+                <CardDescription>
+                  {workersWithMinistry.length} of {servingPeople.length} workers
+                  and volunteers assigned
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
+                    {composition.map((seg, i) => (
+                      <div
+                        key={seg.label}
+                        className={cn(
+                          "h-full",
+                          i === 0 && "bg-slate-700 dark:bg-zinc-400",
+                          i === 1 && "bg-slate-500 dark:bg-zinc-500",
+                          i === 2 && "bg-slate-300 dark:bg-zinc-600",
+                        )}
+                        style={{ width: `${seg.pct}%` }}
+                        title={`${seg.label}: ${seg.count}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-zinc-400">
+                    {composition.map(seg => (
+                      <span key={seg.label}>
+                        {seg.label}{" "}
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {seg.count}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {ministryBreakdown.length > 0 ? (
+                  <div className="space-y-2 pt-1">
+                    <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-500">
+                      By ministry
+                    </p>
+                    {ministryBreakdown.map(([name, count]) => (
+                      <div
+                        key={name}
+                        className="flex items-center justify-between text-sm py-1.5 border-b border-slate-100 dark:border-zinc-800 last:border-0"
+                      >
+                        <span className="text-slate-700 dark:text-zinc-300 truncate pr-2">
+                          {name}
+                        </span>
+                        <span className="tabular-nums font-medium text-slate-900 dark:text-white shrink-0">
+                          {count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500 dark:text-zinc-500">
+                    No ministry assignments recorded yet.
+                  </p>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded-lg border-slate-200 dark:border-zinc-700"
+                  onClick={() => setActiveTab("workers")}
+                >
+                  <Briefcase className="w-3.5 h-3.5 mr-2" />
+                  Open workers list
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {(
+              [
+                {
+                  tab: "workers",
+                  label: "Browse workers",
+                  count: workers.length,
+                  desc: "Ministry involvement",
+                },
+                {
+                  tab: "volunteers",
+                  label: "Browse volunteers",
+                  count: volunteers.length,
+                  desc: "Volunteer workers",
+                },
+                {
+                  tab: "members",
+                  label: "Browse members",
+                  count: members.length,
+                  desc: "Official members",
+                },
+                {
+                  tab: "attenders",
+                  label: "Browse attenders",
+                  count: attenders.length,
+                  desc: "Visitors & new comers",
+                },
+              ] as const
+            ).map(item => (
+              <button
+                key={item.tab}
+                type="button"
+                onClick={() => setActiveTab(item.tab)}
+                className={cn(
+                  panelCard,
+                  "p-4 text-left hover:shadow-[0_2px_8px_rgba(15,23,42,0.08)] dark:hover:shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition-shadow",
+                )}
+              >
+                <p className="font-medium text-sm text-slate-900 dark:text-white">
+                  {item.label}
+                </p>
+                <p className="text-2xl font-semibold tabular-nums text-slate-900 dark:text-white mt-1">
+                  {item.count}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
+                  {item.desc}
+                </p>
+              </button>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="workers" className="mt-0">
+          <Card className={panelCard}>
+            <CardHeader>
+              <CardTitle className="text-slate-900 dark:text-white">
+                Workers & Ministry Involvement
+              </CardTitle>
+              <CardDescription>
+                {workers.length} active worker
+                {workers.length !== 1 ? "s" : ""} —{" "}
+                {
+                  workers.filter(
+                    person => getPersonMinistries(person.id).length > 0,
+                  ).length
+                }{" "}
+                with ministry assignments
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WorkersTable
+                people={workers}
+                search={workerSearch}
+                onSearchChange={setWorkerSearch}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="volunteers" className="mt-0">
+          <Card className={panelCard}>
+            <CardHeader>
+              <CardTitle className="text-slate-900 dark:text-white">
+                Volunteers &amp; Ministry Involvement
+              </CardTitle>
+              <CardDescription>
+                {volunteers.length} active volunteer worker
+                {volunteers.length !== 1 ? "s" : ""}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <WorkersTable
+                people={volunteers}
+                search={volunteerSearch}
+                onSearchChange={setVolunteerSearch}
+                emptyMessage="No volunteer workers found"
+                searchPlaceholder="Search volunteers by name, household, or email..."
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="members" className="mt-0">
+          <Card className={panelCard}>
+            <CardHeader>
+              <CardTitle className="text-slate-900 dark:text-white">
+                Members
+              </CardTitle>
+              <CardDescription>
+                {members.length} official church member
+                {members.length !== 1 ? "s" : ""}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MembershipTable
+                people={members}
+                search={memberSearch}
+                onSearchChange={setMemberSearch}
+                emptyMessage="No members found"
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="attenders" className="mt-0">
+          <Card className={panelCard}>
+            <CardHeader>
+              <CardTitle className="text-slate-900 dark:text-white">
+                Attenders
+              </CardTitle>
+              <CardDescription>
+                {attenders.length} active attender
+                {attenders.length !== 1 ? "s" : ""} — {newComers.length} shown
+                as New Comer (first 30 days)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MembershipTable
+                people={attenders}
+                search={attenderSearch}
+                onSearchChange={setAttenderSearch}
+                showNewComer
+                emptyMessage="No attenders found"
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <AddWorkerCandidateDialog
+        open={isAddCandidateOpen}
+        onOpenChange={setIsAddCandidateOpen}
+      />
+    </div>
   );
 }

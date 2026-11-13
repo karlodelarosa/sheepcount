@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "build:cf": "opennextjs-cloudflare build",
+    "build:cf": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
     "preview": "npm run build:cf && opennextjs-cloudflare preview",
     "deploy": "npm run build:cf && opennextjs-cloudflare deploy",
     "upload": "npm run build:cf && opennextjs-cloudflare upload",
@@ -57,7 +57,7 @@
     "html-to-image": "^1.11.13",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.487.0",
-    "next": "^15.5.18",
+    "next": "^15.5.29",
     "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-day-picker": "^9.11.1",
@@ -70,7 +70,10 @@
     "vaul": "^1.1.2"
   },
   "overrides": {
-    "@radix-ui/react-dismissable-layer": "1.1.11"
+    "@radix-ui/react-dismissable-layer": "1.1.11",
+    "@radix-ui/react-focus-scope": "1.1.9",
+    "postcss": "$postcss",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.1",
@@ -87,14 +90,14 @@
     "@vitest/coverage-v8": "^3.2.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.38.0",
-    "eslint-config-next": "15.3.1",
+    "eslint-config-next": "^15.5.29",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-storybook": "^9.1.13",
     "eslint-plugin-unused-imports": "^4.3.0",
     "playwright": "^1.56.1",
-    "postcss": "^8",
+    "postcss": "^8.5.32",
     "prettier": "^3.6.2",
     "storybook": "^9.1.13",
     "tailwindcss": "^3.4.1",

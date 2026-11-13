@@ -98,7 +98,7 @@ export function EditSessionDetailsDialog({
                 <SelectValue placeholder="Select service type" />
               </SelectTrigger>
               <SelectContent>
-                {serviceTypes.map((type) => (
+                {serviceTypes.map(type => (
                   <SelectItem key={type.id} value={type.id}>
                     {type.name}
                   </SelectItem>
@@ -113,7 +113,7 @@ export function EditSessionDetailsDialog({
               id="session-date"
               type="date"
               value={sessionDate}
-              onChange={(event) => setSessionDate(event.target.value)}
+              onChange={event => setSessionDate(event.target.value)}
               disabled={isSaving}
               required
             />
@@ -125,7 +125,7 @@ export function EditSessionDetailsDialog({
               id="session-start-time"
               type="time"
               value={startTime}
-              onChange={(event) => setStartTime(event.target.value)}
+              onChange={event => setStartTime(event.target.value)}
               disabled={isSaving}
               required
             />

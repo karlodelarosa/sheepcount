@@ -484,6 +484,7 @@ export type Database = {
       };
       church_monthly_themes: {
         Row: {
+          cadence: "monthly" | "quarterly";
           content: string;
           created_at: string;
           description: string;
@@ -495,6 +496,7 @@ export type Database = {
           year: number;
         };
         Insert: {
+          cadence?: "monthly" | "quarterly";
           content?: string;
           created_at?: string;
           description?: string;
@@ -506,6 +508,7 @@ export type Database = {
           year: number;
         };
         Update: {
+          cadence?: "monthly" | "quarterly";
           content?: string;
           created_at?: string;
           description?: string;
@@ -684,6 +687,99 @@ export type Database = {
           },
         ];
       };
+      worker_onboarding_config: {
+        Row: {
+          course_id: string;
+          organization_id: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          course_id: string;
+          organization_id: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          course_id?: string;
+          organization_id?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
+      worker_onboarding_candidates: {
+        Row: {
+          approved_at: string | null;
+          course_id: string;
+          created_at: string;
+          created_by: string | null;
+          deployed_at: string | null;
+          deployed_by: string | null;
+          deployed_membership_type: string | null;
+          deployed_ministry_id: string | null;
+          deployed_role: string;
+          deployed_service_role: string;
+          deployed_team_id: string | null;
+          id: string;
+          organization_id: string;
+          person_id: string;
+          progress_id: string;
+          return_note: string;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: string;
+          target_ministry_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          approved_at?: string | null;
+          course_id: string;
+          created_at?: string;
+          created_by?: string | null;
+          deployed_at?: string | null;
+          deployed_by?: string | null;
+          deployed_membership_type?: string | null;
+          deployed_ministry_id?: string | null;
+          deployed_role?: string;
+          deployed_service_role?: string;
+          deployed_team_id?: string | null;
+          id?: string;
+          organization_id: string;
+          person_id: string;
+          progress_id: string;
+          return_note?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          target_ministry_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          approved_at?: string | null;
+          course_id?: string;
+          created_at?: string;
+          created_by?: string | null;
+          deployed_at?: string | null;
+          deployed_by?: string | null;
+          deployed_membership_type?: string | null;
+          deployed_ministry_id?: string | null;
+          deployed_role?: string;
+          deployed_service_role?: string;
+          deployed_team_id?: string | null;
+          id?: string;
+          organization_id?: string;
+          person_id?: string;
+          progress_id?: string;
+          return_note?: string;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          target_ministry_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -706,6 +802,49 @@ export type Database = {
       };
       seed_default_discipleship_tracks: {
         Args: { org_id: string };
+        Returns: undefined;
+      };
+      set_worker_onboarding_course: {
+        Args: { p_organization_id: string; p_course_id: string };
+        Returns: Database["public"]["Tables"]["worker_onboarding_config"]["Row"];
+      };
+      create_worker_onboarding_candidate: {
+        Args: {
+          p_organization_id: string;
+          p_person_id: string;
+          p_target_ministry_id: string;
+        };
+        Returns: Database["public"]["Tables"]["worker_onboarding_candidates"]["Row"];
+      };
+      update_worker_onboarding_target: {
+        Args: { p_candidate_id: string; p_target_ministry_id: string };
+        Returns: Database["public"]["Tables"]["worker_onboarding_candidates"]["Row"];
+      };
+      submit_worker_onboarding_candidate: {
+        Args: { p_candidate_id: string };
+        Returns: Database["public"]["Tables"]["worker_onboarding_candidates"]["Row"];
+      };
+      approve_worker_onboarding_candidate: {
+        Args: { p_candidate_id: string };
+        Returns: Database["public"]["Tables"]["worker_onboarding_candidates"]["Row"];
+      };
+      return_worker_onboarding_candidate: {
+        Args: { p_candidate_id: string; p_return_note: string };
+        Returns: Database["public"]["Tables"]["worker_onboarding_candidates"]["Row"];
+      };
+      deploy_worker_onboarding_candidate: {
+        Args: {
+          p_candidate_id: string;
+          p_membership_type: string;
+          p_ministry_id: string;
+          p_team_id?: string | null;
+          p_role?: string;
+          p_service_role?: string;
+        };
+        Returns: Database["public"]["Tables"]["worker_onboarding_candidates"]["Row"];
+      };
+      remove_worker_onboarding_candidate: {
+        Args: { p_candidate_id: string };
         Returns: undefined;
       };
     };

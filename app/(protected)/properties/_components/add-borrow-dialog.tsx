@@ -61,7 +61,7 @@ export function AddBorrowDialog({
       defaultPropertyId &&
       availableProperties.some(p => p.id === defaultPropertyId)
         ? defaultPropertyId
-        : availableProperties[0]?.id ?? "";
+        : (availableProperties[0]?.id ?? "");
     setFormData({
       propertyId: initialPropertyId,
       borrowerPersonId: "",
@@ -213,8 +213,10 @@ export function AddBorrowDialog({
             </Button>
             <Button
               type="submit"
-              className="rounded-lg bg-slate-900 hover:bg-slate-800"
-              disabled={!formData.propertyId || availableProperties.length === 0}
+              className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
+              disabled={
+                !formData.propertyId || availableProperties.length === 0
+              }
             >
               Record borrow
             </Button>

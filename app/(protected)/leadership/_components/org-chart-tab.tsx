@@ -33,14 +33,13 @@ export function OrgChartTab() {
   const getPersonName = (personId: string) =>
     people.find(person => person.id === personId)?.name ?? "Unknown";
 
-  const CardBgClass =
-    "border-slate-200/60 bg-white/50 dark:border-zinc-700/60 dark:bg-zinc-800/50";
+  const CardBgClass = "min-w-0 rounded-2xl border-border/60 bg-card shadow-sm";
   const TextForegroundClass = "text-slate-900 dark:text-white";
   const TextMutedClass = "text-slate-600 dark:text-zinc-400";
   const HeadPastorBg =
-    "from-indigo-500 to-indigo-700 dark:from-purple-600 dark:to-purple-800";
+    "from-[var(--accent-color)] to-[var(--accent-color-muted)]";
   const DepartmentIconBg =
-    "from-blue-500 to-blue-700 dark:from-sky-600 dark:to-cyan-800";
+    "from-[var(--accent-color)] to-[var(--accent-color-muted)]";
   const MemberAvatarClass =
     "from-slate-900 to-slate-700 dark:from-zinc-700 dark:to-zinc-500";
 
@@ -52,7 +51,7 @@ export function OrgChartTab() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-40 w-full rounded-xl" />
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           <Skeleton className="h-64 w-full rounded-xl" />
           <Skeleton className="h-64 w-full rounded-xl" />
         </div>
@@ -70,14 +69,14 @@ export function OrgChartTab() {
                 <div
                   className={`w-24 h-24 rounded-full bg-gradient-to-br ${HeadPastorBg} flex items-center justify-center mx-auto mb-4 shadow-lg`}
                 >
-                  <span className="text-white text-xl font-semibold">
+                  <span className="text-[var(--accent-color-foreground)] text-xl font-semibold">
                     {getInitials(headPastor.name)}
                   </span>
                 </div>
                 <CardTitle className={`mb-2 ${TextForegroundClass}`}>
                   {headPastor.name}
                 </CardTitle>
-                <Badge className="bg-indigo-500 hover:bg-indigo-600 text-white dark:bg-purple-600 dark:hover:bg-purple-700">
+                <Badge className="bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]">
                   Head Pastor
                 </Badge>
               </div>
@@ -104,7 +103,7 @@ export function OrgChartTab() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
           {orgChart.departments.map(department => {
             const deptHead = department.headPersonId
               ? people.find(person => person.id === department.headPersonId)

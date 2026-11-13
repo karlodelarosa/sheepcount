@@ -1,4 +1,4 @@
-import { formatCurrency, type SupportedCurrency } from "@/lib/currency";
+import { formatCurrency } from "@/lib/currency";
 import type { AuditPrintData, ReportSignatory } from "./audit-overview";
 
 function formatDate(dateStr: string): string {

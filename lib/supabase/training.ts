@@ -156,7 +156,6 @@ export async function fetchCourseModules(
       "id, course_id, name, description, sort_order, training_courses!inner(organization_id, is_active)",
     )
     .eq("training_courses.organization_id", organizationId)
-    .eq("training_courses.is_active", true)
     .order("sort_order");
 
   if (error) throw error;
@@ -172,8 +171,7 @@ export async function fetchPersonCourseProgress(
     .select(
       "id, course_id, person_id, status, completed_module_ids, monday_mission_action, enrolled_date, completed_at, training_courses!inner(organization_id, is_active)",
     )
-    .eq("training_courses.organization_id", organizationId)
-    .eq("training_courses.is_active", true);
+    .eq("training_courses.organization_id", organizationId);
 
   if (error) throw error;
   return (data as DbPersonCourseProgress[]).map(toProgress);
@@ -416,9 +414,7 @@ export async function assertCellLeaderTrainingComplete(
 ): Promise<void> {
   const { data, error } = await supabase
     .from("person_course_progress")
-    .select(
-      "status, training_courses!inner(organization_id, slug)",
-    )
+    .select("status, training_courses!inner(organization_id, slug)")
     .eq("person_id", personId)
     .eq("training_courses.organization_id", organizationId)
     .eq("training_courses.slug", CELL_LEADERSHIP_COURSE_SLUG)
@@ -439,7 +435,9 @@ export function getPersonTrainingBadges(
   progress: PersonCourseProgress[],
 ): TrainingBadge[] {
   return progress
-    .filter(p => p.personId === personId && p.status === "completed" && p.completedAt)
+    .filter(
+      p => p.personId === personId && p.status === "completed" && p.completedAt,
+    )
     .map(p => {
       const course = courses.find(c => c.id === p.courseId);
       return {

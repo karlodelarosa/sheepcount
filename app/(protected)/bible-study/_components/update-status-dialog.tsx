@@ -21,13 +21,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useBibleStudy } from "@/lib/bible-study";
-import type { BibleStudyGroup, BibleStudyStatus } from "@/lib/supabase/bible-study";
+import type {
+  BibleStudyGroup,
+  BibleStudyStatus,
+} from "@/lib/supabase/bible-study";
 
-const STATUS_OPTIONS: { value: BibleStudyStatus; label: string; description: string }[] = [
-  { value: "active", label: "Active", description: "Group is currently meeting" },
-  { value: "completed", label: "Completed", description: "Bible study finished successfully" },
+const STATUS_OPTIONS: {
+  value: BibleStudyStatus;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "active",
+    label: "Active",
+    description: "Group is currently meeting",
+  },
+  {
+    value: "completed",
+    label: "Completed",
+    description: "Bible study finished successfully",
+  },
   { value: "paused", label: "Paused", description: "Temporarily on hold" },
-  { value: "cancelled", label: "Cancelled", description: "Ended due to unforeseen circumstances" },
+  {
+    value: "cancelled",
+    label: "Cancelled",
+    description: "Ended due to unforeseen circumstances",
+  },
 ];
 
 interface UpdateBibleStudyStatusDialogProps {
@@ -91,7 +110,10 @@ export function UpdateBibleStudyStatusDialog({
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={v => setStatus(v as BibleStudyStatus)}>
+            <Select
+              value={status}
+              onValueChange={v => setStatus(v as BibleStudyStatus)}
+            >
               <SelectTrigger id="status">
                 <SelectValue />
               </SelectTrigger>
@@ -104,7 +126,9 @@ export function UpdateBibleStudyStatusDialog({
               </SelectContent>
             </Select>
             {selectedOption && (
-              <p className="text-sm text-muted-foreground">{selectedOption.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {selectedOption.description}
+              </p>
             )}
           </div>
 

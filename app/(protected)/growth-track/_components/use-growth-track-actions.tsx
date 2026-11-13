@@ -7,10 +7,7 @@ import { useDiscipleship } from "@/lib/discipleship";
 import { usePeople } from "@/lib/people";
 import type { GrowthTrackPerson } from "../_lib/types";
 import type { NextStepAction } from "../_lib/types";
-import {
-  getActionHubAction,
-  getNextStepAction,
-} from "../_lib/filters";
+import { getActionHubAction, getNextStepAction } from "../_lib/filters";
 import {
   cellGroupHasLeader,
   getEffectiveCellGroupLeaderId,
@@ -20,10 +17,7 @@ import {
   isDialogAction,
   type GrowthTrackDialogMode,
 } from "./growth-track-action-dialog";
-import {
-  FollowUpDialog,
-  type FollowUpMethod,
-} from "./follow-up-dialog";
+import { FollowUpDialog, type FollowUpMethod } from "./follow-up-dialog";
 
 export function useGrowthTrackActions() {
   const {
@@ -42,9 +36,8 @@ export function useGrowthTrackActions() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [followUpOpen, setFollowUpOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<GrowthTrackDialogMode>(
-    "assign_cell_group",
-  );
+  const [dialogMode, setDialogMode] =
+    useState<GrowthTrackDialogMode>("assign_cell_group");
   const [activePerson, setActivePerson] = useState<GrowthTrackPerson | null>(
     null,
   );
@@ -222,7 +215,10 @@ export function useGrowthTrackActions() {
     }
   };
 
-  const handleFollowUpConfirm = async (method: FollowUpMethod, notes: string) => {
+  const handleFollowUpConfirm = async (
+    method: FollowUpMethod,
+    notes: string,
+  ) => {
     if (!activePerson) return;
     await completeFollowUp(activePerson.id, method, notes);
   };

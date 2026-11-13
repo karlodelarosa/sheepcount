@@ -1,10 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Sparkles, Edit, Plus } from "lucide-react";
-import { BulletText } from "./bullet-text";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export function PriorYearActionPointsBanner({
   priorYear,

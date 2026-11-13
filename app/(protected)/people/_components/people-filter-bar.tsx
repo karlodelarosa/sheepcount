@@ -59,7 +59,6 @@ interface PeopleFilterBarProps {
   search: string;
   onSearchChange: (search: string) => void;
   onFiltersChange: (filters: PeopleFilters) => void;
-  resultCount?: number;
 }
 
 export function PeopleFilterBar({
@@ -67,25 +66,29 @@ export function PeopleFilterBar({
   search,
   onSearchChange,
   onFiltersChange,
-  resultCount,
 }: PeopleFilterBarProps) {
   const activeFilterCount = countActivePeopleFilters(filters);
   const showClear = hasActivePeopleFilters(filters);
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-col lg:flex-row gap-3">
-        <div className="flex items-center gap-2 flex-1 px-4 py-2 bg-slate-50 rounded-xl border border-slate-200/60 dark:bg-zinc-700 dark:border-zinc-600/60">
-          <Search className="w-4 h-4 text-slate-400 dark:text-zinc-400 shrink-0" />
+      <div className="flex flex-col gap-3 lg:flex-row">
+        <div className="flex min-h-11 flex-1 items-center gap-2 rounded-xl border border-border/80 bg-background px-3 shadow-sm focus-within:ring-2 focus-within:ring-[var(--accent-color)]">
+          <Search
+            className="size-4 shrink-0 text-muted-foreground"
+            aria-hidden="true"
+          />
           <Input
-            placeholder="Search name, phone, social, household, or email..."
+            type="search"
+            aria-label="Search people"
+            placeholder="Search name, phone, email, or household..."
             value={search}
-            onChange={e => onSearchChange(e.target.value)}
-            className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400 text-slate-900 dark:placeholder:text-zinc-400 dark:text-white"
+            onChange={event => onSearchChange(event.target.value)}
+            className="h-10 border-0 bg-transparent px-0 text-foreground shadow-none placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
           />
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:flex lg:shrink-0">
           <Select
             value={filters.status}
             onValueChange={value =>
@@ -95,7 +98,10 @@ export function PeopleFilterBar({
               })
             }
           >
-            <SelectTrigger className="w-full sm:w-[140px] rounded-xl">
+            <SelectTrigger
+              aria-label="Filter by status"
+              className="min-h-11 w-full rounded-xl bg-background shadow-sm lg:w-40"
+            >
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -116,7 +122,10 @@ export function PeopleFilterBar({
               })
             }
           >
-            <SelectTrigger className="w-full sm:w-[160px] rounded-xl">
+            <SelectTrigger
+              aria-label="Filter by membership type"
+              className="min-h-11 w-full rounded-xl bg-background shadow-sm lg:w-44"
+            >
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -132,12 +141,12 @@ export function PeopleFilterBar({
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="rounded-xl gap-2 border-slate-200/60 dark:border-zinc-600/60"
+                className="min-h-11 w-full gap-2 rounded-xl border-border/80 bg-background shadow-sm lg:w-auto"
               >
-                <SlidersHorizontal className="w-4 h-4" />
-                Advanced
+                <SlidersHorizontal className="size-4" />
+                Filters
                 {activeFilterCount > 0 && (
-                  <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-900 px-1.5 text-[10px] font-semibold text-white dark:bg-purple-600">
+                  <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent-color)] px-1.5 text-[10px] font-semibold text-[var(--accent-color-foreground)]">
                     {activeFilterCount}
                   </span>
                 )}
@@ -145,10 +154,10 @@ export function PeopleFilterBar({
             </PopoverTrigger>
             <PopoverContent
               align="end"
-              className="w-[min(100vw-2rem,320px)] rounded-xl p-4 space-y-4"
+              className="w-[min(100vw-2rem,320px)] space-y-4 rounded-xl p-4"
             >
               <div className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <p className="text-sm font-medium text-foreground">
                   Evangelism stage
                 </p>
                 <Select
@@ -175,7 +184,7 @@ export function PeopleFilterBar({
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <p className="text-sm font-medium text-foreground">
                   Achievements
                 </p>
                 <Select
@@ -202,7 +211,7 @@ export function PeopleFilterBar({
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <p className="text-sm font-medium text-foreground">
                     Prospect
                   </p>
                   <Select
@@ -226,8 +235,8 @@ export function PeopleFilterBar({
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    New comer
+                  <p className="text-sm font-medium text-foreground">
+                    Newcomer
                   </p>
                   <Select
                     value={filters.newcomer}
@@ -256,7 +265,7 @@ export function PeopleFilterBar({
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-xl text-muted-foreground"
+              className="min-h-11 rounded-xl text-muted-foreground sm:col-span-3 lg:min-h-0"
               onClick={() =>
                 onFiltersChange({
                   ...DEFAULT_PEOPLE_FILTERS,
@@ -264,28 +273,12 @@ export function PeopleFilterBar({
                 })
               }
             >
-              <X className="w-4 h-4 mr-1" />
+              <X className="mr-1 size-4" />
               Clear filters
             </Button>
           )}
         </div>
       </div>
-
-      {resultCount !== undefined && (
-        <p className="text-xs text-slate-500 dark:text-zinc-400 px-1">
-          {showClear ? (
-            <>
-              Showing {resultCount} {resultCount === 1 ? "person" : "people"}{" "}
-              matching your filters
-            </>
-          ) : (
-            <>
-              {resultCount} {resultCount === 1 ? "person" : "people"} in
-              directory
-            </>
-          )}
-        </p>
-      )}
     </div>
   );
 }

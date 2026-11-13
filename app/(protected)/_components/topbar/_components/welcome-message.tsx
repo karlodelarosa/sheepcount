@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTheme } from "@/context/theme-context";
-import { Calendar } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 const routeTitles: Record<string, string> = {
   dashboard: "Dashboard",
@@ -12,6 +12,7 @@ const routeTitles: Record<string, string> = {
   households: "Households",
   leadership: "Leadership",
   "life-groups": "Life Groups",
+  "cell-groups": "Cell Groups",
   "work-ministry": "Work Ministry",
   training: "Training",
   discipleship: "Discipleship",
@@ -38,11 +39,6 @@ function getPageTitle(pathname: string) {
 export function WelcomeMessage() {
   const pathname = usePathname();
   const { settings } = useTheme();
-  const today = new Date().toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
 
   return (
     <div className="flex items-center gap-2 min-w-0">
@@ -51,14 +47,12 @@ export function WelcomeMessage() {
         <span className="font-medium text-foreground truncate">
           {getPageTitle(pathname)}
         </span>
-        <span className="text-muted-foreground hidden sm:inline">·</span>
-        <span className="text-muted-foreground truncate hidden sm:inline text-xs">
+        <ChevronRight
+          className="hidden size-4 shrink-0 text-muted-foreground sm:block"
+          aria-hidden="true"
+        />
+        <span className="hidden truncate text-sm text-muted-foreground sm:inline">
           {settings.organizationName}
-        </span>
-        <span className="text-muted-foreground hidden md:inline">·</span>
-        <span className="text-muted-foreground hidden md:inline-flex items-center gap-1 text-xs">
-          <Calendar className="w-3 h-3" />
-          {today}
         </span>
       </div>
     </div>

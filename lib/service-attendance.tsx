@@ -48,7 +48,11 @@ type ServiceAttendanceContextValue = {
   changeSessionServiceType: (
     sessionId: string,
     newServiceId: string,
-  ) => Promise<{ serviceId: string; sessionId: string; merged: boolean } | null>;
+  ) => Promise<{
+    serviceId: string;
+    sessionId: string;
+    merged: boolean;
+  } | null>;
   updateSessionDetails: (input: {
     sessionId: string;
     serviceId: string;
@@ -93,22 +97,21 @@ export function ServiceAttendanceProvider({
   const [isSaving, setIsSaving] = useState(false);
 
   const sundayServiceTypes = useMemo(
-    () => serviceTypes.filter((s) => s.category === "sunday"),
+    () => serviceTypes.filter(s => s.category === "sunday"),
     [serviceTypes],
   );
 
   const lifeGroupServiceTypes = useMemo(
-    () => serviceTypes.filter((s) => s.category === "life_group"),
+    () => serviceTypes.filter(s => s.category === "life_group"),
     [serviceTypes],
   );
 
   const primarySundayServiceId =
-    sundayServiceTypes.find((s) => s.name === "Sunday Service")?.id ??
+    sundayServiceTypes.find(s => s.name === "Sunday Service")?.id ??
     sundayServiceTypes[0]?.id;
 
   const getServiceCategory = useCallback(
-    (serviceId: string) =>
-      serviceTypes.find((s) => s.id === serviceId)?.category,
+    (serviceId: string) => serviceTypes.find(s => s.id === serviceId)?.category,
     [serviceTypes],
   );
 
@@ -259,14 +262,10 @@ export function ServiceAttendanceProvider({
 
       setIsSaving(true);
       try {
-        const result = await updateSessionDetailsDb(
-          supabase,
-          organizationId,
-          {
-            ...input,
-            serviceCategory: category,
-          },
-        );
+        const result = await updateSessionDetailsDb(supabase, organizationId, {
+          ...input,
+          serviceCategory: category,
+        });
         await refreshAttendance();
         toast.success(
           result.merged

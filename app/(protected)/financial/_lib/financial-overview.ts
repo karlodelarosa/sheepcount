@@ -12,7 +12,11 @@ import {
   type GoalProgress,
 } from "./goal-analysis";
 
-export type { FinancialGoalConfig, GoalProgress, GoalReceiptScenario } from "./goal-analysis";
+export type {
+  FinancialGoalConfig,
+  GoalProgress,
+  GoalReceiptScenario,
+} from "./goal-analysis";
 
 export type TrendDirection = "up" | "down" | "flat";
 
@@ -104,18 +108,20 @@ export function fillMonthlyTrendForPeriod(
 
   if (period.mode === "range" && period.fromMonth && period.toMonth) {
     const byKey = new Map(trend.map(point => [point.monthKey, point]));
-    return enumerateMonthKeys(period.fromMonth, period.toMonth).map(monthKey => {
-      const existing = byKey.get(monthKey);
-      return (
-        existing ?? {
-          month: formatMonthLabel(monthKey),
-          monthKey,
-          income: 0,
-          expenses: 0,
-          net: 0,
-        }
-      );
-    });
+    return enumerateMonthKeys(period.fromMonth, period.toMonth).map(
+      monthKey => {
+        const existing = byKey.get(monthKey);
+        return (
+          existing ?? {
+            month: formatMonthLabel(monthKey),
+            monthKey,
+            income: 0,
+            expenses: 0,
+            net: 0,
+          }
+        );
+      },
+    );
   }
 
   return trend;
@@ -125,10 +131,7 @@ export function buildMonthlyTrend(
   income: IncomeLine[],
   expenses: ExpenseLine[],
 ): MonthlyTrendPoint[] {
-  const monthMap = new Map<
-    string,
-    { income: number; expenses: number }
-  >();
+  const monthMap = new Map<string, { income: number; expenses: number }>();
 
   for (const line of income) {
     const key = getMonthKey(line.date);
@@ -189,7 +192,9 @@ function computeTrend(
     };
   }
 
-  const percent = Math.round(((recentNet - priorNet) / Math.abs(priorNet)) * 100);
+  const percent = Math.round(
+    ((recentNet - priorNet) / Math.abs(priorNet)) * 100,
+  );
   return {
     direction: percent > 2 ? "up" : percent < -2 ? "down" : "flat",
     percent: Math.abs(percent),

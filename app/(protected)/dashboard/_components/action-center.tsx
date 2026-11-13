@@ -1,30 +1,53 @@
+"use client";
+
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  Cake,
+  Bell,
   CheckCircle2,
   ChevronRight,
+  ClipboardCheck,
   ClipboardList,
   HeartHandshake,
-  Sparkles,
   UserPlus,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Person } from "@/lib/people";
 import type { ShepherdItem } from "@/lib/shepherding";
 import type { UpcomingBirthday } from "../_lib/dashboard-actions";
+import {
+  ATTENTION_EXPANDED_STORAGE_KEY,
+  readAttentionExpanded,
+} from "../_lib/dashboard-preferences";
 
-interface ActionRow {
+type CareCategoryId = "shepherd" | "assimilate" | "follow-ups" | "reminders";
+
+type ActionRow = {
   key: string;
   name: string;
   context: string;
   href: string;
-  /** Optional label for a small pill on the right (e.g. "Today"). */
   tag?: string;
-}
+};
+
+type CareCategory = {
+  id: CareCategoryId;
+  label: string;
+  heading: string;
+  description: string;
+  icon: typeof HeartHandshake;
+  rows: ActionRow[];
+  viewAllHref: string;
+  emptyLabel: string;
+};
 
 interface ActionCenterProps {
   shepherd: ShepherdItem[];
@@ -43,100 +66,73 @@ function toShepherdRow(item: ShepherdItem): ActionRow {
     name: item.person.name,
     context: item.status.description,
     href: `/people/${item.person.id}`,
+    tag: item.status.label,
   };
 }
 
-function ActionSection({
-  title,
-  icon: Icon,
-  accent,
-  rows,
-  viewAllHref,
-  emptyLabel,
-  extra,
-}: {
-  title: string;
-  icon: typeof HeartHandshake;
-  accent: string;
-  rows: ActionRow[];
-  viewAllHref: string;
-  emptyLabel: string;
-  /** Optional non-person row rendered above the list (e.g. a data-gap prompt). */
-  extra?: React.ReactNode;
-}) {
-  const total = rows.length;
-  const visible = rows.slice(0, MAX_ROWS);
-  const remaining = total - visible.length;
-  const isEmpty = total === 0 && !extra;
+function CategoryPanel({ category }: { category: CareCategory }) {
+  const visibleRows = category.rows.slice(0, MAX_ROWS);
 
   return (
-    <Card className="border-border/70">
-      <CardHeader className="px-4 py-3">
-        <CardTitle className="flex items-center justify-between text-sm">
-          <span className="flex items-center gap-2">
-            <span
-              className={cn(
-                "flex h-6 w-6 items-center justify-center rounded-md",
-                accent,
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-            </span>
-            {title}
-          </span>
-          {total > 0 ? (
-            <Badge variant="secondary" className="h-5 text-xs">
-              {total}
-            </Badge>
-          ) : null}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-1 px-3 pb-3">
-        {extra}
-
-        {isEmpty ? (
-          <div className="flex items-center gap-2 px-2 py-3 text-xs text-muted-foreground">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            {emptyLabel}
-          </div>
-        ) : (
-          visible.map(row => (
-            <Link
-              key={row.key}
-              href={row.href}
-              className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-muted/60"
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium">{row.name}</span>
-                <span className="block truncate text-muted-foreground">
-                  {row.context}
-                </span>
-              </span>
-              {row.tag ? (
-                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  {row.tag}
-                </span>
-              ) : null}
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            </Link>
-          ))
-        )}
-
-        {remaining > 0 ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-1 h-7 w-full justify-between text-xs"
-            asChild
+    <div className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+      <div className="mb-2 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-semibold tracking-[-0.02em] text-foreground">
+            {category.heading}
+          </h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {category.description}
+          </p>
+        </div>
+        {category.rows.length > 0 ? (
+          <Link
+            href={category.viewAllHref}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-background px-3 text-xs font-semibold text-foreground shadow-sm outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-[var(--accent-color)] motion-reduce:transition-none"
           >
-            <Link href={viewAllHref}>
-              +{remaining} more
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </Button>
+            View all ({category.rows.length})
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         ) : null}
-      </CardContent>
-    </Card>
+      </div>
+
+      {visibleRows.length > 0 ? (
+        <ul className="divide-y divide-border" role="list">
+          {visibleRows.map(row => (
+            <li key={row.key}>
+              <Link
+                href={row.href}
+                className="group grid min-h-12 grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-1.5 py-1.5 outline-none transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent-color)] motion-reduce:transition-none"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-color-soft)] text-xs font-bold text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]">
+                  {row.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-foreground">
+                    {row.name}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {row.context}
+                  </span>
+                </span>
+                <span className="flex items-center gap-2">
+                  {row.tag ? (
+                    <span className="hidden max-w-40 truncate rounded-full bg-[var(--accent-color-soft)] px-2.5 py-1 text-[11px] font-medium text-[var(--accent-color-strong)] sm:block dark:text-[var(--accent-color)]">
+                      {row.tag}
+                    </span>
+                  ) : null}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="flex min-h-20 items-center gap-3 rounded-xl border border-dashed border-border bg-muted/25 px-4 text-sm text-muted-foreground">
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <span>{category.emptyLabel}</span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -148,114 +144,206 @@ export function ActionCenter({
   unrecordedSundayLabel,
   upcomingBirthdays,
 }: ActionCenterProps) {
-  const shepherdRows = shepherd.map(toShepherdRow);
+  const categories = useMemo<CareCategory[]>(() => {
+    const assimilateRows: ActionRow[] = [
+      ...assimilateContacts.map(item => ({
+        key: item.person.id,
+        name: item.person.name,
+        context: "First-time attendee who needs a personal welcome.",
+        href: `/people/${item.person.id}`,
+        tag: "Needs contact",
+      })),
+      ...unassignedNewMembers.map(person => ({
+        key: person.id,
+        name: person.name,
+        context: "New member who has not joined a life group.",
+        href: `/people/${person.id}`,
+        tag: "Needs a group",
+      })),
+    ];
+    const reminderRows: ActionRow[] = [
+      ...(unrecordedSundayLabel
+        ? [
+            {
+              key: `attendance-${unrecordedSundayLabel}`,
+              name: `Record ${unrecordedSundayLabel} attendance`,
+              context: "No Sunday service session has been logged yet.",
+              href: "/service-attendance",
+              tag: "Attendance",
+            },
+          ]
+        : []),
+      ...upcomingBirthdays.map(entry => ({
+        key: entry.person.id,
+        name: entry.person.name,
+        context: entry.person.householdName || "Upcoming birthday",
+        href: `/people/${entry.person.id}`,
+        tag:
+          entry.inDays === 0
+            ? "Today"
+            : entry.inDays === 1
+              ? "Tomorrow"
+              : `In ${entry.inDays} days`,
+      })),
+    ];
 
-  const assimilateRows: ActionRow[] = [
-    ...assimilateContacts.map(item => ({
-      key: item.person.id,
-      name: item.person.name,
-      context: "First-time — needs contact",
-      href: `/people/${item.person.id}`,
-      tag: "New",
-    })),
-    ...unassignedNewMembers.map(person => ({
-      key: person.id,
-      name: person.name,
-      context: "New member — no life group",
-      href: `/people/${person.id}`,
-    })),
-  ];
+    return [
+      {
+        id: "shepherd",
+        label: "To Shepherd",
+        heading: "People needing reconnection",
+        description: "Members whose recent attendance signals a need for care.",
+        icon: HeartHandshake,
+        rows: shepherd.map(toShepherdRow),
+        viewAllHref: "/people",
+        emptyLabel: "No one currently needs attendance-based reconnection.",
+      },
+      {
+        id: "assimilate",
+        label: "To Assimilate",
+        heading: "People ready to connect",
+        description: "New attendees and members who need a next connection.",
+        icon: UserPlus,
+        rows: assimilateRows,
+        viewAllHref: "/growth-track",
+        emptyLabel: "Everyone new currently has a clear connection path.",
+      },
+      {
+        id: "follow-ups",
+        label: "Follow-ups",
+        heading: "Follow-ups awaiting action",
+        description: "People with an outstanding growth-track follow-up.",
+        icon: ClipboardList,
+        rows: followUps.map(toShepherdRow),
+        viewAllHref: "/growth-track",
+        emptyLabel: "There are no outstanding follow-ups.",
+      },
+      {
+        id: "reminders",
+        label: "Reminders",
+        heading: "This week's reminders",
+        description: "Timely attendance tasks and pastoral moments.",
+        icon: Bell,
+        rows: reminderRows,
+        viewAllHref: "/service-attendance",
+        emptyLabel: "There are no reminders for this week.",
+      },
+    ];
+  }, [
+    assimilateContacts,
+    followUps,
+    shepherd,
+    unassignedNewMembers,
+    unrecordedSundayLabel,
+    upcomingBirthdays,
+  ]);
 
-  const followUpRows = followUps.map(toShepherdRow);
+  const totalActions = categories.reduce(
+    (total, category) => total + category.rows.length,
+    0,
+  );
+  const [expanded, setExpanded] = useState(false);
 
-  const birthdayRows: ActionRow[] = upcomingBirthdays.map(entry => ({
-    key: entry.person.id,
-    name: entry.person.name,
-    context: entry.person.householdName || "—",
-    href: `/people/${entry.person.id}`,
-    tag:
-      entry.inDays === 0
-        ? "Today"
-        : entry.inDays === 1
-          ? "Tomorrow"
-          : `${entry.inDays}d`,
-  }));
+  useEffect(() => {
+    setExpanded(readAttentionExpanded(window.localStorage));
+  }, []);
 
-  const totalActions =
-    shepherdRows.length +
-    assimilateRows.length +
-    followUpRows.length +
-    birthdayRows.length +
-    (unrecordedSundayLabel ? 1 : 0);
+  function handleValueChange(value: string) {
+    const nextExpanded = value === "care-actions";
+    setExpanded(nextExpanded);
+    try {
+      window.localStorage.setItem(
+        ATTENTION_EXPANDED_STORAGE_KEY,
+        nextExpanded ? "expanded" : "collapsed",
+      );
+    } catch {
+      // Storage can be unavailable; the control still works for this session.
+    }
+  }
 
   return (
-    <section className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-primary" />
-        <h2 className="text-sm font-semibold">Needs Attention</h2>
-        <span className="text-xs text-muted-foreground">
-          {totalActions === 0
-            ? "Nothing outstanding"
-            : `${totalActions} action${totalActions === 1 ? "" : "s"} across the church`}
-        </span>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <ActionSection
-          title="To shepherd"
-          icon={HeartHandshake}
-          accent="bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400"
-          rows={shepherdRows}
-          viewAllHref="/people"
-          emptyLabel="No one is slipping in attendance."
-        />
-
-        <ActionSection
-          title="To assimilate"
-          icon={UserPlus}
-          accent="bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400"
-          rows={assimilateRows}
-          viewAllHref="/growth-track"
-          emptyLabel="Everyone new is connected."
-        />
-
-        <ActionSection
-          title="Follow-ups"
-          icon={ClipboardList}
-          accent="bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400"
-          rows={followUpRows}
-          viewAllHref="/growth-track"
-          emptyLabel="No follow-ups pending."
-        />
-
-        <ActionSection
-          title="Reminders"
-          icon={Cake}
-          accent="bg-violet-100 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400"
-          rows={birthdayRows}
-          viewAllHref="/service-attendance"
-          emptyLabel="No reminders this week."
-          extra={
-            unrecordedSundayLabel ? (
-              <Link
-                href="/service-attendance"
-                className="mb-1 flex items-center gap-2.5 rounded-lg border border-violet-200/70 bg-violet-50/70 px-2 py-1.5 text-xs transition-colors hover:bg-violet-100/70 dark:border-violet-900/50 dark:bg-violet-950/30"
-              >
-                <ClipboardList className="h-4 w-4 shrink-0 text-violet-600 dark:text-violet-400" />
-                <span className="min-w-0 flex-1">
-                  <span className="block font-medium">
-                    Record {unrecordedSundayLabel} attendance
+    <section aria-labelledby="ministry-care-heading">
+      <Accordion
+        type="single"
+        collapsible
+        value={expanded ? "care-actions" : ""}
+        onValueChange={handleValueChange}
+        className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:shadow-none"
+      >
+        <AccordionItem value="care-actions" className="border-0">
+          <AccordionTrigger className="items-center gap-4 rounded-none px-4 py-3.5 hover:no-underline focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent-color)] sm:px-5 [&>svg]:mt-0 [&>svg]:text-foreground">
+            <div className="flex min-w-0 flex-1 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between xl:gap-8">
+              <div className="flex min-w-0 items-center gap-3 text-left">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]">
+                  <ClipboardCheck className="h-5 w-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-2">
+                    <span
+                      id="ministry-care-heading"
+                      className="truncate text-base font-bold tracking-[-0.025em] text-foreground"
+                    >
+                      Ministry Care &amp; Actions
+                    </span>
+                    <span className="rounded-full bg-[var(--accent-color-soft)] px-2 py-0.5 text-xs font-bold tabular-nums text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]">
+                      {totalActions}
+                    </span>
                   </span>
-                  <span className="block text-muted-foreground">
-                    No session logged yet
+                  <span className="mt-0.5 block truncate text-xs font-normal text-muted-foreground">
+                    People and tasks that need your attention.
                   </span>
                 </span>
-                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              </Link>
-            ) : null
-          }
-        />
-      </div>
+              </div>
+
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 pl-[3.25rem] sm:flex sm:flex-wrap sm:items-center sm:gap-4 sm:pl-[3.25rem] xl:pl-0">
+                {categories.map(category => {
+                  const Icon = category.icon;
+                  return (
+                    <div
+                      key={category.id}
+                      className="flex items-center gap-2 text-xs"
+                    >
+                      <Icon className="h-4 w-4 text-muted-foreground" />
+                      <dt className="font-medium text-muted-foreground">
+                        {category.label}
+                      </dt>
+                      <dd className="rounded-full bg-muted px-2 py-0.5 font-bold tabular-nums text-foreground">
+                        {category.rows.length}
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            </div>
+          </AccordionTrigger>
+
+          <AccordionContent className="border-t border-border motion-reduce:data-[state=closed]:animate-none motion-reduce:data-[state=open]:animate-none [&>div]:pb-0">
+            <Tabs defaultValue="shepherd" className="gap-0">
+              <div className="overflow-x-auto border-b border-border [scrollbar-width:thin]">
+                <TabsList>
+                  {categories.map(category => {
+                    const Icon = category.icon;
+                    return (
+                      <TabsTrigger key={category.id} value={category.id}>
+                        <Icon className="h-4 w-4" />
+                        {category.label}
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-bold tabular-nums text-foreground">
+                          {category.rows.length}
+                        </span>
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
+              </div>
+              {categories.map(category => (
+                <TabsContent key={category.id} value={category.id}>
+                  <CategoryPanel category={category} />
+                </TabsContent>
+              ))}
+            </Tabs>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </section>
   );
 }

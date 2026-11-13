@@ -92,7 +92,7 @@ export function EditGoalProjectDialog({
               <Input
                 id="campaign-title"
                 value={formData.title}
-                onChange={(e) =>
+                onChange={e =>
                   setFormData({ ...formData, title: e.target.value })
                 }
                 className="rounded-lg"
@@ -105,7 +105,7 @@ export function EditGoalProjectDialog({
               <Textarea
                 id="campaign-description"
                 value={formData.description}
-                onChange={(e) =>
+                onChange={e =>
                   setFormData({ ...formData, description: e.target.value })
                 }
                 className="rounded-lg"
@@ -121,7 +121,7 @@ export function EditGoalProjectDialog({
                   id="campaign-goal"
                   type="number"
                   value={formData.goalAmount}
-                  onChange={(e) =>
+                  onChange={e =>
                     setFormData({ ...formData, goalAmount: e.target.value })
                   }
                   className="rounded-lg"
@@ -134,7 +134,7 @@ export function EditGoalProjectDialog({
                   id="campaign-target"
                   type="date"
                   value={formData.targetDate}
-                  onChange={(e) =>
+                  onChange={e =>
                     setFormData({ ...formData, targetDate: e.target.value })
                   }
                   className="rounded-lg"
@@ -146,7 +146,7 @@ export function EditGoalProjectDialog({
               <Label>Category</Label>
               <Select
                 value={formData.category}
-                onValueChange={(value) =>
+                onValueChange={value =>
                   setFormData({
                     ...formData,
                     category: value as CampaignCategory,
@@ -178,7 +178,7 @@ export function EditGoalProjectDialog({
             </Button>
             <Button
               type="submit"
-              className="rounded-lg bg-slate-900 hover:bg-slate-800"
+              className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
               disabled={!isAdmin}
             >
               Save Changes
@@ -189,4 +189,3 @@ export function EditGoalProjectDialog({
     </Dialog>
   );
 }
-

@@ -1,11 +1,20 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X, UserPlus, Search, ArrowLeft, Settings2, UserCog } from "lucide-react";
+import {
+  X,
+  UserPlus,
+  Search,
+  ArrowLeft,
+  Settings2,
+  UserCog,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -82,9 +91,7 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
 
   const availablePeople = useMemo(
     () =>
-      people.filter(
-        person => !assignments.some(a => a.personId === person.id),
-      ),
+      people.filter(person => !assignments.some(a => a.personId === person.id)),
     [people, assignments],
   );
 
@@ -117,13 +124,13 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
         members: unassigned.length > 0 ? unassigned : filteredMembers,
       });
     }
-    return sections.filter(section => section.members.length > 0 || section.id !== "unassigned");
+    return sections.filter(
+      section => section.members.length > 0 || section.id !== "unassigned",
+    );
   }, [teams, membersByTeam, hasTeams, filteredMembers]);
 
   const canAddMember =
-    newPersonId &&
-    newRole &&
-    (!hasTeams || (newTeamId && newServiceRole));
+    newPersonId && newRole && (!hasTeams || (newTeamId && newServiceRole));
 
   const handleAddMember = async () => {
     if (!canAddMember) return;
@@ -158,11 +165,7 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
     "rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
 
   if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading ministry...
-      </div>
-    );
+    return <PageSkeleton message="Loading ministry..." />;
   }
 
   if (!ministry) {
@@ -245,7 +248,10 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
                       <span className="font-medium text-slate-900 dark:text-white text-sm">
                         {team.name}
                       </span>
-                      <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
+                      <Badge
+                        variant="secondary"
+                        className={DualModeSecondaryBadgeClass}
+                      >
                         {count}
                       </Badge>
                     </div>
@@ -263,7 +269,10 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
       )}
 
       <div className="grid lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-1 border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 h-fit">
+        <Card
+          id="add-member"
+          className="scroll-mt-24 lg:col-span-1 border-slate-200/60 bg-white dark:border-zinc-700/60 dark:bg-zinc-800 h-fit"
+        >
           <CardHeader>
             <CardTitle className="text-slate-900 dark:text-white">
               Add New Member
@@ -291,7 +300,9 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
             {hasTeams && (
               <>
                 <div className="space-y-2">
-                  <Label className="text-slate-700 dark:text-zinc-300">Team</Label>
+                  <Label className="text-slate-700 dark:text-zinc-300">
+                    Team
+                  </Label>
                   <Select
                     value={newTeamId}
                     onValueChange={value => {
@@ -451,7 +462,9 @@ export function MinistryDetailPage({ ministryId }: MinistryDetailPageProps) {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => void handleRemoveMember(member.id)}
+                                onClick={() =>
+                                  void handleRemoveMember(member.id)
+                                }
                                 disabled={isSaving}
                                 className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/50"
                               >

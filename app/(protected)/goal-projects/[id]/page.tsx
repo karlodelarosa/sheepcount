@@ -34,4 +34,3 @@ export default function GoalProjectDetailsPage() {
 
   return <GoalProjectDetails campaignId={id} onBack={handleBack} />;
 }
-

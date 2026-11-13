@@ -31,7 +31,5 @@ export function BrandingLogo({
     );
   }
 
-  return (
-    <BrandLogoIcon className={className} iconClassName={iconClassName} />
-  );
+  return <BrandLogoIcon className={className} iconClassName={iconClassName} />;
 }

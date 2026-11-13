@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Search,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -37,19 +39,30 @@ import {
 } from "@/components/ui/dropdown/index";
 import { formatCurrency, type SupportedCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
-import type { ChurchProperty, PropertyTypeOption } from "@/lib/supabase/properties";
+import type {
+  ChurchProperty,
+  PropertyTypeOption,
+} from "@/lib/supabase/properties";
 
 function statusBadge(status: ChurchProperty["status"]) {
   switch (status) {
     case "borrowed":
       return (
-        <Badge className="rounded-lg bg-amber-500 hover:bg-amber-500">Borrowed</Badge>
+        <Badge className="rounded-lg bg-amber-500 hover:bg-amber-500">
+          Borrowed
+        </Badge>
       );
     case "lost":
-      return <Badge variant="destructive" className="rounded-lg">Lost</Badge>;
+      return (
+        <Badge variant="destructive" className="rounded-lg">
+          Lost
+        </Badge>
+      );
     default:
       return (
-        <Badge className="rounded-lg bg-emerald-500 hover:bg-emerald-500">Owned</Badge>
+        <Badge className="rounded-lg bg-emerald-500 hover:bg-emerald-500">
+          Owned
+        </Badge>
       );
   }
 }
@@ -86,19 +99,44 @@ export function PropertiesTable({
   onBorrow: (property: ChurchProperty) => void;
   onMarkLost: (property: ChurchProperty) => void;
 }) {
-  const filtered = useMemo(() => {
-    if (typeFilter === "all") return properties;
-    return properties.filter(p => p.propertyTypeId === typeFilter);
-  }, [properties, typeFilter]);
+  const [search, setSearch] = useState("");
+  const filtered = useMemo(
+    () =>
+      properties.filter(
+        property =>
+          (typeFilter === "all" || property.propertyTypeId === typeFilter) &&
+          `${property.name} ${property.description ?? ""}`
+            .toLowerCase()
+            .includes(search.trim().toLowerCase()),
+      ),
+    [properties, typeFilter, search],
+  );
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border/60 bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 sm:max-w-md">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground"
+          />
+          <Input
+            aria-label="Search properties"
+            type="search"
+            placeholder="Search properties…"
+            value={search}
+            onChange={event => setSearch(event.target.value)}
+            className="h-11 rounded-xl bg-background pl-10"
+          />
+        </div>
         <p className="text-sm text-slate-500 dark:text-zinc-400">
           {filtered.length} {filtered.length === 1 ? "property" : "properties"}
         </p>
         <Select value={typeFilter} onValueChange={onTypeFilterChange}>
-          <SelectTrigger className="w-full sm:w-[220px] rounded-lg">
+          <SelectTrigger
+            aria-label="Filter by property type"
+            className="h-11 w-full rounded-xl sm:w-[220px]"
+          >
             <SelectValue placeholder="Filter by type" />
           </SelectTrigger>
           <SelectContent>
@@ -112,10 +150,10 @@ export function PropertiesTable({
         </Select>
       </div>
 
-      <div className="rounded-xl border border-slate-200/60 dark:border-zinc-700/60 overflow-hidden bg-card">
+      <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/50 dark:bg-zinc-800/50">
+            <TableRow className="bg-muted/50">
               <TableHead className="w-14" />
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
@@ -129,7 +167,10 @@ export function PropertiesTable({
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="py-12 text-center text-slate-500">
+                <TableCell
+                  colSpan={8}
+                  className="py-12 text-center text-slate-500"
+                >
                   No properties match this filter.
                 </TableCell>
               </TableRow>
@@ -145,7 +186,8 @@ export function PropertiesTable({
                       type="button"
                       className={cn(
                         "h-10 w-10 rounded-lg border border-slate-200/60 dark:border-zinc-700/60 overflow-hidden bg-slate-50 dark:bg-zinc-900 flex items-center justify-center",
-                        isAdmin && "hover:ring-2 hover:ring-slate-300 dark:hover:ring-zinc-600 transition-shadow",
+                        isAdmin &&
+                          "hover:ring-2 hover:ring-slate-300 dark:hover:ring-zinc-600 transition-shadow",
                       )}
                       onClick={e => {
                         e.stopPropagation();

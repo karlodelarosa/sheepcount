@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
+import { Sprout } from "lucide-react";
 import type { PersonProfileTimelineEntry } from "@/lib/supabase/person-profile";
 import { EmptyState, panelCard, SectionHeader } from "./person-detail-ui";
 import { cn } from "@/lib/utils";
@@ -17,14 +17,14 @@ export function SpiritualFootprintTimeline({
   return (
     <div className={cn(panelCard, "p-4", className)}>
       <SectionHeader
-        icon={CalendarDays}
-        title="Spiritual Footprint"
-        description="Timeline across cell, discipleship, training, baptism, and events"
+        icon={Sprout}
+        title="Spiritual Journey"
+        description="A snapshot of their journey through church life"
       />
-      <div className="mt-3 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
+      <div className="mt-4 max-h-[34rem] overflow-y-auto pr-1">
         {timeline.length === 0 ? (
           <EmptyState
-            icon={CalendarDays}
+            icon={Sprout}
             title="No history yet"
             description="Activity appears here as this person participates in church life."
           />
@@ -40,7 +40,7 @@ export function SpiritualFootprintTimeline({
                 className="relative flex gap-2.5 pb-3 last:pb-0"
               >
                 <span
-                  className="relative z-10 mt-1.5 h-3.5 w-3.5 shrink-0 rounded-full border-2 border-white bg-slate-400 dark:border-zinc-900 dark:bg-zinc-500"
+                  className="relative z-10 mt-1.5 size-3.5 shrink-0 rounded-full border-2 border-card bg-[var(--accent-color)]"
                   aria-hidden
                 />
                 <div className="min-w-0 flex-1">

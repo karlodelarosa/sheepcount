@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Clock,
-  UserCheck,
-  UserPlus,
-  Users,
-} from "lucide-react";
+import { Clock, UserCheck, UserPlus, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -45,7 +40,9 @@ export function AttendanceOverviewStep({
     <div className="space-y-4">
       <div className="rounded-lg border bg-muted/30 p-3 text-sm">
         <p className="font-medium">{serviceName}</p>
-        <p className="text-muted-foreground">{formatLongDate(attendanceDate)}</p>
+        <p className="text-muted-foreground">
+          {formatLongDate(attendanceDate)}
+        </p>
         <p className="mt-1 text-xs text-muted-foreground">
           Service start: {serviceStartTime}
         </p>
@@ -100,7 +97,7 @@ export function AttendanceOverviewStep({
         <Label>Attendee breakdown</Label>
         <ScrollArea className="h-48 rounded-xl border">
           <div className="divide-y">
-            {attendees.map((attendee) => {
+            {attendees.map(attendee => {
               const arrivalStatus = classifyArrival(
                 attendee.timeOfArrival,
                 serviceStartTime,

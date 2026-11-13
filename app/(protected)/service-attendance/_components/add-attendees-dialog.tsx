@@ -132,14 +132,14 @@ export function AddAttendeesDialog({
   );
 
   const availablePeople = useMemo(
-    () => people.filter((person) => !existingIds.has(person.id)),
+    () => people.filter(person => !existingIds.has(person.id)),
     [people, existingIds],
   );
 
   const peopleById = useMemo(
     () =>
       new Map(
-        availablePeople.map((person) => [
+        availablePeople.map(person => [
           person.id,
           {
             id: person.id,
@@ -171,9 +171,9 @@ export function AddAttendeesDialog({
   }, [isOpen, sessionServiceStartTime]);
 
   const togglePerson = (personId: string) => {
-    setSelectedKeys((prev) =>
+    setSelectedKeys(prev =>
       prev.includes(personId)
-        ? prev.filter((id) => id !== personId)
+        ? prev.filter(id => id !== personId)
         : [...prev, personId],
     );
   };
@@ -183,18 +183,18 @@ export function AddAttendeesDialog({
     if (!parsed) return;
 
     const guestKey = createGuestKey();
-    setGuestNames((prev) => {
+    setGuestNames(prev => {
       const next = new Map(prev);
       next.set(guestKey, parsed);
       return next;
     });
-    setSelectedKeys((prev) => [...prev, guestKey]);
+    setSelectedKeys(prev => [...prev, guestKey]);
     setGuestInput("");
   };
 
   const handleRemoveGuest = (guestKey: string) => {
-    setSelectedKeys((prev) => prev.filter((key) => key !== guestKey));
-    setGuestNames((prev) => {
+    setSelectedKeys(prev => prev.filter(key => key !== guestKey));
+    setGuestNames(prev => {
       const next = new Map(prev);
       next.delete(guestKey);
       return next;
@@ -208,14 +208,14 @@ export function AddAttendeesDialog({
 
   const goToTimestampStep = () => {
     const existingTimes = new Map(
-      attendees.map((attendee) => [attendee.key, attendee.timeOfArrival]),
+      attendees.map(attendee => [attendee.key, attendee.timeOfArrival]),
     );
     const nextAttendees = buildSelectedAttendeesFromSelection(
       selectedKeys,
       peopleById,
       guestNames,
       serviceStartTime,
-    ).map((attendee) => ({
+    ).map(attendee => ({
       ...attendee,
       timeOfArrival: existingTimes.get(attendee.key) ?? attendee.timeOfArrival,
     }));
@@ -224,8 +224,8 @@ export function AddAttendeesDialog({
   };
 
   const updateArrivalTime = (key: string, timeOfArrival: string) => {
-    setAttendees((prev) =>
-      prev.map((attendee) =>
+    setAttendees(prev =>
+      prev.map(attendee =>
         attendee.key === key ? { ...attendee, timeOfArrival } : attendee,
       ),
     );
@@ -233,8 +233,8 @@ export function AddAttendeesDialog({
 
   const applyToggleToAll = (toggle: ArrivalStatus) => {
     const time = getToggleTime(serviceStartTime, toggle);
-    setAttendees((prev) =>
-      prev.map((attendee) => ({ ...attendee, timeOfArrival: time })),
+    setAttendees(prev =>
+      prev.map(attendee => ({ ...attendee, timeOfArrival: time })),
     );
   };
 
@@ -295,7 +295,7 @@ export function AddAttendeesDialog({
             <Input
               type="time"
               value={serviceStartTime}
-              onChange={(e) => setServiceStartTime(e.target.value)}
+              onChange={e => setServiceStartTime(e.target.value)}
               disabled={step === 2}
             />
           </div>

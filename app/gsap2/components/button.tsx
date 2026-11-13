@@ -34,7 +34,7 @@ export default function BubbleButton({ label = "Launch" }) {
       className="relative overflow-hidden px-10 py-4 rounded-xl text-white font-semibold tracking-wide bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 shadow-lg select-none"
     >
       {/* floating particles burst */}
-      {particles.map((id) => (
+      {particles.map(id => (
         <motion.span
           key={id}
           className="absolute w-2 h-2 rounded-full bg-white/70"
@@ -82,7 +82,10 @@ export default function BubbleButton({ label = "Launch" }) {
       {/* glow ring */}
       <motion.div
         className="absolute inset-0 rounded-xl ring-2 ring-white/30 blur-sm pointer-events-none"
-        animate={{ opacity: isPressed ? 0.4 : 0.9, scale: isPressed ? 0.96 : 1 }}
+        animate={{
+          opacity: isPressed ? 0.4 : 0.9,
+          scale: isPressed ? 0.96 : 1,
+        }}
         transition={{ duration: 0.3 }}
       />
 

@@ -101,7 +101,8 @@ export async function updateOtherResident(
     updated_at: new Date().toISOString(),
   };
 
-  if (input.firstName !== undefined) updates.first_name = input.firstName.trim();
+  if (input.firstName !== undefined)
+    updates.first_name = input.firstName.trim();
   if (input.lastName !== undefined) updates.last_name = input.lastName.trim();
   if (input.relation !== undefined) updates.relation = input.relation;
   if (input.phone !== undefined) updates.phone = input.phone.trim();

@@ -61,9 +61,7 @@ export function isMenuItemVisibleInNav(
   return !hiddenMenuItems?.includes(itemKey);
 }
 
-export function parseOrganizationSettings(
-  raw: unknown,
-): OrganizationSettings {
+export function parseOrganizationSettings(raw: unknown): OrganizationSettings {
   if (!raw || typeof raw !== "object") {
     return { ...DEFAULT_ORGANIZATION_SETTINGS };
   }

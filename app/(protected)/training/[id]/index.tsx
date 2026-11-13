@@ -1,17 +1,12 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { PersonSelect } from "@/components/person-select";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import {
@@ -47,9 +42,16 @@ import { ConfirmDeleteDialog } from "@/app/(protected)/work-ministry/_components
 interface CourseDetailsProps {
   courseId: string;
   onBack: () => void;
+  initialPersonId?: string;
+  initialTab?: string;
 }
 
-export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
+export function CourseDetails({
+  courseId,
+  onBack,
+  initialPersonId,
+  initialTab,
+}: CourseDetailsProps) {
   const { people } = usePeople();
   const {
     courses,
@@ -67,7 +69,9 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
     getCourseProgressRows,
   } = useTraining();
 
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(
+    initialTab === "progress" ? "progress" : "overview",
+  );
   const [newPersonId, setNewPersonId] = useState("");
   const [selectedProgressId, setSelectedProgressId] = useState("");
   const [moduleName, setModuleName] = useState("");
@@ -77,6 +81,7 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
   const [editDescription, setEditDescription] = useState("");
   const [editInitialized, setEditInitialized] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deepLinkApplied, setDeepLinkApplied] = useState(false);
 
   const course = courses.find(c => c.id === courseId);
   const courseModules = useMemo(
@@ -106,10 +111,22 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
     [courseProgress, people, courseModules.length],
   );
 
-  const activeProgressId =
-    selectedProgressId || enrollmentRows[0]?.id || "";
+  const activeProgressId = selectedProgressId || enrollmentRows[0]?.id || "";
 
   const activeEnrollment = enrollmentRows.find(e => e.id === activeProgressId);
+
+  useEffect(() => {
+    if (deepLinkApplied || !initialPersonId || enrollmentRows.length === 0)
+      return;
+    const enrollment = enrollmentRows.find(
+      row => row.personId === initialPersonId,
+    );
+    if (enrollment) {
+      setSelectedProgressId(enrollment.id);
+      setActiveTab("progress");
+    }
+    setDeepLinkApplied(true);
+  }, [deepLinkApplied, enrollmentRows, initialPersonId]);
 
   const enrolledPersonIds = useMemo(
     () => new Set(courseProgress.map(e => e.personId)),
@@ -128,7 +145,10 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
 
   const handleEnroll = async () => {
     if (!newPersonId) return;
-    const result = await enrollPersonInCourse({ courseId, personId: newPersonId });
+    const result = await enrollPersonInCourse({
+      courseId,
+      personId: newPersonId,
+    });
     if (result) {
       setNewPersonId("");
       setSelectedProgressId(result.id);
@@ -186,7 +206,9 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
   };
 
   const nextModule = activeEnrollment
-    ? courseModules.find(m => !activeEnrollment.completedModuleIds.includes(m.id))
+    ? courseModules.find(
+        m => !activeEnrollment.completedModuleIds.includes(m.id),
+      )
     : undefined;
 
   const DualModePrimaryButtonClass =
@@ -197,22 +219,21 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
     "rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
   const DualModeMemberAvatarClass =
     "from-slate-900 to-slate-700 dark:from-purple-700 dark:to-purple-500";
-  const tabTriggerClass =
-    "text-xs sm:text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:text-slate-900 dark:data-[state=active]:bg-zinc-700 dark:data-[state=active]:text-white";
 
   if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading course...
-      </div>
-    );
+    return <PageSkeleton message="Loading course..." />;
   }
 
   if (!course) {
     return (
       <div className="space-y-6 p-6">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={onBack} className="rounded-xl">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onBack}
+            className="rounded-xl"
+          >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-slate-900 dark:text-white">Course Not Found</h1>
@@ -229,9 +250,9 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
           Course Management
         </AlertTitle>
         <AlertDescription className="text-blue-800/90 dark:text-blue-300/90">
-          Manage this training course — add sequential modules, enroll people, and
-          track module completion. Modules must be completed in order; finishing all
-          modules earns a badge on the person&apos;s profile.
+          Manage this training course — add sequential modules, enroll people,
+          and track module completion. Modules must be completed in order;
+          finishing all modules earns a badge on the person&apos;s profile.
         </AlertDescription>
       </Alert>
 
@@ -248,7 +269,10 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-slate-900 dark:text-white">{course.name}</h1>
-              <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
+              <Badge
+                variant="secondary"
+                className={DualModeSecondaryBadgeClass}
+              >
                 {course.category}
               </Badge>
             </div>
@@ -256,14 +280,16 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
               {course.description || "Training course"}
             </p>
             <p className="text-sm text-slate-500 dark:text-zinc-500 mt-1">
-              {courseModules.length} module{courseModules.length !== 1 ? "s" : ""} ·{" "}
-              {enrollmentRows.length} enrolled
+              {courseModules.length} module
+              {courseModules.length !== 1 ? "s" : ""} · {enrollmentRows.length}{" "}
+              enrolled
             </p>
           </div>
         </div>
         <Badge variant="secondary" className={DualModeSecondaryBadgeClass}>
           <GraduationCap className="w-3 h-3 mr-1 inline" />
-          {enrollmentRows.filter(e => e.status === "completed").length} completed
+          {enrollmentRows.filter(e => e.status === "completed").length}{" "}
+          completed
         </Badge>
       </div>
 
@@ -274,7 +300,8 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
               Enroll Person
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-zinc-400">
-              Add someone to this course to begin tracking their module progress.
+              Add someone to this course to begin tracking their module
+              progress.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -304,21 +331,25 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
         </Card>
 
         <div className="lg:col-span-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80">
-              <TabsTrigger value="overview" className={tabTriggerClass}>
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-6"
+          >
+            <TabsList>
+              <TabsTrigger value="overview">
                 <LayoutDashboard className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Overview
               </TabsTrigger>
-              <TabsTrigger value="manage" className={tabTriggerClass}>
+              <TabsTrigger value="manage">
                 <ListChecks className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Modules
               </TabsTrigger>
-              <TabsTrigger value="progress" className={tabTriggerClass}>
+              <TabsTrigger value="progress">
                 <TrendingUp className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Progress
               </TabsTrigger>
-              <TabsTrigger value="settings" className={tabTriggerClass}>
+              <TabsTrigger value="settings">
                 <Settings className="w-4 h-4 mr-1.5 hidden sm:inline" />
                 Settings
               </TabsTrigger>
@@ -361,7 +392,9 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
                               </p>
                               <p className="text-sm text-slate-500 dark:text-zinc-500">
                                 Enrolled{" "}
-                                {new Date(row.enrolledDate).toLocaleDateString()}
+                                {new Date(
+                                  row.enrolledDate,
+                                ).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
@@ -375,7 +408,9 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
                                   </Badge>
                                   <p className="text-xs text-slate-500 dark:text-zinc-500">
                                     {row.completedAt
-                                      ? new Date(row.completedAt).toLocaleDateString()
+                                      ? new Date(
+                                          row.completedAt,
+                                        ).toLocaleDateString()
                                       : "Completed"}
                                   </p>
                                 </>
@@ -480,7 +515,8 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
                     Manage Modules
                   </CardTitle>
                   <CardDescription className="text-slate-600 dark:text-zinc-400">
-                    Add, reorder, or remove modules — learners complete them in order
+                    Add, reorder, or remove modules — learners complete them in
+                    order
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -656,7 +692,8 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
                               {activeEnrollment.person?.name}
                             </p>
                             <p className="text-sm text-slate-500 dark:text-zinc-500">
-                              {activeEnrollment.completed}/{activeEnrollment.total} modules ·{" "}
+                              {activeEnrollment.completed}/
+                              {activeEnrollment.total} modules ·{" "}
                               {activeEnrollment.progressPercent}%
                             </p>
                           </div>
@@ -664,7 +701,9 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
                         <div className="h-2 rounded-full bg-slate-200 dark:bg-zinc-700 overflow-hidden">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-700 transition-all"
-                            style={{ width: `${activeEnrollment.progressPercent}%` }}
+                            style={{
+                              width: `${activeEnrollment.progressPercent}%`,
+                            }}
                           />
                         </div>
                       </div>
@@ -685,7 +724,9 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
                         <div className="space-y-3">
                           {courseModules.map(module => {
                             const isComplete =
-                              activeEnrollment.completedModuleIds.includes(module.id);
+                              activeEnrollment.completedModuleIds.includes(
+                                module.id,
+                              );
                             const isNext = nextModule?.id === module.id;
 
                             return (
@@ -721,22 +762,25 @@ export function CourseDetails({ courseId, onBack }: CourseDetailsProps) {
                                       {module.description}
                                     </p>
                                   )}
-                                  {isNext && activeEnrollment.status !== "completed" && (
-                                    <div className="mt-3 space-y-2">
-                                      <Label className="text-xs">
-                                        Monday Mission Action (optional)
-                                      </Label>
-                                      <Textarea
-                                        value={mondayMissionAction}
-                                        onChange={e =>
-                                          setMondayMissionAction(e.target.value)
-                                        }
-                                        placeholder="How will they apply this at work this week?"
-                                        className={DualModeInputClass}
-                                        rows={2}
-                                      />
-                                    </div>
-                                  )}
+                                  {isNext &&
+                                    activeEnrollment.status !== "completed" && (
+                                      <div className="mt-3 space-y-2">
+                                        <Label className="text-xs">
+                                          Monday Mission Action (optional)
+                                        </Label>
+                                        <Textarea
+                                          value={mondayMissionAction}
+                                          onChange={e =>
+                                            setMondayMissionAction(
+                                              e.target.value,
+                                            )
+                                          }
+                                          placeholder="How will they apply this at work this week?"
+                                          className={DualModeInputClass}
+                                          rows={2}
+                                        />
+                                      </div>
+                                    )}
                                 </div>
                               </div>
                             );

@@ -20,7 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { ChurchEventType, CreateChurchEventInput } from "@/lib/supabase/events";
+import type {
+  ChurchEventType,
+  CreateChurchEventInput,
+} from "@/lib/supabase/events";
 
 const eventTypes: ChurchEventType[] = ["VBS", "Camp", "Retreat", "Conference"];
 
@@ -73,7 +76,8 @@ export function CreateEventDialog({
         <DialogHeader>
           <DialogTitle className="text-base">Create Event</DialogTitle>
           <DialogDescription className="text-xs">
-            Set up a VBS, camp, retreat, or conference to track session attendance
+            Set up a VBS, camp, retreat, or conference to track session
+            attendance
           </DialogDescription>
         </DialogHeader>
 
@@ -102,7 +106,10 @@ export function CreateEventDialog({
 
           <div className="space-y-1.5">
             <Label className="text-xs">Type</Label>
-            <Select value={type} onValueChange={v => setType(v as ChurchEventType)}>
+            <Select
+              value={type}
+              onValueChange={v => setType(v as ChurchEventType)}
+            >
               <SelectTrigger className="h-8 text-sm">
                 <SelectValue />
               </SelectTrigger>

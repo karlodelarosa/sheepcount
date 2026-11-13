@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +17,7 @@ import {
   Plus,
   Settings2,
 } from "lucide-react";
+import { DirectoryTitleCard } from "@/components/ui/directory-page-header";
 import { OverviewStatCard } from "@/components/overview-stat-card";
 import { DEFAULT_CURRENCY, formatCurrency } from "@/lib/currency";
 import { useOrganizationSettings } from "@/lib/organization-settings";
@@ -91,11 +94,16 @@ export function PropertyManagementView() {
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isBorrowDialogOpen, setIsBorrowDialogOpen] = useState(false);
-  const [borrowPropertyId, setBorrowPropertyId] = useState<string | undefined>();
-  const [editingProperty, setEditingProperty] = useState<ChurchProperty | null>(null);
+  const [borrowPropertyId, setBorrowPropertyId] = useState<
+    string | undefined
+  >();
+  const [editingProperty, setEditingProperty] = useState<ChurchProperty | null>(
+    null,
+  );
   const [uploadingImageProperty, setUploadingImageProperty] =
     useState<ChurchProperty | null>(null);
-  const [deletingProperty, setDeletingProperty] = useState<ChurchProperty | null>(null);
+  const [deletingProperty, setDeletingProperty] =
+    useState<ChurchProperty | null>(null);
 
   const handleMarkLost = async (property: ChurchProperty) => {
     await updateProperty({
@@ -138,11 +146,7 @@ export function PropertyManagementView() {
   };
 
   if (entitlementsLoading || !hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading...
-      </div>
-    );
+    return <PageSkeleton message="Loading..." />;
   }
 
   if (!propertiesEnabled) {
@@ -175,40 +179,34 @@ export function PropertyManagementView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Properties
-          </h1>
-          <p className="text-slate-600 dark:text-zinc-400 mt-1">
-            Manage church assets, track estimated values, and log borrows.
-          </p>
-        </div>
-        {isAdmin && (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setBorrowPropertyId(undefined);
-                setIsBorrowDialogOpen(true);
-              }}
-              className="rounded-xl"
-            >
-              <HandCoins className="w-4 h-4 mr-2" />
-              Record Borrow
-            </Button>
-            <Button
-              onClick={() => setIsAddDialogOpen(true)}
-              className="rounded-xl bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Property
-            </Button>
-          </div>
-        )}
-      </div>
+      <DirectoryTitleCard
+        title="Properties"
+        description="Manage church assets, track estimated values, and log borrows."
+        icon={Building2}
+        action={
+          isAdmin
+            ? {
+                label: "Add Property",
+                icon: Plus,
+                onClick: () => setIsAddDialogOpen(true),
+              }
+            : undefined
+        }
+        secondaryAction={
+          isAdmin
+            ? {
+                label: "Record Borrow",
+                icon: HandCoins,
+                onClick: () => {
+                  setBorrowPropertyId(undefined);
+                  setIsBorrowDialogOpen(true);
+                },
+              }
+            : undefined
+        }
+      />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <OverviewStatCard
           icon={Package}
           label="Total properties"
@@ -240,21 +238,17 @@ export function PropertyManagementView() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList
-          className={`grid w-full h-10 p-1 bg-slate-100/80 dark:bg-zinc-800/80 ${
-            isAdmin ? "max-w-lg grid-cols-3" : "max-w-md grid-cols-2"
-          }`}
-        >
-          <TabsTrigger value="inventory" className="gap-1.5 text-xs sm:text-sm">
+        <TabsList>
+          <TabsTrigger value="inventory">
             <Building2 className="w-4 h-4" />
             Inventory
           </TabsTrigger>
-          <TabsTrigger value="borrow-log" className="gap-1.5 text-xs sm:text-sm">
+          <TabsTrigger value="borrow-log">
             <ClipboardList className="w-4 h-4" />
             Borrow Log
           </TabsTrigger>
           {isAdmin && (
-            <TabsTrigger value="types" className="gap-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="types">
               <Settings2 className="w-4 h-4" />
               Types
             </TabsTrigger>
@@ -270,7 +264,7 @@ export function PropertyManagementView() {
                 {isAdmin && (
                   <Button
                     onClick={() => setIsAddDialogOpen(true)}
-                    className="mt-4 rounded-xl bg-slate-900 hover:bg-slate-800"
+                    className="mt-4 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add your first property

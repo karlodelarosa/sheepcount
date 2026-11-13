@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import React, { useLayoutEffect, useRef, useCallback } from "react";
 import { gsap } from "gsap";
 import { Physics2DPlugin } from "gsap/Physics2DPlugin";
 
@@ -18,12 +18,9 @@ const HeroGridPhysics: React.FC = () => {
   const clicked = useRef(false);
   const resetAll = useRef(false);
 
-  // Build a stable array of indexes to render
-  const cellsIndexes = Array.from({ length: X_MAX * Y_MAX }).map((_, i) => i);
-
   // Update center positions of cells (store on element.dataset)
   const updateCellPositions = useCallback(() => {
-    cellRefs.current.forEach((cell) => {
+    cellRefs.current.forEach(cell => {
       if (!cell) return;
       const rect = cell.getBoundingClientRect();
       (cell as any).center_position = {
@@ -34,59 +31,53 @@ const HeroGridPhysics: React.FC = () => {
   }, []);
 
   // Pointer move handler (pull effect)
-  const handlePointerMove = useCallback(
-    (e?: PointerEvent) => {
-      if (clicked.current) return;
-      // default when no pointer (e.g., pointerleave): move pointer offscreen
-      const pointerX = e?.pageX ?? -PULL_DISTANCE;
-      const pointerY = e?.pageY ?? -PULL_DISTANCE;
+  const handlePointerMove = useCallback((e?: PointerEvent) => {
+    if (clicked.current) return;
+    // default when no pointer (e.g., pointerleave): move pointer offscreen
+    const pointerX = e?.pageX ?? -PULL_DISTANCE;
+    const pointerY = e?.pageY ?? -PULL_DISTANCE;
 
-      cellRefs.current.forEach((cell) => {
-        if (!cell) return;
-        const pos = (cell as any).center_position;
-        if (!pos) return;
+    cellRefs.current.forEach(cell => {
+      if (!cell) return;
+      const pos = (cell as any).center_position;
+      if (!pos) return;
 
-        const diffX = pointerX - pos.x;
-        const diffY = pointerY - pos.y;
-        const distance = Math.hypot(diffX, diffY);
+      const diffX = pointerX - pos.x;
+      const diffY = pointerY - pos.y;
+      const distance = Math.hypot(diffX, diffY);
 
-        if (distance < PULL_DISTANCE) {
-          const percent = distance / PULL_DISTANCE;
-          (cell as any).pulled = true;
-          gsap.to(cell, {
-            duration: 0.18,
-            x: diffX * percent,
-            y: diffY * percent,
-            overwrite: "auto",
-            ease: "sine.out",
-          });
-        } else if ((cell as any).pulled) {
-          (cell as any).pulled = false;
-          gsap.to(cell, {
-            duration: 0.9,
-            x: 0,
-            y: 0,
-            ease: "elastic.out(1, 0.3)",
-            overwrite: "auto",
-          });
-        }
-      });
-
-      if (resetAll.current) {
-        resetAll.current = false;
-        gsap.to(
-          cellRefs.current.filter(Boolean) as HTMLDivElement[],
-          {
-            duration: 0.9,
-            x: 0,
-            y: 0,
-            ease: "elastic.out(1, 0.3)",
-          }
-        );
+      if (distance < PULL_DISTANCE) {
+        const percent = distance / PULL_DISTANCE;
+        (cell as any).pulled = true;
+        gsap.to(cell, {
+          duration: 0.18,
+          x: diffX * percent,
+          y: diffY * percent,
+          overwrite: "auto",
+          ease: "sine.out",
+        });
+      } else if ((cell as any).pulled) {
+        (cell as any).pulled = false;
+        gsap.to(cell, {
+          duration: 0.9,
+          x: 0,
+          y: 0,
+          ease: "elastic.out(1, 0.3)",
+          overwrite: "auto",
+        });
       }
-    },
-    []
-  );
+    });
+
+    if (resetAll.current) {
+      resetAll.current = false;
+      gsap.to(cellRefs.current.filter(Boolean) as HTMLDivElement[], {
+        duration: 0.9,
+        x: 0,
+        y: 0,
+        ease: "elastic.out(1, 0.3)",
+      });
+    }
+  }, []);
 
   // Click handler to trigger physics explosion
   const handleCellClick = useCallback(
@@ -96,7 +87,7 @@ const HeroGridPhysics: React.FC = () => {
 
       const cells = cellRefs.current.filter(Boolean) as HTMLDivElement[];
       // Play physics explosion with stagger from clicked index
-      const tween = gsap.to(cells, {
+      gsap.to(cells, {
         duration: 1.6,
         physics2D: {
           velocity: "random(400, 1000)",
@@ -113,7 +104,7 @@ const HeroGridPhysics: React.FC = () => {
           // note: 'this' is the tween instance
           try {
             this.timeScale(-1.3);
-          } catch (err) {
+          } catch {
             // ignore if timeScale fails
           }
         },
@@ -135,7 +126,7 @@ const HeroGridPhysics: React.FC = () => {
         }
       }, 6000);
     },
-    [handlePointerMove]
+    [handlePointerMove],
   );
 
   // Setup event listeners and initial measurements
@@ -163,7 +154,7 @@ const HeroGridPhysics: React.FC = () => {
       window.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("pointerleave", () => handlePointerMove());
       // remove per-cell listeners
-      cellRefs.current.forEach((cell) => {
+      cellRefs.current.forEach(cell => {
         if (!cell) return;
         const onUp = (cell as any).__onUp;
         if (onUp) cell.removeEventListener("pointerup", onUp);
@@ -236,7 +227,8 @@ const HeroGridPhysics: React.FC = () => {
           border-radius: 50%;
           will-change: transform;
           cursor: pointer;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35),
+          box-shadow:
+            0 4px 12px rgba(0, 0, 0, 0.35),
             inset 0 -2px 6px rgba(0, 0, 0, 0.06);
           transition: transform 0.12s ease;
         }

@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,9 +78,7 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
 
   const availablePeople = useMemo(
     () =>
-      people.filter(
-        person => !memberships.some(m => m.personId === person.id),
-      ),
+      people.filter(person => !memberships.some(m => m.personId === person.id)),
     [people, memberships],
   );
 
@@ -122,11 +122,7 @@ export function LifeGroupDetails({ groupId, onBack }: LifeGroupDetailsProps) {
     "rounded-lg bg-slate-100 text-slate-700 dark:bg-zinc-700 dark:text-zinc-300";
 
   if (!hydrated) {
-    return (
-      <div className="p-8 text-center text-slate-500 dark:text-zinc-400">
-        Loading life group...
-      </div>
-    );
+    return <PageSkeleton message="Loading life group..." />;
   }
 
   if (!group) {

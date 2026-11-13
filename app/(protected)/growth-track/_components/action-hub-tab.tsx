@@ -1,9 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import {
-  EmptyState,
-} from "@/app/(protected)/people/_components/person-detail-ui";
+import { EmptyState } from "@/app/(protected)/people/_components/person-detail-ui";
 import type { GrowthTrackPerson } from "../_lib/types";
 import {
   ACTION_SECTIONS,
@@ -37,17 +34,17 @@ function SectionContent({
   const Icon = config.icon;
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 px-4 py-3 dark:border-zinc-700/80 dark:bg-zinc-800/30">
+    <section className="min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+      <div className="border-b border-border/60 px-5 py-5">
         <div className="flex items-start gap-3">
-          <div className="shrink-0 rounded-lg bg-white border border-slate-200/80 p-2 dark:bg-zinc-900 dark:border-zinc-600/80">
-            <Icon className="w-4 h-4 text-slate-600 dark:text-zinc-300" />
+          <div className="shrink-0 rounded-xl bg-[var(--accent-color-soft)] p-2.5">
+            <Icon className="size-5 text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-base font-bold tracking-tight">
               {config.label}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-zinc-400 mt-0.5">
+            <p className="mt-1 text-sm text-muted-foreground">
               {config.description}
             </p>
           </div>
@@ -61,8 +58,8 @@ function SectionContent({
           description={config.emptyDescription}
         />
       ) : (
-        <div className="space-y-2">
-          <p className="text-xs text-slate-500 dark:text-zinc-400 px-1">
+        <div>
+          <p className="border-b border-border/60 px-5 py-3 text-xs text-muted-foreground">
             {people.length} {people.length === 1 ? "person" : "people"}
           </p>
           {people.map(person => (
@@ -76,7 +73,7 @@ function SectionContent({
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -93,9 +90,12 @@ export function ActionHubTab({
   const sectionPeople = getPeopleForActionSection(people, activeSection);
 
   return (
-    <div className="space-y-4">
-      {/* Section filter pills */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
+    <div className="grid items-start gap-5 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      {/* Action category navigation */}
+      <nav
+        aria-label="Action categories"
+        className="flex min-w-0 gap-2 overflow-x-auto rounded-2xl border border-border/60 bg-card p-2 shadow-sm lg:flex-col"
+      >
         {ACTION_SECTIONS.map(section => {
           const count = sectionCounts[section.key];
           const isActive = activeSection === section.key;
@@ -105,31 +105,24 @@ export function ActionHubTab({
             <button
               key={section.key}
               type="button"
+              aria-pressed={isActive}
               onClick={() => onSectionChange(section.key)}
               className={cn(
-                "inline-flex items-center gap-2 shrink-0 rounded-xl border px-3 py-2 text-sm font-medium transition-all",
+                "inline-flex min-h-11 items-center gap-3 shrink-0 rounded-xl px-3 py-3 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-color)]",
                 isActive
-                  ? "border-violet-300 bg-violet-50 text-violet-900 shadow-sm dark:border-violet-700 dark:bg-violet-950/50 dark:text-violet-100"
-                  : "border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-800/60",
+                  ? "bg-[var(--accent-color-soft)] text-[var(--accent-color-strong)] dark:text-[var(--accent-color)]"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
               <span className="whitespace-nowrap">{section.shortLabel}</span>
-              {count > 0 && (
-                <Badge
-                  variant={isActive ? "default" : "secondary"}
-                  className={cn(
-                    "h-5 min-w-5 px-1.5 text-[10px] tabular-nums",
-                    !isActive && count > 0 && "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",
-                  )}
-                >
-                  {count}
-                </Badge>
-              )}
+              <span className="ml-auto min-w-6 rounded-lg bg-muted px-2 py-0.5 text-center text-xs font-semibold tabular-nums">
+                {count}
+              </span>
             </button>
           );
         })}
-      </div>
+      </nav>
 
       <SectionContent
         config={activeConfig}

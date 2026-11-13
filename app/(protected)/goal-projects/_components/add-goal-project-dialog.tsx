@@ -1,12 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DEFAULT_CURRENCY, getCurrencySymbol } from "@/lib/currency";
 import { useOrganizationSettings } from "@/lib/organization-settings";
 import type {
@@ -79,7 +92,9 @@ export function AddGoalProjectDialog({
                 id="project-name"
                 placeholder="e.g., New Sanctuary Renovation"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className="rounded-lg"
                 required
               />
@@ -91,7 +106,9 @@ export function AddGoalProjectDialog({
                 id="description"
                 placeholder="Describe the project and its purpose"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 className="rounded-lg"
                 rows={3}
                 required
@@ -106,7 +123,9 @@ export function AddGoalProjectDialog({
                   type="number"
                   placeholder="1000000"
                   value={formData.goalAmount}
-                  onChange={(e) => setFormData({ ...formData, goalAmount: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, goalAmount: e.target.value })
+                  }
                   className="rounded-lg"
                   required
                 />
@@ -118,7 +137,9 @@ export function AddGoalProjectDialog({
                   id="target-date"
                   type="date"
                   value={formData.targetDate}
-                  onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, targetDate: e.target.value })
+                  }
                   className="rounded-lg"
                   required
                 />
@@ -129,7 +150,7 @@ export function AddGoalProjectDialog({
               <Label htmlFor="category">Category</Label>
               <Select
                 value={formData.category}
-                onValueChange={(value) =>
+                onValueChange={value =>
                   setFormData({
                     ...formData,
                     category: value as CampaignCategory,
@@ -150,12 +171,17 @@ export function AddGoalProjectDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="rounded-lg">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="rounded-lg"
+            >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="rounded-lg bg-slate-900 hover:bg-slate-800"
+              className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
               disabled={!isAdmin}
             >
               Create Campaign

@@ -6,10 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency, type SupportedCurrency } from "@/lib/currency";
-import {
-  computeAuditSummary,
-  getAuditEntries,
-} from "../_lib/audit-overview";
+import { computeAuditSummary, getAuditEntries } from "../_lib/audit-overview";
 import type { AuditSchedule } from "../_lib/types";
 import type { AuditExpenseEntry, AuditIncomeEntry } from "../_lib/types";
 
@@ -35,19 +32,17 @@ export function AuditsTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Audit schedules
-          </h2>
+          <h2 className="text-lg font-bold text-foreground">Audit schedules</h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            Create a schedule, then add receipt and expense entries on the detail
-            page
+            Create a schedule, then add receipt and expense entries on the
+            detail page
           </p>
         </div>
         <Button
           onClick={onCreateAudit}
-          className="rounded-xl bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20"
+          className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
         >
           <Plus className="w-4 h-4 mr-2" />
           New schedule
@@ -55,7 +50,7 @@ export function AuditsTab({
       </div>
 
       {sortedAudits.length === 0 ? (
-        <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm dark:border-zinc-700/60">
+        <Card className="rounded-2xl border-border/60 bg-card shadow-sm">
           <CardContent className="py-16 text-center">
             <ClipboardList className="w-12 h-12 mx-auto text-slate-300 dark:text-zinc-600" />
             <p className="mt-4 text-slate-600 dark:text-zinc-400">
@@ -82,7 +77,7 @@ export function AuditsTab({
                 href={`/financial/${audit.id}`}
                 className="block group"
               >
-                <Card className="border-slate-200/60 bg-white/50 backdrop-blur-sm hover:shadow-md hover:border-slate-300/80 transition-all dark:border-zinc-700/60 dark:bg-zinc-900/40 dark:hover:border-zinc-600/80">
+                <Card className="rounded-2xl border-border/60 bg-card shadow-sm transition-shadow hover:shadow-md">
                   <CardContent className="py-4 px-4">
                     <div className="flex items-center justify-between gap-4">
                       <div className="min-w-0 flex-1">
@@ -90,7 +85,10 @@ export function AuditsTab({
                           <h3 className="font-medium text-slate-900 dark:text-white">
                             {audit.title}
                           </h3>
-                          <Badge variant="secondary" className="rounded-lg text-xs">
+                          <Badge
+                            variant="secondary"
+                            className="rounded-lg text-xs"
+                          >
                             {income.length + expenses.length} entries
                           </Badge>
                         </div>
@@ -107,7 +105,8 @@ export function AuditsTab({
                         </div>
                         <div className="flex flex-wrap gap-3 mt-2 text-xs">
                           <span className="text-emerald-600 dark:text-emerald-400">
-                            Receipts {formatCurrency(summary.totalIncome, currency)}
+                            Receipts{" "}
+                            {formatCurrency(summary.totalIncome, currency)}
                           </span>
                           <span className="text-rose-600 dark:text-rose-400">
                             Expenses{" "}

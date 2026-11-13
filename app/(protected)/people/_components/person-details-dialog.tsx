@@ -255,7 +255,9 @@ export function PersonDetailsDialog({
                         <span>
                           Completed:{" "}
                           {progress.completedAt
-                            ? new Date(progress.completedAt).toLocaleDateString()
+                            ? new Date(
+                                progress.completedAt,
+                              ).toLocaleDateString()
                             : "—"}
                         </span>
                         {course?.category && <span>{course.category}</span>}

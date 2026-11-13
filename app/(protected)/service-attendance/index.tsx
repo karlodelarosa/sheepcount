@@ -2,10 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +13,7 @@ import {
   UsersRound,
   LayoutDashboard,
   Cake,
+  CalendarDays,
 } from "lucide-react";
 import { usePeople } from "@/lib/people";
 import { useServiceAttendance } from "@/lib/service-attendance";
@@ -42,11 +40,13 @@ import {
   formatLongDate,
 } from "./_components/attendance-session-card";
 
+import { DirectoryTitleCard } from "@/components/ui/directory-page-header";
+
 function toGroupedRows(
   rows: ReturnType<typeof useServiceAttendance>["attendanceRows"],
 ) {
   return groupAttendanceBySession(
-    rows.map((r) => ({
+    rows.map(r => ({
       id: r.id,
       serviceId: r.serviceId,
       date: r.date,
@@ -86,7 +86,8 @@ export function ServiceAttendanceView() {
     [attendanceRows],
   );
 
-  const [dateRange, setDateRange] = useState<DateRangeValue>(getInitialDateRange);
+  const [dateRange, setDateRange] =
+    useState<DateRangeValue>(getInitialDateRange);
 
   const sundayRecords = useMemo(
     () => attendanceRecords.filter(isSundayRecord),
@@ -94,7 +95,7 @@ export function ServiceAttendanceView() {
   );
 
   const otherRecords = useMemo(
-    () => attendanceRecords.filter((r) => !isSundayRecord(r)),
+    () => attendanceRecords.filter(r => !isSundayRecord(r)),
     [attendanceRecords],
   );
 
@@ -105,7 +106,7 @@ export function ServiceAttendanceView() {
 
   const selectedSundayRecord = selectedSunday
     ? sundayRecords.find(
-        (r) =>
+        r =>
           r.serviceId === selectedSunday.serviceId &&
           r.date === selectedSunday.date,
       )
@@ -170,35 +171,22 @@ export function ServiceAttendanceView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Service Attendance</h1>
-          <p className="text-sm text-muted-foreground">
-            Sunday worship and life group gatherings
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => router.push("/service-attendance/search")}
-          >
-            <Search className="w-3.5 h-3.5" />
-            Search
-          </Button>
-          <Button
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setIsDialogOpen(true)}
-            disabled={isSaving || loading}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Record
-          </Button>
-        </div>
-      </div>
-
+      <DirectoryTitleCard
+        title="Service Attendance"
+        description="Sunday worship and life group gatherings"
+        icon={CalendarDays}
+        secondaryAction={{
+          label: "Search",
+          icon: Search,
+          onClick: () => router.push("/service-attendance/search"),
+        }}
+        action={{
+          label: "Record Attendance",
+          icon: Plus,
+          disabled: isSaving || loading,
+          onClick: () => setIsDialogOpen(true),
+        }}
+      />
       {loading ? (
         <div className="space-y-3">
           <Skeleton className="h-9 w-80" />
@@ -211,20 +199,20 @@ export function ServiceAttendanceView() {
         </div>
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="h-8">
-            <TabsTrigger value="dashboard" className="gap-1 text-xs px-2.5">
+          <TabsList>
+            <TabsTrigger value="dashboard">
               <LayoutDashboard className="w-3.5 h-3.5" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="sunday" className="gap-1 text-xs px-2.5">
+            <TabsTrigger value="sunday">
               <Church className="w-3.5 h-3.5" />
               Sunday
             </TabsTrigger>
-            <TabsTrigger value="other" className="gap-1 text-xs px-2.5">
+            <TabsTrigger value="other">
               <UsersRound className="w-3.5 h-3.5" />
               Life Groups
             </TabsTrigger>
-            <TabsTrigger value="birthdays" className="gap-1 text-xs px-2.5">
+            <TabsTrigger value="birthdays">
               <Cake className="w-3.5 h-3.5" />
               Birthdays
             </TabsTrigger>
@@ -232,8 +220,10 @@ export function ServiceAttendanceView() {
 
           <TabsContent value="dashboard" className="mt-3">
             <AttendanceDashboardTab
+              onOpenSession={openSession}
+              onViewAll={() => setActiveTab("sunday")}
               attendanceRecords={attendanceRecords}
-              rawAttendance={attendanceRows.map((r) => ({
+              rawAttendance={attendanceRows.map(r => ({
                 id: r.id,
                 serviceId: r.serviceId,
                 date: r.date,
@@ -299,7 +289,7 @@ export function ServiceAttendanceView() {
                   </Card>
                 ) : (
                   <div className="space-y-2">
-                    {sundayRecords.map((record) => (
+                    {sundayRecords.map(record => (
                       <AttendanceRecordCard
                         key={`${record.serviceId}-${record.date}`}
                         record={record}
@@ -355,7 +345,7 @@ export function ServiceAttendanceView() {
       )}
 
       <RecordAttendanceDialog
-        serviceTypes={serviceTypes.map((s) => ({
+        serviceTypes={serviceTypes.map(s => ({
           id: s.id,
           name: s.name,
           color: "violet",

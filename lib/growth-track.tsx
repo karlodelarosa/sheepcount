@@ -24,7 +24,10 @@ import {
   buildGrowthTrackOverview,
   type GrowthTrackOverview,
 } from "@/lib/growth-track/overview";
-import type { GrowthTrackPerson, FollowUpMethod } from "@/lib/growth-track/types";
+import type {
+  GrowthTrackPerson,
+  FollowUpMethod,
+} from "@/lib/growth-track/types";
 import type { EvangelismStage } from "@/lib/people";
 import { usePeople } from "@/lib/people";
 import { useGroupsMinistry } from "@/lib/groups-ministry";
@@ -62,10 +65,7 @@ type GrowthTrackContextValue = {
     personId: string,
     lifeGroupId: string,
   ) => Promise<boolean>;
-  enrollInDiscipleship: (
-    personId: string,
-    trackId: string,
-  ) => Promise<boolean>;
+  enrollInDiscipleship: (personId: string, trackId: string) => Promise<boolean>;
   logOutreach: (
     personId: string,
     type: "contact" | "visitation" | "follow_up_call",
@@ -97,12 +97,15 @@ export function GrowthTrackProvider({
   const supabase = useMemo(() => createClient(), []);
   const organizationId = getOrganizationId(tenant);
 
-  const { people, updatePerson, refreshPeople, hydrated: peopleHydrated } =
-    usePeople();
+  const {
+    people,
+    updatePerson,
+    refreshPeople,
+    hydrated: peopleHydrated,
+  } = usePeople();
   const {
     cellGroups,
     cellGroupMembers,
-    lifeGroups,
     lifeGroupMembers,
     assignCellGroupMember,
     assignLifeGroupMember,
@@ -110,7 +113,6 @@ export function GrowthTrackProvider({
     hydrated: groupsHydrated,
   } = useGroupsMinistry();
   const {
-    tracks,
     enrollments,
     enrollPerson,
     refreshDiscipleship,

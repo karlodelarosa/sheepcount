@@ -40,7 +40,10 @@ export function EditPropertyDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   property: ChurchProperty;
-  onSubmit: (input: UpdatePropertyInput, imageFile?: File | null) => Promise<unknown>;
+  onSubmit: (
+    input: UpdatePropertyInput,
+    imageFile?: File | null,
+  ) => Promise<unknown>;
   isAdmin: boolean;
 }) {
   const { settings } = useOrganizationSettings();
@@ -100,7 +103,9 @@ export function EditPropertyDialog({
       <DialogContent className="sm:max-w-[600px] border-slate-200/60">
         <DialogHeader>
           <DialogTitle>Edit Property</DialogTitle>
-          <DialogDescription>Update property details and status</DialogDescription>
+          <DialogDescription>
+            Update property details and status
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
@@ -117,7 +122,9 @@ export function EditPropertyDialog({
                 <Input
                   id="edit-property-name"
                   value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  onChange={e =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="rounded-lg"
                   required
                 />
@@ -215,7 +222,9 @@ export function EditPropertyDialog({
                 id="edit-notes"
                 placeholder="Internal notes (condition, storage location, etc.)"
                 value={formData.notes}
-                onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                onChange={e =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
                 className="rounded-lg"
                 rows={2}
               />
@@ -232,7 +241,7 @@ export function EditPropertyDialog({
             </Button>
             <Button
               type="submit"
-              className="rounded-lg bg-slate-900 hover:bg-slate-800"
+              className="min-h-11 rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)]"
               disabled={!isAdmin}
             >
               Save Changes

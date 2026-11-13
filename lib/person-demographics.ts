@@ -37,10 +37,7 @@ export const DEFAULT_AGE_BRACKET_FILTER: AgeBracketFilter = {
   unknown: true,
 };
 
-export function getAgeBracket(
-  age: number,
-  birthdate?: string,
-): AgeBracketKey {
+export function getAgeBracket(age: number, birthdate?: string): AgeBracketKey {
   if (!birthdate || age <= 0) return "unknown";
   if (age <= 12) return "kids";
   if (age <= 21) return "youth";
@@ -75,7 +72,9 @@ export const GENDER_COLORS: Record<GenderKey, string> = {
   unknown: "#94a3b8",
 };
 
-export function getGenderKey(gender: PersonGender | null | undefined): GenderKey {
+export function getGenderKey(
+  gender: PersonGender | null | undefined,
+): GenderKey {
   if (gender === "Male") return "male";
   if (gender === "Female") return "female";
   return "unknown";

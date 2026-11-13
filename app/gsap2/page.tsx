@@ -27,7 +27,7 @@ function AnimatedMenu() {
           duration: 1,
           delay: i * 0.12,
           ease: "back.out(1.6)",
-        }
+        },
       );
     });
   }, []);
@@ -70,13 +70,13 @@ function AnimatedMenu() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + idx * 0.1, duration: 0.3 }}
             >
-              <Icon 
-                className="w-6 h-6 mb-1 transition-all duration-200" 
+              <Icon
+                className="w-6 h-6 mb-1 transition-all duration-200"
                 style={{
                   background: "linear-gradient(45deg, #f472b6, #a5b4fc)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
-                  }}
+                }}
               />
               {/* <span className="text-xs">{item.label}</span> */}
               {/* Optional hover glow */}

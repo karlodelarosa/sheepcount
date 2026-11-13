@@ -3,7 +3,10 @@ import type { DiscipleshipEnrollment } from "@/lib/supabase/discipleship";
 import type { GrowthTrackActivity } from "@/lib/supabase/growth-track";
 import type { LifeGroupMember } from "@/lib/supabase/life-groups";
 import type { EvangelismStage, Person } from "@/lib/people";
-import type { AssignmentStatus, GrowthTrackPerson } from "@/lib/growth-track/types";
+import type {
+  AssignmentStatus,
+  GrowthTrackPerson,
+} from "@/lib/growth-track/types";
 import { getEffectiveCellGroupLeaderId } from "@/lib/growth-track/cell-group-utils";
 
 const PIPELINE_STAGES: EvangelismStage[] = [
@@ -75,7 +78,10 @@ function computeAssignmentStatus(
     return "assigned";
   }
 
-  if (person.evangelismStage === "Discipleship" || person.evangelismStage === "Worker") {
+  if (
+    person.evangelismStage === "Discipleship" ||
+    person.evangelismStage === "Worker"
+  ) {
     return "assigned";
   }
 

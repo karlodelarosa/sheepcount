@@ -96,7 +96,8 @@ export async function createAdminPosition(
       organization_id: organizationId,
       title: input.title,
       person_id: input.personId,
-      appointed_date: input.appointedDate ?? new Date().toISOString().slice(0, 10),
+      appointed_date:
+        input.appointedDate ?? new Date().toISOString().slice(0, 10),
       term: input.term,
       status: "active",
     })
@@ -185,7 +186,9 @@ export function buildOrgChart({
   return {
     headPersonId,
     departments: ministries.map(ministry => {
-      const ministryTeams = teams.filter(team => team.ministryId === ministry.id);
+      const ministryTeams = teams.filter(
+        team => team.ministryId === ministry.id,
+      );
 
       return {
         id: ministry.id,
@@ -204,7 +207,8 @@ export function buildOrgChart({
         })),
         directMemberIds: members
           .filter(
-            member => member.ministryId === ministry.id && member.teamId === null,
+            member =>
+              member.ministryId === ministry.id && member.teamId === null,
           )
           .map(member => member.personId),
       };

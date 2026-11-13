@@ -11,13 +11,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Calendar,
-  Check,
-  Clock,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Check, Clock } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -176,7 +170,7 @@ export function RecordAttendanceDialog({
     if (!serviceTypes?.length) return;
 
     const preferred =
-      defaultServiceId && serviceTypes.some((s) => s.id === defaultServiceId)
+      defaultServiceId && serviceTypes.some(s => s.id === defaultServiceId)
         ? defaultServiceId
         : serviceTypes[0].id;
 
@@ -186,7 +180,7 @@ export function RecordAttendanceDialog({
   const peopleById = useMemo(
     () =>
       new Map(
-        people.map((person) => [
+        people.map(person => [
           person.id,
           {
             id: person.id,
@@ -199,7 +193,7 @@ export function RecordAttendanceDialog({
   );
 
   const selectedServiceName =
-    serviceTypes.find((service) => service.id === selectedServiceId)?.name ??
+    serviceTypes.find(service => service.id === selectedServiceId)?.name ??
     "Service";
 
   const overviewStats = useMemo(
@@ -208,9 +202,9 @@ export function RecordAttendanceDialog({
   );
 
   const togglePerson = (personId: string) => {
-    setSelectedKeys((prev) =>
+    setSelectedKeys(prev =>
       prev.includes(personId)
-        ? prev.filter((id) => id !== personId)
+        ? prev.filter(id => id !== personId)
         : [...prev, personId],
     );
   };
@@ -220,18 +214,18 @@ export function RecordAttendanceDialog({
     if (!parsed) return;
 
     const guestKey = createGuestKey();
-    setGuestNames((prev) => {
+    setGuestNames(prev => {
       const next = new Map(prev);
       next.set(guestKey, parsed);
       return next;
     });
-    setSelectedKeys((prev) => [...prev, guestKey]);
+    setSelectedKeys(prev => [...prev, guestKey]);
     setGuestInput("");
   };
 
   const handleRemoveGuest = (guestKey: string) => {
-    setSelectedKeys((prev) => prev.filter((key) => key !== guestKey));
-    setGuestNames((prev) => {
+    setSelectedKeys(prev => prev.filter(key => key !== guestKey));
+    setGuestNames(prev => {
       const next = new Map(prev);
       next.delete(guestKey);
       return next;
@@ -245,14 +239,14 @@ export function RecordAttendanceDialog({
 
   const goToTimestampStep = () => {
     const existingTimes = new Map(
-      attendees.map((attendee) => [attendee.key, attendee.timeOfArrival]),
+      attendees.map(attendee => [attendee.key, attendee.timeOfArrival]),
     );
     const nextAttendees = buildSelectedAttendeesFromSelection(
       selectedKeys,
       peopleById,
       guestNames,
       serviceStartTime,
-    ).map((attendee) => ({
+    ).map(attendee => ({
       ...attendee,
       timeOfArrival: existingTimes.get(attendee.key) ?? attendee.timeOfArrival,
     }));
@@ -261,8 +255,8 @@ export function RecordAttendanceDialog({
   };
 
   const updateArrivalTime = (key: string, timeOfArrival: string) => {
-    setAttendees((prev) =>
-      prev.map((attendee) =>
+    setAttendees(prev =>
+      prev.map(attendee =>
         attendee.key === key ? { ...attendee, timeOfArrival } : attendee,
       ),
     );
@@ -270,8 +264,8 @@ export function RecordAttendanceDialog({
 
   const applyToggleToAll = (toggle: ArrivalStatus) => {
     const time = getToggleTime(serviceStartTime, toggle);
-    setAttendees((prev) =>
-      prev.map((attendee) => ({ ...attendee, timeOfArrival: time })),
+    setAttendees(prev =>
+      prev.map(attendee => ({ ...attendee, timeOfArrival: time })),
     );
   };
 
@@ -307,21 +301,18 @@ export function RecordAttendanceDialog({
 
   const isBusy = isSaving || isSubmitting;
 
-  const canProceedFromStep1 =
-    Boolean(selectedServiceId && attendanceDate && selectedKeys.length > 0);
+  const canProceedFromStep1 = Boolean(
+    selectedServiceId && attendanceDate && selectedKeys.length > 0,
+  );
 
-  const dialogWidth =
-    step === 1 ? "sm:max-w-xl" : "sm:max-w-4xl";
+  const dialogWidth = step === 1 ? "sm:max-w-xl" : "sm:max-w-4xl";
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {children ? <DialogTrigger asChild>{children}</DialogTrigger> : null}
 
       <DialogContent
-        className={cn(
-          dialogWidth,
-          "max-h-[90vh] overflow-y-auto",
-        )}
+        className={cn(dialogWidth, "max-h-[90vh] overflow-y-auto")}
       >
         <DialogHeader className="space-y-3">
           <DialogTitle>Record Attendance</DialogTitle>
@@ -347,7 +338,7 @@ export function RecordAttendanceDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {serviceTypes?.length ? (
-                    serviceTypes.map((svc) => (
+                    serviceTypes.map(svc => (
                       <SelectItem key={svc.id} value={svc.id}>
                         <div className="flex items-center gap-2">
                           {svc.name.includes("Worship") ? (
@@ -373,7 +364,7 @@ export function RecordAttendanceDialog({
               <Input
                 type="date"
                 value={attendanceDate}
-                onChange={(e) => setAttendanceDate(e.target.value)}
+                onChange={e => setAttendanceDate(e.target.value)}
                 disabled={step > 1}
               />
             </div>
@@ -383,7 +374,7 @@ export function RecordAttendanceDialog({
               <Input
                 type="time"
                 value={serviceStartTime}
-                onChange={(e) => setServiceStartTime(e.target.value)}
+                onChange={e => setServiceStartTime(e.target.value)}
                 disabled={step === 3}
               />
             </div>
@@ -432,7 +423,7 @@ export function RecordAttendanceDialog({
               variant="outline"
               className="gap-1.5"
               disabled={isBusy}
-              onClick={() => setStep((prev) => (prev - 1) as WorkflowStep)}
+              onClick={() => setStep(prev => (prev - 1) as WorkflowStep)}
             >
               <ArrowLeft className="h-4 w-4" />
               Back

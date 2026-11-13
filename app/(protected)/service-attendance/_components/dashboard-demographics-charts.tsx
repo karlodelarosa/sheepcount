@@ -35,10 +35,12 @@ import type { DashboardAttendeeSummary } from "../_lib/group-attendance";
 
 interface DashboardDemographicsChartsProps {
   attendees: DashboardAttendeeSummary[];
+  hideAge?: boolean;
 }
 
 export function DashboardDemographicsCharts({
   attendees,
+  hideAge = false,
 }: DashboardDemographicsChartsProps) {
   const genderData = useMemo(() => {
     const counts: Record<GenderKey, number> = {
@@ -92,18 +94,22 @@ export function DashboardDemographicsCharts({
   if (attendees.length === 0) return null;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card className="border-border/60 bg-card/50">
-        <CardHeader className="py-3 px-4">
-          <CardTitle className="text-sm flex items-center gap-1.5">
-            <Users className="w-4 h-4 text-blue-500" />
+    <div
+      className={
+        hideAge ? "grid min-w-0 grid-cols-1" : "grid gap-4 lg:grid-cols-2"
+      }
+    >
+      <Card className="min-w-0 rounded-2xl border-border/60 bg-card shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3 text-base font-bold">
+            <Users className="size-5 shrink-0 text-[var(--accent-color)]" />
             By gender
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-sm">
             Unique people in selected filters
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-4 pb-4 pt-0">
+        <CardContent>
           {genderData.length > 0 ? (
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <ResponsiveContainer width="100%" height={160}>
@@ -138,7 +144,9 @@ export function DashboardDemographicsCharts({
                       />
                       <span className="truncate">{item.label}</span>
                     </span>
-                    <span className="tabular-nums font-medium">{item.count}</span>
+                    <span className="tabular-nums font-medium">
+                      {item.count}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -151,49 +159,59 @@ export function DashboardDemographicsCharts({
         </CardContent>
       </Card>
 
-      <Card className="border-border/60 bg-card/50">
-        <CardHeader className="py-3 px-4">
-          <CardTitle className="text-sm flex items-center gap-1.5">
-            <Users className="w-4 h-4 text-indigo-500" />
-            By age bracket
-          </CardTitle>
-          <CardDescription className="text-xs">
-            People without birthdates are grouped as Unknown
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-4 pb-4 pt-0">
-          {ageData.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={ageData} layout="vertical" margin={{ left: 4 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-muted"
-                    horizontal={false}
-                  />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} />
-                  <YAxis
-                    type="category"
-                    dataKey="label"
-                    width={72}
-                    tick={{ fontSize: 9 }}
-                  />
-                  <Tooltip />
-                  <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                    {ageData.map(entry => (
-                      <Cell key={entry.key} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </>
-          ) : (
-            <p className="text-xs text-muted-foreground text-center py-8">
-              No age data
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      {!hideAge && (
+        <Card className="min-w-0 rounded-2xl border-border/60 bg-card shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-base font-bold">
+              <Users className="w-4 h-4 text-indigo-500" />
+              By age bracket
+            </CardTitle>
+            <CardDescription className="text-sm">
+              People without birthdates are grouped as Unknown
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {ageData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart
+                    data={ageData}
+                    layout="vertical"
+                    margin={{ left: 4 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tick={{ fontSize: 10 }}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      width={72}
+                      tick={{ fontSize: 9 }}
+                    />
+                    <Tooltip />
+                    <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                      {ageData.map(entry => (
+                        <Cell key={entry.key} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-8">
+                No age data
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

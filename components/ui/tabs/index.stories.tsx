@@ -1,3 +1,4 @@
+import { expect, userEvent, within } from "storybook/test";
 // Tabs.stories.tsx
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import React from "react";
@@ -40,4 +41,103 @@ export const Default: Story = {
       ))}
     </Tabs>
   ),
+};
+
+export const PreservesVisitedContent: Story = {
+  render: () => (
+    <Tabs defaultValue="first">
+      <TabsList>
+        <TabsTrigger value="first">First</TabsTrigger>
+        <TabsTrigger value="second">Second</TabsTrigger>
+      </TabsList>
+      <TabsContent value="first">
+        <input aria-label="Draft" />
+      </TabsContent>
+      <TabsContent value="second">Second content</TabsContent>
+    </Tabs>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.type(canvas.getByRole("textbox"), "Keep this draft");
+    await userEvent.click(canvas.getByRole("tab", { name: "Second" }));
+    await expect(canvas.getByRole("tab", { name: "Second" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(canvas.getByText("Second content")).toBeVisible();
+    await userEvent.click(canvas.getByRole("tab", { name: "First" }));
+    await expect(canvas.getByRole("textbox")).toHaveValue("Keep this draft");
+  },
+};
+
+function PendingTabsExample() {
+  const [resource] = React.useState(() => {
+    let resolve!: (value: string) => void;
+    const promise = new Promise<string>(done => {
+      resolve = done;
+    });
+    return { promise, resolve };
+  });
+  function PendingContent() {
+    return <div>{React.use(resource.promise)}</div>;
+  }
+  return (
+    <>
+      <button onClick={() => resource.resolve("Loaded content")}>
+        Finish loading
+      </button>
+      <Tabs defaultValue="first">
+        <TabsList>
+          <TabsTrigger value="first">First</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+        </TabsList>
+        <TabsContent value="first">First content</TabsContent>
+        <TabsContent value="pending">
+          <PendingContent />
+        </TabsContent>
+      </Tabs>
+    </>
+  );
+}
+
+export const SwitchesWhileLoading: Story = {
+  render: () => <PendingTabsExample />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("tab", { name: "Pending" }));
+    await expect(canvas.getByRole("tab", { name: "Pending" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(canvas.getByRole("status")).toBeVisible();
+    await userEvent.click(canvas.getByRole("tab", { name: "First" }));
+    await expect(canvas.getByText("First content")).toBeVisible();
+    await userEvent.click(
+      canvas.getByRole("button", { name: "Finish loading" }),
+    );
+    await userEvent.click(canvas.getByRole("tab", { name: "Pending" }));
+    await expect(canvas.getByText("Loaded content")).toBeVisible();
+  },
+};
+
+export const ControlledSelectionStaysAuthoritative: Story = {
+  render: () => (
+    <Tabs value="first" onValueChange={() => {}}>
+      <TabsList>
+        <TabsTrigger value="first">First</TabsTrigger>
+        <TabsTrigger value="second">Second</TabsTrigger>
+      </TabsList>
+      <TabsContent value="first">First content</TabsContent>
+      <TabsContent value="second">Second content</TabsContent>
+    </Tabs>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("tab", { name: "Second" }));
+    await expect(canvas.getByRole("tab", { name: "First" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(canvas.getByText("First content")).toBeVisible();
+  },
 };

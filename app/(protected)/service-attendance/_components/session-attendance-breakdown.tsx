@@ -30,12 +30,14 @@ import {
 
 interface SessionAttendanceBreakdownProps {
   attendees: SessionAttendeeLike[];
+  hideStatus?: boolean;
   activeFilter: AttendanceStatusKey | null;
   onFilterChange: (filter: AttendanceStatusKey | null) => void;
 }
 
 export function SessionAttendanceBreakdown({
   attendees,
+  hideStatus = false,
   activeFilter,
   onFilterChange,
 }: SessionAttendanceBreakdownProps) {
@@ -84,108 +86,124 @@ export function SessionAttendanceBreakdown({
   ];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
-      <Card className="border-border/60 bg-card/50">
-        <CardHeader className="py-3 px-4">
-          <CardTitle className="text-sm flex items-center gap-1.5">
-            <PieChart className="w-4 h-4 text-violet-500" />
-            By status
-          </CardTitle>
-          <CardDescription className="text-xs">
-            {activeFilter
-              ? `Showing ${ATTENDANCE_STATUS_LABELS[activeFilter].toLowerCase()} — tap again to clear`
-              : "Tap a status to filter the attendee list"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="px-4 pb-4 pt-0 space-y-3">
-          {breakdown.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={breakdown} layout="vertical" margin={{ left: 4 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-muted"
-                    horizontal={false}
-                  />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} />
-                  <YAxis
-                    type="category"
-                    dataKey="label"
-                    width={88}
-                    tick={{ fontSize: 10 }}
-                  />
-                  <Tooltip />
-                  <Bar
-                    dataKey="count"
-                    radius={[0, 4, 4, 0]}
-                    className="cursor-pointer"
-                    onClick={(_data, index) => {
-                      const item = breakdown[index];
-                      if (item) toggleFilter(item.key);
-                    }}
+    <div
+      className={
+        hideStatus ? "grid min-w-0 grid-cols-1" : "grid gap-4 lg:grid-cols-2"
+      }
+    >
+      {!hideStatus && (
+        <Card className="border-border/60 bg-card/50">
+          <CardHeader className="py-3 px-4">
+            <CardTitle className="text-sm flex items-center gap-1.5">
+              <PieChart className="w-4 h-4 text-violet-500" />
+              By status
+            </CardTitle>
+            <CardDescription className="text-xs">
+              {activeFilter
+                ? `Showing ${ATTENDANCE_STATUS_LABELS[activeFilter].toLowerCase()} — tap again to clear`
+                : "Tap a status to filter the attendee list"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-4 pb-4 pt-0 space-y-3">
+            {breakdown.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart
+                    data={breakdown}
+                    layout="vertical"
+                    margin={{ left: 4 }}
                   >
-                    {breakdown.map(entry => (
-                      <Cell
-                        key={entry.key}
-                        fill={entry.color}
-                        opacity={
-                          activeFilter && activeFilter !== entry.key ? 0.35 : 1
-                        }
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-
-              <div className="grid grid-cols-2 gap-2">
-                {breakdown.map(item => {
-                  const isActive = activeFilter === item.key;
-                  return (
-                    <button
-                      key={item.key}
-                      type="button"
-                      onClick={() => toggleFilter(item.key)}
-                      className={cn(
-                        "flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-xs text-left transition-all",
-                        isActive
-                          ? "border-violet-400 bg-violet-50 ring-2 ring-violet-400/40 dark:border-violet-600 dark:bg-violet-950/40"
-                          : "border-border/50 bg-background/50 hover:border-border hover:bg-muted/40",
-                      )}
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tick={{ fontSize: 10 }}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      width={88}
+                      tick={{ fontSize: 10 }}
+                    />
+                    <Tooltip />
+                    <Bar
+                      dataKey="count"
+                      radius={[0, 4, 4, 0]}
+                      className="cursor-pointer"
+                      onClick={(_data, index) => {
+                        const item = breakdown[index];
+                        if (item) toggleFilter(item.key);
+                      }}
                     >
-                      <span className="flex items-center gap-1.5 min-w-0">
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ backgroundColor: item.color }}
+                      {breakdown.map(entry => (
+                        <Cell
+                          key={entry.key}
+                          fill={entry.color}
+                          opacity={
+                            activeFilter && activeFilter !== entry.key
+                              ? 0.35
+                              : 1
+                          }
                         />
-                        <span className="truncate">{item.label}</span>
-                      </span>
-                      <span className="font-medium tabular-nums shrink-0">
-                        {item.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            <p className="text-xs text-muted-foreground text-center py-6">
-              No status data available
-            </p>
-          )}
-        </CardContent>
-      </Card>
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
 
-      <Card className="border-violet-200/60 dark:border-violet-800/40 bg-gradient-to-br from-violet-50/40 to-transparent dark:from-violet-950/20">
-        <CardHeader className="py-3 px-4">
-          <CardTitle className="text-sm flex items-center gap-1.5">
-            <Users className="w-4 h-4 text-violet-500" />
+                <div className="grid grid-cols-2 gap-2">
+                  {breakdown.map(item => {
+                    const isActive = activeFilter === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => toggleFilter(item.key)}
+                        className={cn(
+                          "flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-xs text-left transition-all",
+                          isActive
+                            ? "border-violet-400 bg-violet-50 ring-2 ring-violet-400/40 dark:border-violet-600 dark:bg-violet-950/40"
+                            : "border-border/50 bg-background/50 hover:border-border hover:bg-muted/40",
+                        )}
+                      >
+                        <span className="flex items-center gap-1.5 min-w-0">
+                          <span
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: item.color }}
+                          />
+                          <span className="truncate">{item.label}</span>
+                        </span>
+                        <span className="font-medium tabular-nums shrink-0">
+                          {item.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center py-6">
+                No status data available
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="min-w-0 rounded-2xl border-border/60 bg-card shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3 text-base font-bold">
+            <Users className="size-5 shrink-0 text-[var(--accent-color)]" />
             Workers vs congregation
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-sm">
             How serving workers compare to attenders and newcomers
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-4 pb-4 pt-0 space-y-4">
+        <CardContent className="space-y-6">
           <div className="flex h-8 rounded-lg overflow-hidden border border-border/40">
             {contrastSegments.map(segment => {
               const width = (segment.count / contrast.total) * 100;
@@ -218,14 +236,16 @@ export function SessionAttendanceBreakdown({
                         className="w-2.5 h-2.5 rounded-sm shrink-0"
                         style={{ backgroundColor: segment.color }}
                       />
-                      <span className="font-medium truncate">{segment.label}</span>
+                      <span className="font-medium truncate">
+                        {segment.label}
+                      </span>
                     </span>
                     <span className="tabular-nums shrink-0 text-muted-foreground">
                       {segment.count}{" "}
                       <span className="text-[10px]">({pct}%)</span>
                     </span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground pl-4">
+                  <p className="text-xs text-muted-foreground pl-4">
                     {segment.hint}
                   </p>
                 </div>

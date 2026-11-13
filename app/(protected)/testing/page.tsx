@@ -16,7 +16,11 @@ export default function HeroBanner() {
     if (!hero || lights.length === 0) return;
 
     // --- IDLE LIGHT MOVEMENT ---
-    const idleTl = gsap.timeline({ repeat: -1, yoyo: true, ease: "sine.inOut" });
+    const idleTl = gsap.timeline({
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
     idleTl.to(lights, {
       duration: 30,
       xPercent: "+=15",
@@ -78,8 +82,8 @@ export default function HeroBanner() {
                 i === 0
                   ? "rgba(255,140,0,0.5)"
                   : i === 1
-                  ? "rgba(138,43,226,0.5)"
-                  : "rgba(255,255,255,0.2)"
+                    ? "rgba(138,43,226,0.5)"
+                    : "rgba(255,255,255,0.2)"
               }, transparent 70%)`,
               top: `${30 * i}%`,
               left: `${40 * i}%`,
@@ -92,8 +96,7 @@ export default function HeroBanner() {
       <h1
         className="text-[10vw] font-bold tracking-tight relative z-10"
         style={{
-          background:
-            "linear-gradient(90deg, #ff7e00, #b347ff, #ff7e00)",
+          background: "linear-gradient(90deg, #ff7e00, #b347ff, #ff7e00)",
           backgroundSize: "200% 200%",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",

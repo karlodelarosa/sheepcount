@@ -44,8 +44,9 @@ export function ChangeMembershipDialog({
   onConfirm,
   isSaving = false,
 }: ChangeMembershipDialogProps) {
-  const [membershipType, setMembershipType] =
-    useState<MembershipType>(currentMembershipType);
+  const [membershipType, setMembershipType] = useState<MembershipType>(
+    currentMembershipType,
+  );
 
   useEffect(() => {
     if (open) {
@@ -87,10 +88,7 @@ export function ChangeMembershipDialog({
                 setMembershipType(value as MembershipType)
               }
             >
-              <SelectTrigger
-                id="change-membership-type"
-                className="rounded-xl"
-              >
+              <SelectTrigger id="change-membership-type" className="rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -118,7 +116,7 @@ export function ChangeMembershipDialog({
             type="button"
             disabled={isSaving || !hasChange}
             onClick={() => void onConfirm(membershipType)}
-            className="rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-purple-600 dark:hover:bg-purple-700"
+            className="rounded-xl bg-[var(--accent-color)] text-[var(--accent-color-foreground)] hover:bg-[var(--accent-color-muted)] focus-visible:ring-[var(--accent-color)]"
           >
             {isSaving ? (
               <>

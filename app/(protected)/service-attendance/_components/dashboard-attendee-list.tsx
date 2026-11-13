@@ -4,7 +4,10 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { getMembershipDisplayLabel, getPersonVisitDate } from "@/lib/membership-path";
+import {
+  getMembershipDisplayLabel,
+  getPersonVisitDate,
+} from "@/lib/membership-path";
 import { cn } from "@/lib/utils";
 import {
   ATTENDANCE_STATUS_LABELS,
@@ -90,7 +93,10 @@ export function DashboardAttendeeList({
                     {attendee.householdName || "No household"}
                   </p>
                 </div>
-                <Badge variant="outline" className="text-[10px] tabular-nums shrink-0">
+                <Badge
+                  variant="outline"
+                  className="text-[10px] tabular-nums shrink-0"
+                >
                   {attendee.attendanceCount}x
                 </Badge>
                 <Badge

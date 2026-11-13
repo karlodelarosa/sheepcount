@@ -46,7 +46,9 @@ export function RegisterParticipantDialog({
   const [dietaryRestrictions, setDietaryRestrictions] = useState("");
 
   const existingRegistrations = getEventRegistrations(event.id);
-  const registeredPersonIds = new Set(existingRegistrations.map(r => r.personId));
+  const registeredPersonIds = new Set(
+    existingRegistrations.map(r => r.personId),
+  );
 
   const selectedPerson = people.find(p => p.id === personId);
   const isChildRegistration = selectedPerson?.role === "Child";
@@ -72,7 +74,9 @@ export function RegisterParticipantDialog({
       parentPersonId: isChildRegistration ? parentPersonId : undefined,
       roleInEvent,
       medicalNotes: isChildRegistration ? medicalNotes : undefined,
-      dietaryRestrictions: isChildRegistration ? dietaryRestrictions : undefined,
+      dietaryRestrictions: isChildRegistration
+        ? dietaryRestrictions
+        : undefined,
     });
 
     if (result) {
@@ -164,7 +168,11 @@ export function RegisterParticipantDialog({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+            >
               Cancel
             </Button>
             <Button type="submit">Register</Button>

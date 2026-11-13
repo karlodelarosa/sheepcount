@@ -55,7 +55,9 @@ type GoalProjectsContextValue = {
   deleteContribution: (contributionId: string) => Promise<boolean>;
 };
 
-const GoalProjectsContext = createContext<GoalProjectsContextValue | null>(null);
+const GoalProjectsContext = createContext<GoalProjectsContextValue | null>(
+  null,
+);
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
@@ -65,7 +67,11 @@ function getErrorMessage(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-export function GoalProjectsProvider({ children }: { children: React.ReactNode }) {
+export function GoalProjectsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { tenant, isLoading: tenantLoading } = useTenant();
   const supabase = useMemo(() => createClient(), []);
   const organizationId = getOrganizationId(tenant);
@@ -82,7 +88,10 @@ export function GoalProjectsProvider({ children }: { children: React.ReactNode }
     }
 
     try {
-      const data = await fetchFundraisingCampaignsForOrg(supabase, organizationId);
+      const data = await fetchFundraisingCampaignsForOrg(
+        supabase,
+        organizationId,
+      );
       setCampaigns(data);
     } catch (error) {
       toast.error("Failed to load fundraising campaigns", {
@@ -140,7 +149,9 @@ export function GoalProjectsProvider({ children }: { children: React.ReactNode }
       setIsSaving(true);
       try {
         const campaign = await updateFundraisingCampaign(supabase, input);
-        setCampaigns(prev => prev.map(c => (c.id === campaign.id ? campaign : c)));
+        setCampaigns(prev =>
+          prev.map(c => (c.id === campaign.id ? campaign : c)),
+        );
         return campaign;
       } catch (error) {
         toast.error("Failed to update campaign", {
@@ -333,4 +344,3 @@ export function useGoalProjects(): GoalProjectsContextValue {
   }
   return ctx;
 }
-

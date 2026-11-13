@@ -67,8 +67,7 @@ export function PersonAttendanceSection({
   hydrated,
 }: PersonAttendanceSectionProps) {
   const stats = useMemo(
-    () =>
-      buildPersonAttendanceStats(attendanceRows, personId, lastAttendance),
+    () => buildPersonAttendanceStats(attendanceRows, personId, lastAttendance),
     [attendanceRows, personId, lastAttendance],
   );
 
@@ -78,7 +77,7 @@ export function PersonAttendanceSection({
   );
 
   const personRows = useMemo(
-    () => attendanceRows.filter((row) => row.personId === personId),
+    () => attendanceRows.filter(row => row.personId === personId),
     [attendanceRows, personId],
   );
 
@@ -150,16 +149,16 @@ export function PersonAttendanceSection({
             label="Current streak"
             value={stats.currentStreak}
             hint={
-              stats.currentStreak === 1
-                ? "Sunday in a row"
-                : "Sundays in a row"
+              stats.currentStreak === 1 ? "Sunday in a row" : "Sundays in a row"
             }
           />
         </div>
 
         {stats.sundaySessionsInPeriod > 0 && (
           <div className="flex items-center gap-2">
-            <Badge className={cn("rounded-lg border-0", RATE_TONE_STYLES[rateTone])}>
+            <Badge
+              className={cn("rounded-lg border-0", RATE_TONE_STYLES[rateTone])}
+            >
               {rateTone === "good" && (
                 <>
                   <TrendingUp className="w-3 h-3 mr-1 inline" />
@@ -188,7 +187,12 @@ export function PersonAttendanceSection({
             title="No attendance history"
             description="Record this person at a Sunday service or life group to start tracking."
             action={
-              <Button variant="outline" size="sm" className="rounded-xl" asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl"
+                asChild
+              >
                 <Link href="/service-attendance">Go to attendance</Link>
               </Button>
             }
@@ -260,7 +264,7 @@ export function PersonAttendanceSection({
                   <p className="text-xs text-muted-foreground">No breakdown</p>
                 ) : (
                   <div className="space-y-2">
-                    {serviceBreakdown.map((item) => {
+                    {serviceBreakdown.map(item => {
                       const maxCount = serviceBreakdown[0]?.count ?? 1;
                       const width = (item.count / maxCount) * 100;
                       const sunday = isSundayRecord(item);

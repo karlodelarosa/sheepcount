@@ -44,15 +44,25 @@ type TrainingContextValue = {
   hydrated: boolean;
   isSaving: boolean;
   refreshTraining: () => Promise<void>;
-  addCourse: (input: CreateTrainingCourseInput) => Promise<TrainingCourse | null>;
+  addCourse: (
+    input: CreateTrainingCourseInput,
+  ) => Promise<TrainingCourse | null>;
   updateCourse: (
     input: UpdateTrainingCourseInput,
   ) => Promise<TrainingCourse | null>;
   removeCourse: (courseId: string) => Promise<boolean>;
-  addModule: (input: CreateCourseModuleInput) => Promise<TrainingCourseModule | null>;
+  addModule: (
+    input: CreateCourseModuleInput,
+  ) => Promise<TrainingCourseModule | null>;
   removeModuleById: (moduleId: string) => Promise<boolean>;
-  moveModule: (courseId: string, moduleId: string, direction: "up" | "down") => Promise<boolean>;
-  enrollPersonInCourse: (input: EnrollInCourseInput) => Promise<PersonCourseProgress | null>;
+  moveModule: (
+    courseId: string,
+    moduleId: string,
+    direction: "up" | "down",
+  ) => Promise<boolean>;
+  enrollPersonInCourse: (
+    input: EnrollInCourseInput,
+  ) => Promise<PersonCourseProgress | null>;
   removeEnrollment: (progressId: string) => Promise<boolean>;
   updateModuleProgress: (
     input: Omit<UpdateCourseModuleProgressInput, "progressId"> & {
@@ -63,7 +73,10 @@ type TrainingContextValue = {
   ) => Promise<PersonCourseProgress | null>;
   getCourseModules: (courseId: string) => TrainingCourseModule[];
   getCourseProgressRows: (courseId: string) => PersonCourseProgress[];
-  getCourseProgress: (courseId: string, personId: string) => PersonCourseProgress | undefined;
+  getCourseProgress: (
+    courseId: string,
+    personId: string,
+  ) => PersonCourseProgress | undefined;
   getCourseEnrollmentCount: (courseId: string) => number;
   getPersonActiveCourses: (personId: string) => Array<{
     progress: PersonCourseProgress;
@@ -132,7 +145,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   }, [refreshTraining, tenantLoading]);
 
   const addCourse = useCallback(
-    async (input: CreateTrainingCourseInput): Promise<TrainingCourse | null> => {
+    async (
+      input: CreateTrainingCourseInput,
+    ): Promise<TrainingCourse | null> => {
       if (!organizationId) {
         toast.error("No organization found");
         return null;
@@ -140,7 +155,11 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
       setIsSaving(true);
       try {
-        const course = await createTrainingCourse(supabase, organizationId, input);
+        const course = await createTrainingCourse(
+          supabase,
+          organizationId,
+          input,
+        );
         await refreshTraining();
         toast.success("Training course created", {
           description: `${course.name} was added.`,
@@ -159,7 +178,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   );
 
   const updateCourse = useCallback(
-    async (input: UpdateTrainingCourseInput): Promise<TrainingCourse | null> => {
+    async (
+      input: UpdateTrainingCourseInput,
+    ): Promise<TrainingCourse | null> => {
       setIsSaving(true);
       try {
         const course = await updateTrainingCourse(supabase, input);
@@ -207,7 +228,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   );
 
   const addModule = useCallback(
-    async (input: CreateCourseModuleInput): Promise<TrainingCourseModule | null> => {
+    async (
+      input: CreateCourseModuleInput,
+    ): Promise<TrainingCourseModule | null> => {
       const courseModules = modules.filter(m => m.courseId === input.courseId);
       const nextSortOrder =
         input.sortOrder ??
@@ -217,13 +240,13 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
       setIsSaving(true);
       try {
-        const module = await createCourseModule(supabase, {
+        const createdModule = await createCourseModule(supabase, {
           ...input,
           sortOrder: nextSortOrder,
         });
         await refreshTraining();
         toast.success("Module added");
-        return module;
+        return createdModule;
       } catch (error) {
         toast.error("Failed to add module", {
           description: getErrorMessage(error),
@@ -296,7 +319,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
   );
 
   const enrollPersonInCourse = useCallback(
-    async (input: EnrollInCourseInput): Promise<PersonCourseProgress | null> => {
+    async (
+      input: EnrollInCourseInput,
+    ): Promise<PersonCourseProgress | null> => {
       setIsSaving(true);
       try {
         const row = await enrollInCourse(supabase, input);
@@ -361,12 +386,17 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
 
       setIsSaving(true);
       try {
-        const wasComplete = progress.find(p => p.id === progressRow)?.status === "completed";
-        const updated = await updateCourseModuleProgress(supabase, organizationId, {
-          progressId: progressRow,
-          moduleId: input.moduleId,
-          mondayMissionAction: input.mondayMissionAction,
-        });
+        const wasComplete =
+          progress.find(p => p.id === progressRow)?.status === "completed";
+        const updated = await updateCourseModuleProgress(
+          supabase,
+          organizationId,
+          {
+            progressId: progressRow,
+            moduleId: input.moduleId,
+            mondayMissionAction: input.mondayMissionAction,
+          },
+        );
         await refreshTraining();
 
         if (updated.status === "completed" && !wasComplete) {
@@ -421,7 +451,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
         .filter(p => p.personId === personId && p.status === "in_progress")
         .map(p => {
           const course = courses.find(c => c.id === p.courseId);
-          const moduleCount = modules.filter(m => m.courseId === p.courseId).length;
+          const moduleCount = modules.filter(
+            m => m.courseId === p.courseId,
+          ).length;
           const completed = p.completedModuleIds.length;
           const progressPercent =
             moduleCount > 0 ? Math.round((completed / moduleCount) * 100) : 0;
@@ -439,7 +471,9 @@ export function TrainingProvider({ children }: { children: React.ReactNode }) {
           course: courses.find(c => c.id === p.courseId),
         }))
         .sort((a, b) =>
-          (b.progress.completedAt ?? "").localeCompare(a.progress.completedAt ?? ""),
+          (b.progress.completedAt ?? "").localeCompare(
+            a.progress.completedAt ?? "",
+          ),
         ),
     [courses, progress],
   );
@@ -489,4 +523,9 @@ export function useTraining() {
   return ctx;
 }
 
-export type { TrainingCourse, TrainingCourseModule, PersonCourseProgress, TrainingBadge };
+export type {
+  TrainingCourse,
+  TrainingCourseModule,
+  PersonCourseProgress,
+  TrainingBadge,
+};

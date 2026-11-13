@@ -1,5 +1,7 @@
 "use client";
 
+import { PageSkeleton } from "@/components/page-skeleton";
+
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -61,7 +63,7 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
     [uniqueAttendeeIds, people],
   );
 
-  if (!hydrated) return null;
+  if (!hydrated) return <PageSkeleton />;
 
   if (!event) {
     return (
@@ -150,7 +152,11 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
 
       <div className="grid grid-cols-3 gap-2">
         {[
-          { label: "Unique Attendees", value: uniqueAttendees.length, icon: Users },
+          {
+            label: "Unique Attendees",
+            value: uniqueAttendees.length,
+            icon: Users,
+          },
           { label: "Sessions", value: sessions.length, icon: ClipboardList },
           {
             label: "Total Check-ins",
@@ -268,9 +274,10 @@ export function EventDetailView({ eventId }: EventDetailViewProps) {
                     </p>
                   </div>
                   <span className="text-muted-foreground">
-                    {sessions.filter(s =>
-                      s.personIds.includes(person.id),
-                    ).length}{" "}
+                    {
+                      sessions.filter(s => s.personIds.includes(person.id))
+                        .length
+                    }{" "}
                     sessions
                   </span>
                 </Link>
