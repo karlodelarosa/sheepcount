@@ -1,5 +1,7 @@
 "use client";
 
+import { getPlanningYears } from "@/lib/church-goal-years";
+
 import {
   createContext,
   useCallback,
@@ -127,13 +129,11 @@ export function ChurchGoalsProvider({
     [yearlyGoals],
   );
 
-  const availableYears = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const years = new Set<number>([currentYear]);
-    for (const goal of yearlyGoals) years.add(goal.year);
-    for (const theme of monthlyThemes) years.add(theme.year);
-    return Array.from(years).sort((a, b) => b - a);
-  }, [yearlyGoals, monthlyThemes]);
+  const currentYear = new Date().getFullYear();
+  const availableYears = useMemo(
+    () => getPlanningYears(currentYear, yearlyGoals, monthlyThemes),
+    [currentYear, yearlyGoals, monthlyThemes],
+  );
 
   const saveYearlyGoal = useCallback(
     async (input: SaveYearlyGoalInput): Promise<YearlyGoal | null> => {

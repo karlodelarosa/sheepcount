@@ -64,7 +64,11 @@ export function YearSelector({
             {sortedYears.map(year => (
               <SelectItem key={year} value={String(year)}>
                 {year}
-                {year === currentYear ? " (current)" : ""}
+                {year === currentYear
+                  ? " (current)"
+                  : year === currentYear + 1
+                    ? " (next year)"
+                    : ""}
               </SelectItem>
             ))}
           </SelectContent>
